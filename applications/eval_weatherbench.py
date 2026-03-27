@@ -449,6 +449,17 @@ def main():
     parser.add_argument("--out", type=str, default="wb2_scores.csv", help="Output CSV path")
     parser.add_argument("--lead-time-hours", type=int, default=6, help="Hours per forecast step")
     parser.add_argument("--max-inits", type=int, default=None, help="Limit init dates (for testing)")
+    parser.add_argument(
+        "--plot",
+        type=str,
+        default=None,
+        metavar="PLOT_DIR",
+        help="If set, also generate WB2 scorecard figures in this directory",
+    )
+    parser.add_argument(
+        "--label", type=str, default="CREDIT", help="Model label used in plot legends (default: CREDIT)"
+    )
+    parser.add_argument("--no-refs", action="store_true", help="Omit IFS/Pangu/GraphCast reference lines in plots")
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
 
@@ -475,6 +486,11 @@ def main():
     logger.info(f"Saved WB2 scores to {args.out}")
 
     print_wb2_summary(scores)
+
+    if args.plot:
+        from plot_weatherbench import plot_all
+
+        plot_all(args.out, args.plot, label=args.label, show_refs=not args.no_refs)
 
 
 if __name__ == "__main__":
