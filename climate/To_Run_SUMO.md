@@ -16,7 +16,7 @@ Three modes are supported:
 ## Architecture
 
 ```
-CAM6 (CESM B-compset, Derecho)
+CAM6 (CESM B-compset, compute partition)
   ├── writes h1 history every 6 h (instantaneous fincl2 fields)
   ├── pauses at sumo_barrier_after_h1 (cam_comp.F90)
   └── reads sumo_cam6_nudge.YYYY-MM-DD-SSSSS.nc → nudging toolbox
@@ -39,15 +39,38 @@ graphcast_server.py (GPU, JAX)      camulator_sumo_server.py (GPU, PyTorch)
 
 ---
 
-## Environment
+## Customize for your HPC
 
-A single conda env serves the whole stack (PyTorch + JAX + GraphCast + CREDIT):
+Every launch command below uses these shell variables. Set them once at the top of your session — they parameterize all the paths so the commands work on any HPC, not just NCAR's. The example values are what we use on NCAR Casper + Derecho; replace with your own.
 
 ```bash
-conda activate /glade/work/wchapman/conda-envs/supermodel
+# Path to your CESM2.1.5 fork clone (WillyChap/CESM checked out via manage_externals)
+export CESM_ROOT=$HOME/codes/CESM                         # example
+
+# Path to your case (created by climate/setup_SUMO_B_case.sh or by hand)
+export CASE=$HOME/cesm-cases/g.e21.SUMO_CAM6_v03          # example
+export CASENAME=$(basename $CASE)                         # auto-derived
+
+# CESM run directory (must be visible from both partitions; xmlquery RUNDIR is canonical)
+export RUNDIR=$($CASE/xmlquery RUNDIR --value)
+
+# This CREDIT repo (WillyChap/miles-credit, camulator-sumo branch)
+export SUMO_REPO=$HOME/codes/miles-credit                 # example
+
+# Persistent JAX XLA compilation cache (any scratch path; cold compile ~18 min,
+# warm cache ~10 s. Avoid /tmp -- it gets wiped between jobs).
+export JAX_COMPILATION_CACHE_DIR=$SCRATCH/jax_compilation_cache    # example
 ```
 
-For the older CAMulator-only path the legacy env `credit-coupling` also still works.
+## Environment
+
+A single conda env (`supermodel`) serves the whole stack — PyTorch + JAX + GraphCast + CREDIT. Build it from `environment.yml` at the repo root (see the README's "Build the conda environment" step).
+
+```bash
+conda activate supermodel
+```
+
+For the older CAMulator-only path the legacy `credit-coupling` env also still works (no JAX needed).
 
 ---
 
@@ -58,7 +81,7 @@ For the older CAMulator-only path the legacy env `credit-coupling` also still wo
 | `regrid/reference_data/reference_h1_prev.nc` | CAM6 h1 at T-6h, persistent. Used by `graphcast_server.py` for grid metadata + warmup. |
 | `regrid/reference_data/reference_h1_t.nc` | CAM6 h1 at T, same purpose. |
 | `regrid/sumo_nudge_template.nc` (or built from h1) | Structural netCDF template for nudge file writes. |
-| `/glade/derecho/scratch/wchapman/jax_compilation_cache/` | XLA persistent cache. First GraphCast compile ~18 min; subsequent calls ~10 s. |
+| `$JAX_COMPILATION_CACHE_DIR` (any persistent scratch path) | XLA persistent cache. First GraphCast compile ~18 min; subsequent calls ~10 s. |
 
 If `fincl2` changes such that the reference h1 files no longer carry every field GraphCast needs, copy a fresh pair into `regrid/reference_data/`.
 
@@ -68,91 +91,98 @@ If `fincl2` changes such that the reference h1 files no longer carry every field
 
 Steers CAM6 toward GraphCast's 6-hour forecast at each coupling step.
 
-## Deployment model: two independent PBS jobs
+## Deployment model: two independent batch jobs
 
-**Casper hosts the A100 GPU; Derecho hosts CESM's compute queue.**  They share /glade/derecho/scratch but otherwise know nothing about each other. So the workflow is two completely separate PBS submissions that communicate only through the run-directory file flags:
+SUMO assumes two distinct partitions on your HPC:
+
+- A **GPU partition** (one A100; 80 GB recommended for cold compile, 40 GB after warm cache) that hosts the GraphCast server + coordinator.
+- A **compute partition** that hosts the CESM build (CPU nodes).
+
+They share a scratch filesystem visible to both, but otherwise know nothing about each other. The workflow is two completely separate batch submissions that communicate only through file flags in `$RUNDIR`:
 
 ```
-Casper PBS job                          Derecho PBS job
-(80 GB A100)                            (CPU compute nodes)
+GPU partition                           Compute partition
+(1× A100)                               (CPU nodes)
 ─────────────                           ───────────────
 graphcast_server.py                     CESM (case.submit)
 gc_coordinator.py                          ↑↓ h1 files,
    ↑↓ nudge files                             nudge files,
-         shared rundir on /glade/derecho/scratch
+         shared scratch filesystem (= $RUNDIR)
 ```
+
+**NCAR example:** Casper (A100 80 GB) hosts the GPU side; Derecho (CPU compute) hosts CESM. Both mount `/glade/derecho/scratch`.
 
 Either job can start first; the coordinator polls for `cesm_h1_ready.flag` so it just waits if CESM hasn't started yet, and CESM's nudging toolbox warns-and-continues if a nudge file is missing (only happens at step 0 by design).
 
 ### Prereqs
 
 * A100 GPU node (cached compile: 40 GB OK; cold compile: 80 GB recommended).
-* CESM case built with the existing SUMO patches (Nudge_Do=0 in `namelist_definition.xml`, `sumo_barrier_after_h1` in `cam_comp.F90`, fincl2 with all GraphCast input fields). The existing `g.e21.SUMO_CAM6_v03` case has these.
-* GraphCast checkpoint: `graphcast/params/graphcast_params_GraphCast - ERA5 1979-2017 - resolution 0.25 - pressure levels 37 - mesh 2to6 - precipitation input and output.npz` (shipped).
+* CESM case built with the SUMO patches (Nudge_Do=0 in `namelist_definition.xml`, `sumo_barrier_after_h1` in `cam_comp.F90`, fincl2 with all GraphCast input fields). The reference case-setup script `climate/setup_SUMO_B_case.sh` produces all of this — adapt its top-of-file paths for your machine.
+* GraphCast checkpoint downloaded into `graphcast/params/` per the README (140 MB `.npz` from DeepMind's public bucket).
 
-### 1. Reset run dir (once)
+### 1. Reset run dir (once per attempt)
 
 ```bash
-cd /glade/work/wchapman/Roman_Coupling/camulator_sumo/climate
+cd $SUMO_REPO/climate
 bash reset_run_dir.sh
 ```
 
-Cleans both CAMulator and GraphCast lifecycle flags, restores LE2 restart symlinks.
+Cleans both CAMulator and GraphCast lifecycle flags, restores restart symlinks.
 
-### 2. Submit the **Casper** job (servers + coordinator)
+### 2. Submit the **GPU-partition** job (servers + coordinator)
 
 ```bash
-qsub -v MODE=graphcast,RUNDIR=/glade/derecho/scratch/wchapman/g.e21.SUMO_GC_v01/run \
-     /glade/work/wchapman/Roman_Coupling/camulator_sumo/climate/submit_supermodel.pbs
+qsub -v MODE=graphcast,RUNDIR=$RUNDIR  $SUMO_REPO/climate/submit_supermodel.pbs
 ```
 
-This requests `select=1:ncpus=8:ngpus=1:mem=80GB:gpu_type=a100`. The job:
+`submit_supermodel.pbs` requests `select=1:ncpus=8:ngpus=1:mem=80GB:gpu_type=a100` — edit the `#PBS` header at the top of the file for your scheduler / queue / project code. The job:
 1. Activates the `supermodel` env.
 2. Starts `graphcast_server.py` in the background (warmup at startup; ~18 min cold, ~30 s warm cache).
 3. Starts `gc_coordinator.py` in the background.
 4. Enters a heartbeat loop until the coordinator exits or walltime hits.
 5. On any exit (clean, signal, walltime), trap calls `run_coordinators.sh --action stop` → SIGTERM with grace, then SIGKILL.
 
-### 3. Submit the **Derecho** job (CESM)
+### 3. Submit the **compute-partition** job (CESM)
 
-In a separate terminal, on any Derecho-capable login node:
+In a separate terminal:
 
 ```bash
-cd /glade/work/wchapman/cesm/CREDIT/g.e21.SUMO_GC_v01
+cd $CASE
 ./case.submit
 ```
 
-CESM doesn't need to wait for the Casper job — its first 6 h step writes the first `cesm_h1_ready.flag`, the coordinator picks it up, and the loop starts.
+CESM doesn't need to wait for the GPU job — its first 6 h step writes the first `cesm_h1_ready.flag`, the coordinator picks it up, and the loop starts.
 
 ### 4. Watch progress
 
 ```bash
-tail -f /glade/derecho/scratch/wchapman/g.e21.SUMO_GC_v01/run/gc_server.log
-tail -f /glade/derecho/scratch/wchapman/g.e21.SUMO_GC_v01/run/gc_coordinator.log
+tail -f $RUNDIR/gc_server.log
+tail -f $RUNDIR/gc_coordinator.log
 qstat -u $USER     # both jobs visible
 ```
 
-Or, from anywhere on Casper:
+Or, from anywhere on the GPU partition:
 
 ```bash
-bash /glade/work/wchapman/Roman_Coupling/camulator_sumo/climate/run_coordinators.sh \
+bash $SUMO_REPO/climate/run_coordinators.sh \
      --mode graphcast --rundir $RUNDIR --action status
 ```
 
 ### 5. Stop early
 
-Stop the Casper-side stack:
+Stop the GPU-side stack:
 ```bash
-bash climate/run_coordinators.sh --mode graphcast --rundir $RUNDIR --action stop
+bash $SUMO_REPO/climate/run_coordinators.sh \
+     --mode graphcast --rundir $RUNDIR --action stop
 # or, from anywhere:
-qdel <casper_jobid>      # PBS trap on the job will run the same stop
+qdel <gpu_jobid>      # PBS trap on the job will run the same stop
 ```
 
-Stop CESM independently with `qdel <derecho_jobid>`.
+Stop CESM independently with `qdel <cesm_jobid>`.
 
-### Interactive testing (single Casper node)
+### Interactive testing (single GPU node)
 
-For development on one A100 node with no Derecho involvement, use `launch_gc_test.sh --no-case-submit` (it inherits the right PBS env and runs both server and coordinator inline; you exit with Ctrl-C). Do **not** use it for production runs — the `case.submit` call in that script assumes Derecho-side PBS access from the Casper job, which won't work.
+For development on one A100 node with no compute-partition involvement, use `launch_gc_test.sh --no-case-submit` (it inherits the right PBS env and runs both server and coordinator inline; you exit with Ctrl-C). Do **not** use it for production runs — the `case.submit` call in that script assumes the GPU job has scheduler reach into the compute partition, which is HPC-specific and usually does not work.
 
 ### Step-by-step protocol per 6 h
 
@@ -171,22 +201,28 @@ For development on one A100 node with no Derecho involvement, use `launch_gc_tes
 
 Unchanged from prior validated runs. See the original launch sequence below.
 
+Set `$CAMULATOR_IC` to the SUMO-compatible IC tensor (built once with `make_sumo_ic_from_cam6_restart.py`; see the epilogue of `setup_SUMO_B_case.sh` for the exact call):
+
+```bash
+export CAMULATOR_IC=$RUNDIR/sumo_init_camulator_condition_tensor_1980-01-01T00Z.pth
+```
+
 ### 1. Reset run dir
 ```bash
-cd /glade/work/wchapman/Roman_Coupling/camulator_sumo/climate
+cd $SUMO_REPO/climate
 bash reset_run_dir.sh
 ```
 
-### 2. Start CAMulator server (GPU)
+### 2. Start CAMulator server (GPU partition)
 ```bash
-conda activate /glade/work/wchapman/conda-envs/credit-coupling
-cd /glade/work/wchapman/Roman_Coupling/camulator_sumo/climate
+conda activate supermodel        # or: credit-coupling (legacy, no JAX needed)
+cd $SUMO_REPO/climate
 
 python camulator_sumo_server.py \
-    --config    camulator_config.yml \
+    --config     camulator_config.yml \
     --model_name checkpoint.pt00044.pt \
-    --rundir    /glade/derecho/scratch/wchapman/g.e21.SUMO_CAM6_v03/run \
-    --init_cond /glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended_v2/init_times/sumo_init_camulator_condition_tensor_1980-01-01T00Z.pth \
+    --rundir     $RUNDIR \
+    --init_cond  $CAMULATOR_IC \
     --sumo --sumo_vars U V --sumo_tau 6.0 \
     --save_atm_nc camulator_out --daily_mean
 ```
@@ -196,17 +232,16 @@ Wait for: `Server ready — waiting for CESM go.flag ...`
 ### 3. Start coordinator (login or CPU node)
 ```bash
 python sumo_coordinator.py \
-    --rundir    /glade/derecho/scratch/wchapman/g.e21.SUMO_CAM6_v03/run \
-    --cam6dir   /glade/derecho/scratch/wchapman/g.e21.SUMO_CAM6_v03/run \
-    --cam6_case g.e21.SUMO_CAM6_v03 \
+    --rundir    $RUNDIR \
+    --cam6dir   $RUNDIR \
+    --cam6_case $CASENAME \
     --vars U V --alpha_cam 0.5 \
     --start_ymd 19800101
 ```
 
 ### 4. Submit CESM
 ```bash
-cd /glade/work/wchapman/cesm/CREDIT/g.e21.SUMO_CAM6_v03/
-./case.submit
+cd $CASE && ./case.submit
 ```
 
 ---
@@ -221,23 +256,34 @@ Default blend: 50/50 each variable, every level. Alternative `stratosphere_lean_
 
 ## Common: setup, reset, prerequisites
 
-### CESM sandbox
+### CESM source
+
+The SUMO-patched CESM2.1.5 fork (CAM6 + SUMO barrier + SST=0 fix for DATA ATM + portable Makefile):
+
+```bash
+git clone -b release-cesm2.1.5-camulator git@github.com:WillyChap/CESM.git $CESM_ROOT
+cd $CESM_ROOT && ./manage_externals/checkout_externals
 ```
-/glade/work/wchapman/JE_help_cnn/camulator_sandbox_fluxupdown/
-```
-Three-part `cime_comp_mod.F90` SST=0 fix (MEMORY.md), Nudge_Do XML registration, `sumo_barrier_after_h1` in `cam_comp.F90`. **No further rebuild needed for namelist-only changes.**
+
+Patches: three-part `cime_comp_mod.F90` SST=0 fix, Nudge_Do XML registration, `sumo_barrier_after_h1` in `cam_comp.F90`. **No further rebuild needed for namelist-only changes.**
 
 ### Conda env (unified)
+
+Build the `supermodel` env from `environment.yml` once (see README "Build the conda environment"), then:
+
 ```bash
-conda activate /glade/work/wchapman/conda-envs/supermodel    # JAX + PyTorch
-# legacy CAMulator-only env still works:
-conda activate /glade/work/wchapman/conda-envs/credit-coupling
+conda activate supermodel        # JAX + PyTorch + GraphCast + CREDIT
+# Legacy CAMulator-only env still works (no JAX):
+conda activate credit-coupling
 ```
 
 ### CESM case (CAM6 side, shared across modes)
+
 ```bash
-cd /glade/work/wchapman/Roman_Coupling/camulator_sumo/climate
-bash setup_SUMO_B_case.sh   # first time only; lands at g.e21.SUMO_CAM6_v03
+cd $SUMO_REPO/climate
+# Edit the configuration block at the top (CESM_ROOT, CASE_DIR, REFDIR,
+# PROJECT, MACH, COMPILER) for your machine BEFORE running.
+bash setup_SUMO_B_case.sh   # first time only; ends with case.build
 ```
 
 The case's `user_nl_cam` already has:
@@ -250,7 +296,7 @@ The case's `user_nl_cam` already has:
 ```bash
 bash reset_run_dir.sh
 ```
-Removes case output, re-symlinks LE2 restart data, copies fresh rpointers, **cleans both CAMulator and GraphCast lifecycle flags**.
+Removes case output, re-symlinks restart data, copies fresh rpointers, **cleans both CAMulator and GraphCast lifecycle flags**.
 
 ---
 
@@ -269,8 +315,8 @@ Removes case output, re-symlinks LE2 restart data, copies fresh rpointers, **cle
 | `gc_to_nudge.py` | `regrid/` | Standalone: GC prediction → CAM6 nudge file |
 | `inspect_gc_prediction.py` | `regrid/` | Inspect GC output, optional ERA5 compare |
 | `reference_data/reference_h1_{prev,t}.nc` | `regrid/` | Persistent h1 pair for stencil + warmup |
-| CESM case | `/glade/work/wchapman/cesm/CREDIT/g.e21.SUMO_CAM6_v03/` | CAM6 case |
-| Run directory | `/glade/derecho/scratch/wchapman/g.e21.SUMO_CAM6_v03/run/` | Shared flag/file exchange |
+| CESM case | `$CASE` (per-user) | CAM6 case |
+| Run directory | `$RUNDIR` (per-user, `xmlquery RUNDIR --value`) | Shared flag/file exchange |
 
 ---
 
@@ -282,13 +328,13 @@ CAM6's `nudging.F90` hard-codes `Nudge_Climo_Year = 1000`. All nudge files write
 
 ## JAX compilation cache
 
-Set automatically by `graphcast_server.py` and `run_graphcast_inference.py`:
+Set `JAX_COMPILATION_CACHE_DIR` in your shell (or in the GPU job submit script) to **any persistent scratch path on your HPC** — `graphcast_server.py` and `run_graphcast_inference.py` will honor it:
 
-```
-JAX_COMPILATION_CACHE_DIR=/glade/derecho/scratch/wchapman/jax_compilation_cache
+```bash
+export JAX_COMPILATION_CACHE_DIR=$SCRATCH/jax_compilation_cache    # example
 ```
 
-**Cold compile populates the cache (~18 min) → every subsequent call is ~10 s.** The cache is keyed on `(input shapes, JAX version, jaxlib version, GPU model)`; change any of those → recompile. Scratch may be purged after weeks of no access; if the cache disappears, the first call pays the compile tax again.
+**Cold compile populates the cache (~18 min) → every subsequent call is ~10 s.** The cache is keyed on `(input shapes, JAX version, jaxlib version, GPU model)`; change any of those → recompile. Many HPCs purge scratch after weeks of no access; if the cache disappears, the first call pays the compile tax again.
 
 ---
 
@@ -314,8 +360,8 @@ JAX_COMPILATION_CACHE_DIR=/glade/derecho/scratch/wchapman/jax_compilation_cache
 Validate the GraphCast server in isolation before integration:
 
 ```bash
-conda activate /glade/work/wchapman/conda-envs/supermodel
-cd /glade/work/wchapman/Roman_Coupling/camulator_sumo
+conda activate supermodel
+cd $SUMO_REPO
 python -m regrid.smoke_test_graphcast_server
 ```
 
