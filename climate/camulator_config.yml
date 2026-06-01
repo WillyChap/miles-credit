@@ -19,7 +19,7 @@
 # the location to save your workspace, it will have 
 # (1) pbs script, (2) a copy of this config, (3) model weights, (4) training_log.csv
 # if save_loc does not exist, it will be created automatically
-save_loc: '/glade/derecho/scratch/wchapman/CREDIT_runs/wxformermod_sharp_SpatPS_pxshf/'
+save_loc: '/glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended_v2/'
 seed: 1000
 
 data:
@@ -27,28 +27,29 @@ data:
     # files must have the listed variable names 
     # upper-air variables will be normalized by the dataloader, users do not need to normalize them
     variables: ['U','V','T','Qtot']
-    save_loc: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate_branch_1980_????_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+    save_loc: '/glade/derecho/scratch/wchapman/b_credit_runs/b.e21.CREDIT_climate_branch_1980_????_zmdata_ERA5scaled_zmdata_Qtot.zarr'
     
     # surface variables, must be YEARLY zarr or nc with (time, latitude, longitude) dims
     # the time dimension MUST be the same as upper-air variables
     # files must have the listed variable names
     # surface variables will be normalized by the dataloader, users do not need to normalize them
     surface_variables: ['PS','TREFHT']
-    save_loc_surface: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate_branch_1980_????_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+    save_loc_surface: '/glade/derecho/scratch/wchapman/b_credit_runs/b.e21.CREDIT_climate_branch_1980_????_zmdata_ERA5scaled_zmdata_Qtot.zarr'
 
     # dynamic forcing variables, must be YEARLY zarr or nc with (time, latitude, longitude) dims
     # the time dimension MUST be the same as upper-air variables
     # files must have the listed variable names
     # surface variables will be normalized by the dataloader, users do not need to normalize them
     dynamic_forcing_variables: ['SOLIN','SST','ICEFRAC','co2vmr_3d']
-    save_loc_dynamic_forcing: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate_branch_1980_????_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+    save_loc_dynamic_forcing: '/glade/derecho/scratch/wchapman/b_credit_runs/b.e21.CREDIT_climate_branch_1980_????_zmdata_ERA5scaled_zmdata_Qtot.zarr'
 
     # diagnostic variables, must be YEARLY zarr or nc with (time, latitude, longitude) dims
     # the time dimension MUST be the same as upper-air variables
     # files must have the listed variable names 
     # diagnostic variables will be normalized by the dataloader, users do not need to normalize them
-    diagnostic_variables: ['PRECT','TS','CLDHGH','CLDLOW','CLDMED','TAUX','TAUY','U10','QFLX','FSNS','FLNS','FSNT','FLNT','SHFLX','LHFLX']
-    save_loc_diagnostic: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate_branch_1980_????_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+
+    diagnostic_variables: ['PRECT','TS','CLDHGH','CLDLOW','CLDMED','TAUX','TAUY','U10','QFLX','FSDS_J','FLDS_J','FSUS','FLUS','SHFLX','LHFLX','FSUTOA','FLUT']
+    save_loc_diagnostic: '/glade/derecho/scratch/wchapman/b_credit_runs/b.e21.CREDIT_climate_branch_1980_????_zmdata_ERA5scaled_zmdata_Qtot.zarr'
     
     # periodic forcing variables, must be a single zarr or nc with (time, latitude, longitude) dims
     # the time dimension should cover an entire LEAP YEAR
@@ -58,20 +59,20 @@ data:
     #
     # periodic forcing variables MUST be normalized BY USER 
     forcing_variables: [] 
-    save_loc_forcing: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate_branch_1980_????_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+    save_loc_forcing: '/glade/derecho/scratch/wchapman/b_credit_runs_f32_02/b.e21.CREDIT_climate_branch_1980_????_zmdata_ERA5scaled_zmdata_Qtot.zarr'
     
     # static variables must be a single zarr or nc with (latitude, longitude) coords
     # static variables must be normalized BY USER 
     static_variables: ['z_norm','LANDM_COSLAT'] 
-    save_loc_static: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc'
-    save_loc_physics: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc'
+    save_loc_static: '/glade/derecho/scratch/wchapman/b_credit_runs/statics_b_credit_runs_f32_02.nc'
+    save_loc_physics: '/glade/derecho/scratch/wchapman/b_credit_runs/statics_b_credit_runs_f32_02.nc'
 
     # z-score files, they must be zarr or nc with (level,) coords
-    # they MUST include all the 
+    # they MUST include all the
     #     'variables', 'surface_variables', 'dynamic_forcing_variables', 'diagnostic_variables' above
-    mean_path: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/mean_6h_1980_Coupled_2000_2012_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
-    std_path: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/std_6h_1980_Coupled_2000_2012_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
-  
+    mean_path: '/glade/derecho/scratch/wchapman/b_credit_runs/mean_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+    std_path: '/glade/derecho/scratch/wchapman/b_credit_runs/std_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+
     
     # years to form the training / validation set [first_year, last_yeat (not covered)]
     train_years: [1980, 2012] # 1979 - 2013
@@ -121,7 +122,7 @@ data:
     # True is the same as the old 'std'
     #
     # False: input tensors will be formed under the order of [dynamic_forcing -> forcing -> static]
-    static_first: True    
+    static_first: True   # MUST match training (era5-v2/ConcatPreblock always puts dyn_forcing before static)
 
     # SST forcing  
     # sst_forcing:
@@ -267,24 +268,24 @@ model:
     channels: 4                       # upper-air variable channels
     surface_channels: 2               # surface variable channels
     input_only_channels: 6            # dynamic forcing, forcing, static channels
-    output_only_channels: 15           # diagnostic variable channels
+    output_only_channels: 17           # diagnostic variable channels
     
     patch_width: 1                    # number of latitude grids in each 3D patch (default: 1)
     patch_height: 1                   # number of longitude grids in each 3D patch (default: 1)
     frame_patch_size: 1               # number of input states in each 3D patch (default: 1)
     
-    dim: [256, 512, 1024, 2048]       # Dimensionality of each layer
-    depth: [2, 2, 18, 2]              # Depth of each layer
-    global_window_size: [4, 4, 2, 1] # Global window size for each layer
-    local_window_size: 3             # Local window size
-    cross_embed_kernel_sizes:         # kernel sizes for cross-embedding
+    dim: [256, 512, 1024, 2048]
+    depth: [2, 2, 18, 2]
+    global_window_size: [4, 4, 2, 1]
+    local_window_size: 3
+    cross_embed_kernel_sizes:
     - [4, 8, 16, 32]
     - [2, 4]
     - [2, 4]
     - [2, 4]
-    cross_embed_strides: [2, 2, 2, 2] # Strides for cross-embedding (default: [4, 2, 2, 2])
-    attn_dropout: 0.                  # Dropout probability for attention layers (default: 0.0)
-    ff_dropout: 0.                    # Dropout probability for feed-forward layers (default: 0.0)
+    cross_embed_strides: [2, 2, 2, 2]
+    attn_dropout: 0.
+    ff_dropout: 0.
 
     # fuxi example
     # frames: 2               # number of input states
@@ -323,24 +324,18 @@ model:
         pad_lon: 48
 
     # configuration for postblock processing
-    post_conf: 
+    post_conf:
         activate: True
-
-
-        # this scaling maps your variables to the ERA5 units 
-        # alot of it is painfully redundant because we turn around
-        # and move Joules -> Watts anyway... but so it goes for generalization. 
-        # !!!!!make sure to adjust if your timestep is not 6 hours!!!!!
         requires_scaling: False
         scaling_coefs:
-            tot_precip: 1 #model timestep in seconds m/day -> m/s
-            surf_net_solar: 1 #model timestep in seconds (W/s) -> J/s
-            surf_net_therm: 1 #model timestep in seconds (W/s) -> J/s
-            surf_shflx: 1 #model timestep in seconds (W/s) -> J/s
-            surf_lhflx: 1 #model timestep in seconds (W/s) -> J/s
-            top_net_solar: 1 #model timestep in seconds (W/s) -> J/s
-            top_net_therm: 1 #model timestep in seconds (W/s) -> J/s
-            evap: 1 #model timestep / 1000 [kg/m2/s -> m] water equivalent 
+            tot_precip: 1
+            surf_net_solar: 1
+            surf_net_therm: 1
+            surf_shflx: 1
+            surf_lhflx: 1
+            top_net_solar: 1
+            top_net_therm: 1
+            evap: 1
             SP: 1
             U: 1
             V: 1
@@ -348,17 +343,17 @@ model:
             temp: 1
             Q: 1
             T: 1
-            
         skebs:
             activate: False
-        
         tracer_fixer:
             activate: True
             activate_outside_model: True
             denorm: True
-            tracer_name: ['Qtot','PRECT','U10','CLDHGH','CLDLOW','CLDMED']
-            tracer_thres: [0, 0, 0, 0, 0, 0]
-            
+            mean_path: '/glade/derecho/scratch/wchapman/b_credit_runs/mean_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+            std_path: '/glade/derecho/scratch/wchapman/b_credit_runs/std_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+            tracer_name: ['Qtot', 'PRECT', 'CLDHGH', 'CLDLOW', 'CLDMED', 'FSDS_J', 'FSUS', 'FSUTOA', 'FLUT']
+            tracer_thres: [0, 0, 0, 0, 0, 0, 0, 0, 0]
+            tracer_thres_max: [null, null, 1, 1, 1, null, null, null, null]
         global_mass_fixer:
             activate: True
             activate_outside_model: True
@@ -370,10 +365,15 @@ model:
             lon_lat_level_name: ['lon2d', 'lat2d', 'hyai', 'hybi']
             surface_pressure_name: ['PS']
             specific_total_water_name: ['Qtot']
-
+            save_loc_physics: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc'
+            mean_path: '/glade/derecho/scratch/wchapman/b_credit_runs/mean_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+            std_path: '/glade/derecho/scratch/wchapman/b_credit_runs/std_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+            q_inds: [96, 127]
+            sp_inds: 128
         global_water_fixer:
             activate: True
             activate_outside_model: True
+            conservation_loss_weight: 0.05
             simple_demo: False
             denorm: True
             grid_type: 'sigma'
@@ -383,24 +383,49 @@ model:
             specific_total_water_name: ['Qtot']
             precipitation_name: ['PRECT']
             evaporation_name: ['QFLX']
-            
+            save_loc_physics: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc'
+            mean_path: '/glade/derecho/scratch/wchapman/b_credit_runs/mean_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+            std_path: '/glade/derecho/scratch/wchapman/b_credit_runs/std_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+            lead_time_periods: 6
+            q_inds: [96, 127]
+            sp_inds: 128
+            precip_ind: 130
+            evapor_ind: 138
         global_energy_fixer:
+            activate: False
+        global_energy_fixer_updown:
             activate: True
             activate_outside_model: True
             simple_demo: False
             denorm: True
             grid_type: 'sigma'
             midpoint: True
+            lead_time_periods: 6
+            save_loc_physics: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc'
+            mean_path: '/glade/derecho/scratch/wchapman/b_credit_runs/mean_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+            std_path: '/glade/derecho/scratch/wchapman/b_credit_runs/std_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
             lon_lat_level_name: ['lon2d', 'lat2d', 'hyai', 'hybi']
             surface_pressure_name: ['PS']
+            surface_geopotential_name: ['PHIS']
             air_temperature_name: ['T']
             specific_total_water_name: ['Qtot']
             u_wind_name: ['U']
             v_wind_name: ['V']
-            surface_geopotential_name: ['PHIS']
-            TOA_net_radiation_flux_name: ['FSNT', 'FLNT']
-            surface_net_radiation_flux_name: ['FSNS', 'FLNS']
-            surface_energy_flux_name: ['SHFLX', 'LHFLX',]
+            T_inds: [64, 95]
+            q_inds: [96, 127]
+            U_inds: [0, 31]
+            V_inds: [32, 63]
+            sp_inds: 128
+            TOA_forcing_solar_ind: 130       # SOLIN: 130 prog + SOLIN at 130 (dyn_forcing first, static_first=False)
+            TOA_up_solar_ind: 145          # FSUTOA
+            TOA_up_OLR_ind: 146            # FLUT
+            surf_down_solar_ind: 141       # FSDS_J  (diag index 11 → ch 141)
+            surf_up_solar_ind: 143         # FSUS    (diag index 13 → ch 143)
+            surf_down_LW_ind: 142          # FLDS_J  (diag index 12 → ch 142)
+            surf_up_LW_ind: 144            # FLUS    (diag index 14 → ch 144)
+            surf_SH_ind: 139               # SHFLX   (diag index  9 → ch 139)
+            surf_LH_ind: 140               # LHFLX   (diag index 10 → ch 140)
+            
 
 loss: 
     # the main training loss
@@ -477,16 +502,16 @@ predict:
 
     forecasts:
         type: "custom"       # keep it as "custom". See also credit.forecast
-        start_year: 1981     # year of the first initialization (where rollout will start)
+        start_year: 1980     # year of the first initialization (where rollout will start)
         start_month: 1       # month of the first initialization
         start_day: 1         # day of the first initialization
         start_hours: [0]     # hour-of-day for each initialization, 0 for 00Z, 12 for 12Z
         duration: 1          # number of days to initialize, starting from the (year, mon, day) above
-                             # duration should be divisible by the number of GPUs 
+                             # duration should be divisible by the number of GPUs
                              # (e.g., duration: 384 for 365-day rollout using 32 GPUs)
         days:  365           # forecast length, ignored for Climate rollout.
 
-    start_datetime: '1981-01-01 00:00:00'
+    start_datetime: '1980-01-01 00:00:00'
     climate_rescale_output: True
         
     # saved variables (rollout_to_netcdf.yml)
@@ -497,7 +522,7 @@ predict:
     # The location to store rollout predictions, the folder structure will be:
     # $save_forecast/$initialization_time/file.nc
     # each forecast lead time produces a file.nc
-    save_forecast: '/glade/derecho/scratch/wchapman/CREDIT/new_pxshf/Post_003steps/'
+    save_forecast: '/glade/derecho/scratch/wchapman/CREDIT/climate_new_ckpt/'
     
     # this keyword will apply a low-pass filter to all fields and each forecast step
     # it will reduce high-freq noise, but may impact performance
@@ -507,15 +532,15 @@ predict:
     # Supplying this will compute ananomly ACC, otherwise its Pearson coeffcient (acc in metrics).
     climatology: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/ERA5_clim_1990_2019_6h_interp.nc'
 
-    save_vars: ['PRECT','TS','CLDHGH','CLDLOW','CLDMED','TAUX','TAUY','U10','QFLX','FSNS','FLNS','FSNT','FLNT','SHFLX','LHFLX','TREFHT','PS','Qtot','U','V','T']
-    forcing_file: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate_branch_1980_2014.nc'
+    save_vars: ['PRECT','TS','CLDHGH','CLDLOW','CLDMED','TAUX','TAUY','U10','QFLX','SHFLX','LHFLX','FSDS_J','FLDS_J','FSUS','FLUS','FSUTOA','FLUT','TREFHT','PS','Qtot','U','V','T']
+    forcing_file: '/glade/derecho/scratch/wchapman/CAMULATOR_FORCING/b.e21.CREDIT_climate_cyclic_1yr_f32coords.nc'
 
-    
+
     run_fast_climate: False
-    init_cond_fast_climate: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/init_times/init_be21_condition_tensor_1981-01-01T00Z.pth'
+    init_cond_fast_climate: '/glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended/init_times/init_camulator_condition_tensor_1981-01-01T00Z.pth'
     inds_rmse_fast_climate: ['rmse_PRECT','rmse_TREFHT']
     seasonal_mean_fast_climate: '/glade/work/wchapman/miles_branchs/CESM_Spatial_PS/truth_be21_tensor_2013-01-01T00Z.pth'
-    timesteps_fast_climate: 200
+    timesteps_fast_climate: 1000
     
     # deprecated
     # save_format: "nc"

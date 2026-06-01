@@ -14,7 +14,8 @@ CESM (compute partition) and the neural-surrogate server + coordinator (GPU part
 | This repo (SUMO orchestration + CAMulator + GraphCast Python) | `git clone -b camulator-sumo git@github.com:WillyChap/miles-credit.git` then `pip install -e .` inside the active conda env |
 | `credit-coupling` conda env | PyTorch 2.4.1+cu121 base + this repo; used by the CAMulator server and all `climate/` scripts |
 | `supermodel` conda env | JAX + PyTorch; used only by the GraphCast coordinator/server |
-| GraphCast weights + stats | **Ship with this repo** at `./graphcast/params/*.npz` (140 MB) and `./graphcast/stats/*.nc` — nothing to stage |
+| GraphCast source code | Vendored at `./graphcast/` in this repo (DeepMind release, Apache 2.0) |
+| GraphCast weights + stats | **NOT in git** (140 MB params file exceeds GitHub limits). Download `params/*.npz` and `stats/*.nc` from DeepMind's public bucket: https://console.cloud.google.com/storage/browser/dm_graphcast — drop into `./graphcast/params/` and `./graphcast/stats/` |
 | CAMulator checkpoint (active model: `extended_v2`) | `/glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended_v2/checkpoint.pt00044.pt` (3.3 GB) |
 | CAMulator config referenced by the checkpoint | `/glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended_v2/camulator_config_extended_v2.yml` — all sub-paths below are listed inside it |
 | CAMulator normalization stats (mean / std) | `/glade/derecho/scratch/wchapman/b_credit_runs/mean_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc` and the matching `std_6h_…` file in the same directory |

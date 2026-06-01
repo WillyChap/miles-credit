@@ -1,6 +1,7 @@
 import gc
 import logging
 from collections import defaultdict
+from datetime import datetime, timezone
 
 import numpy as np
 import torch
@@ -11,7 +12,7 @@ from torch.utils.data import IterableDataset
 import optuna
 
 from credit.data import concat_and_reshape, reshape_only
-from credit.postblock import GlobalMassFixer, GlobalWaterFixer, GlobalEnergyFixer
+from credit.postblock import GlobalMassFixer, GlobalWaterFixer, GlobalEnergyFixer, GlobalEnergyFixerUpDown
 from credit.scheduler import update_on_batch
 from credit.trainers.base_trainer import BaseTrainer
 from credit.trainers.utils import accum_log, cycle
@@ -41,9 +42,12 @@ class Trainer(BaseTrainer):
         self.flag_mass_conserve = False
         self.flag_water_conserve = False
         self.flag_energy_conserve = False
+        self.flag_energy_updown_conserve = False
         self.opt_mass = None
         self.opt_water = None
         self.opt_energy = None
+        self.opt_energy_updown = None
+        self.water_conservation_loss_weight = 0.0
 
         if post_conf.get("activate", False):
             if post_conf.get("global_mass_fixer", {}).get("activate", False) and post_conf["global_mass_fixer"].get(
@@ -59,6 +63,14 @@ class Trainer(BaseTrainer):
                 logger.info("Activate GlobalWaterFixer outside of model")
                 self.flag_water_conserve = True
                 self.opt_water = GlobalWaterFixer(post_conf)
+                self.water_conservation_loss_weight = float(
+                    post_conf["global_water_fixer"].get("conservation_loss_weight", 0.0)
+                )
+                if self.water_conservation_loss_weight > 0:
+                    logger.info(
+                        "WaterFixer: MSE loss on pre-correction prediction + "
+                        "conservation penalty weight=%.4f", self.water_conservation_loss_weight
+                    )
 
             if post_conf.get("global_energy_fixer", {}).get("activate", False) and post_conf["global_energy_fixer"].get(
                 "activate_outside_model", False
@@ -66,6 +78,13 @@ class Trainer(BaseTrainer):
                 logger.info("Activate GlobalEnergyFixer outside of model")
                 self.flag_energy_conserve = True
                 self.opt_energy = GlobalEnergyFixer(post_conf)
+
+            if post_conf.get("global_energy_fixer_updown", {}).get("activate", False) and post_conf["global_energy_fixer_updown"].get(
+                "activate_outside_model", False
+            ):
+                logger.info("Activate GlobalEnergyFixerUpDown outside of model")
+                self.flag_energy_updown_conserve = True
+                self.opt_energy_updown = GlobalEnergyFixerUpDown(post_conf)
 
         # ---- Static data/rollout settings ----
         data_conf = self.conf["data"]
@@ -118,6 +137,18 @@ class Trainer(BaseTrainer):
             logger.info(f"ensemble training with ensemble_size {self.ensemble_size}")
         logger.info(f"Using grad-max-norm value: {self.grad_max_norm}")
 
+        # Report frozen vs active parameter counts (once per epoch, rank 0 only)
+        if self.rank == 0 and epoch <= 1:
+            frozen_params = sum(p.numel() for p in self.model.parameters() if not p.requires_grad)
+            active_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
+            active_layers = [n for n, p in self.model.named_parameters() if p.requires_grad]
+            frozen_layers = [n for n, p in self.model.named_parameters() if not p.requires_grad]
+            print(f"[FREEZE] Epoch {epoch}: {len(active_layers)} TRAINABLE tensors ({active_params:,} values) | "
+                  f"{len(frozen_layers)} frozen tensors ({frozen_params:,} values)")
+            print(f"[FREEZE]   Trainable: {active_layers}")
+            if frozen_layers:
+                print(f"[FREEZE]   Frozen (first 5): {frozen_layers[:5]}")
+
         # lambda scheduler steps once per epoch before batches
         if self.use_scheduler and self.scheduler_type == "lambda":
             scheduler.step()
@@ -143,6 +174,12 @@ class Trainer(BaseTrainer):
         dl = cycle(trainloader)
         results_dict = defaultdict(list)
 
+        # Track which months/dates are sampled to catch dataloader bugs (e.g. thread_workers>1
+        # causing batch duplication). After the epoch, logs a month histogram and unique-batch
+        # count. If you see only a few unique batches or a single month, something is wrong.
+        _sample_months = defaultdict(int)
+        _sample_dates = set()
+
         for steps in range(batches_per_epoch):
             logs = {}
             loss = 0
@@ -151,6 +188,28 @@ class Trainer(BaseTrainer):
             while not stop_forecast:
                 batch = next(dl)
                 forecast_step = batch["forecast_step"].item()
+
+                # Log sample dates from rank 0 only (one GPU is sufficient for coverage check)
+                if self.rank == 0 and "datetime" in batch:
+                    try:
+                        dt_vals = batch["datetime"].reshape(-1).tolist()
+                        for sec in dt_vals:
+                            # datetime tensor stores seconds since Unix epoch
+                            dt = datetime.fromtimestamp(int(sec), tz=timezone.utc)
+                            _sample_months[dt.strftime("%b")] += 1
+                            _sample_dates.add(dt.strftime("%Y-%m-%d"))
+                    except Exception:
+                        pass
+
+                # Skip orphaned mid-sequence batches (step>1 but no prior y_pred).
+                # These arrive at the start of a new outer-loop iteration from a
+                # different DataLoader worker whose step=1 batch was already consumed
+                # by a previous iteration. Training on them compares a 1-step
+                # prediction against a multi-step-ahead target — wrong objective.
+                # Use continue (not break) so the while loop keeps consuming until
+                # it finds a proper step=1 batch; y_pred is then never None on exit.
+                if forecast_step != 1 and y_pred is None:
+                    continue
 
                 if forecast_step == 1:
                     # input: (batch, time, var, level, lat, lon) + (batch, time, var, lat, lon)
@@ -168,7 +227,6 @@ class Trainer(BaseTrainer):
                     if self.ensemble_size > 1:
                         x_forcing_batch = torch.repeat_interleave(x_forcing_batch, self.ensemble_size, 0)
                     x = torch.cat((x, x_forcing_batch), dim=1)
-
                 if self.flag_clamp:
                     x = torch.clamp(x, min=self.clamp_min, max=self.clamp_max)
 
@@ -185,14 +243,22 @@ class Trainer(BaseTrainer):
                     input_dict = self.opt_mass(input_dict)
                     y_pred = input_dict["y_pred"]
 
+                water_cons_loss = None
                 if self.flag_water_conserve:
+                    y_pred_pre_water = y_pred  # save pre-correction for MSE loss
                     input_dict = {"y_pred": y_pred, "x": x}
                     input_dict = self.opt_water(input_dict)
                     y_pred = input_dict["y_pred"]
+                    water_cons_loss = input_dict.get("water_conservation_loss", None)
 
                 if self.flag_energy_conserve:
                     input_dict = {"y_pred": y_pred, "x": x}
                     input_dict = self.opt_energy(input_dict)
+                    y_pred = input_dict["y_pred"]
+
+                if self.flag_energy_updown_conserve:
+                    input_dict = {"y_pred": y_pred, "x": x}
+                    input_dict = self.opt_energy_updown(input_dict)
                     y_pred = input_dict["y_pred"]
 
                 # backprop only on specified timesteps
@@ -208,7 +274,18 @@ class Trainer(BaseTrainer):
                         y = torch.clamp(y, min=self.clamp_min, max=self.clamp_max)
 
                     with torch.autocast(enabled=self.amp, device_type="cuda"):
-                        loss = criterion(y.to(y_pred.dtype), y_pred).mean()
+                        # Use pre-WaterFixer prediction for MSE so gradients point
+                        # directly at raw PRECT, avoiding the correction feedback loop.
+                        # Add conservation penalty separately to drive water balance.
+                        use_pre = (
+                            self.flag_water_conserve
+                            and self.water_conservation_loss_weight > 0
+                            and water_cons_loss is not None
+                        )
+                        y_for_loss = y_pred_pre_water if use_pre else y_pred
+                        loss = criterion(y.to(y_for_loss.dtype), y_for_loss).mean()
+                        if use_pre:
+                            loss = loss + self.water_conservation_loss_weight * water_cons_loss
                     accum_log(logs, {"loss": loss.item()})
                     scaler.scale(loss).backward(retain_graph=self.retain_graph)
 
@@ -296,6 +373,18 @@ class Trainer(BaseTrainer):
                 scheduler.step()
 
         batch_group_generator.close()
+
+        # Log sample coverage summary (rank 0 only). Catches dataloader duplication bugs:
+        # healthy run → many unique dates, all months represented.
+        # buggy run  → few unique dates, 1-2 months, e.g. "9 unique batches | months: Jul:9"
+        if self.rank == 0 and _sample_dates:
+            month_order = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+            month_str = "  ".join(f"{m}:{_sample_months[m]}" for m in month_order if _sample_months[m])
+            logger.info(
+                f"Epoch {epoch} sample coverage: {len(_sample_dates)} unique dates | "
+                f"months: {month_str}"
+            )
+
         torch.cuda.empty_cache()
         gc.collect()
 
@@ -345,6 +434,14 @@ class Trainer(BaseTrainer):
                     forecast_step = batch["forecast_step"].item()
                     stop_forecast = batch["stop_forecast"].item()
 
+                    # Skip orphaned mid-sequence batches (same fix as train_one_epoch).
+                    # Also reset stop_forecast: if the orphaned batch happened to be the
+                    # final step of its sequence (stop_forecast=True), we must not let
+                    # that flag exit the while loop before we've run any forward pass.
+                    if forecast_step != 1 and y_pred is None:
+                        stop_forecast = False
+                        continue
+
                     if forecast_step == 1:
                         if "x_surf" in batch:
                             x = concat_and_reshape(batch["x"], batch["x_surf"]).to(self.device)
@@ -382,6 +479,11 @@ class Trainer(BaseTrainer):
                     if self.flag_energy_conserve:
                         input_dict = {"y_pred": y_pred, "x": x}
                         input_dict = self.opt_energy(input_dict)
+                        y_pred = input_dict["y_pred"]
+
+                    if self.flag_energy_updown_conserve:
+                        input_dict = {"y_pred": y_pred, "x": x}
+                        input_dict = self.opt_energy_updown(input_dict)
                         y_pred = input_dict["y_pred"]
 
                     # compute loss and metrics only at the final rollout step

@@ -37,8 +37,8 @@ class ERA5Normalizer(nn.Module):
         data_conf = conf["data"]
         src_cfg = next(iter(data_conf["source"].values()))
 
-        self.level_coord: str = src_cfg["level_coord"]
-        self.levels = src_cfg["levels"]
+        self.level_coord: str = src_cfg.get("level_coord", "level")
+        self.levels = src_cfg.get("levels", [])
 
         self.mean_ds = xr.open_dataset(data_conf["mean_path"]).load()
         self.std_ds = xr.open_dataset(data_conf["std_path"]).load()
@@ -58,14 +58,25 @@ class ERA5Normalizer(nn.Module):
 
         if dim == "3d":
             # mean/std shape: (n_levels,) → broadcast to (1, n_levels, 1, 1, 1)
-            m = self.mean_ds[varname].sel({self.level_coord: self.levels}).values
-            s = self.std_ds[varname].sel({self.level_coord: self.levels}).values
+            if self.levels:
+                m = self.mean_ds[varname].sel({self.level_coord: self.levels}).values
+                s = self.std_ds[varname].sel({self.level_coord: self.levels}).values
+            else:
+                m = self.mean_ds[varname].values
+                s = self.std_ds[varname].values
             mean = torch.tensor(m, dtype=dtype, device=device).view(1, -1, 1, 1, 1)
             std = torch.tensor(s, dtype=dtype, device=device).view(1, -1, 1, 1, 1)
         else:
-            # 2D variable — scalar mean/std
-            mean = torch.tensor(float(self.mean_ds[varname].values), dtype=dtype, device=device)
-            std = torch.tensor(float(self.std_ds[varname].values), dtype=dtype, device=device)
+            # 2D variable — scalar or spatial (H, W) mean/std
+            m = self.mean_ds[varname].values
+            s = self.std_ds[varname].values
+            if m.ndim == 0:
+                mean = torch.tensor(float(m), dtype=dtype, device=device)
+                std = torch.tensor(float(s), dtype=dtype, device=device)
+            else:
+                # spatial mean field (H, W) → broadcast to (1, 1, 1, H, W)
+                mean = torch.tensor(m, dtype=dtype, device=device).view(1, 1, 1, *m.shape)
+                std = torch.tensor(s, dtype=dtype, device=device).view(1, 1, 1, *s.shape)
 
         return mean, std
 

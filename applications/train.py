@@ -78,6 +78,42 @@ def load_model_states_and_optimizer(conf, model, device):
     load_scaler_conf = False if "load_scaler" not in conf["trainer"] else conf["trainer"]["load_scaler"]
     load_scheduler_conf = False if "load_scheduler" not in conf["trainer"] else conf["trainer"]["load_scheduler"]
 
+    # Freeze specified layers before optimizer creation (for fine-tuning).
+    # Add frozen_layers to conf["trainer"] as a list of name substrings to freeze,
+    # e.g. frozen_layers: ['cross_embed', 'down_blocks', 'up_block1', 'up_block2', 'up_block3']
+    frozen_layer_patterns = conf["trainer"].get("frozen_layers", [])
+    if frozen_layer_patterns:
+        n_frozen_params = 0
+        for name, param in model.named_parameters():
+            if any(pat in name for pat in frozen_layer_patterns):
+                param.requires_grad = False
+                n_frozen_params += 1
+        n_trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        n_total = sum(p.numel() for p in model.parameters())
+        logging.info(
+            f"Froze {n_frozen_params} parameter tensors matching {frozen_layer_patterns}. "
+            f"Trainable: {n_trainable:,} / {n_total:,} ({100 * n_trainable / n_total:.1f}%)"
+        )
+
+    # Fine-tune mode: freeze ALL parameters, then unfreeze only trainable_layers.
+    # e.g. trainable_layers: ['up_block4.0', 'up_block4.2']
+    # Uses substring matching so it works with DDP 'module.' prefix too.
+    trainable_layer_patterns = conf["trainer"].get("trainable_layers", [])
+    if trainable_layer_patterns:
+        for param in model.parameters():
+            param.requires_grad = False
+        n_unfrozen = 0
+        for name, param in model.named_parameters():
+            if any(pat in name for pat in trainable_layer_patterns):
+                param.requires_grad = True
+                n_unfrozen += 1
+        n_trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        n_total = sum(p.numel() for p in model.parameters())
+        logging.info(
+            f"Fine-tune mode: froze all, unfroze {n_unfrozen} tensors matching {trainable_layer_patterns}. "
+            f"Trainable: {n_trainable:,} / {n_total:,} ({100 * n_trainable / n_total:.1f}%)"
+        )
+
     #  Load an optimizer, gradient scaler, and learning rate scheduler, the optimizer must come after wrapping model using FSDP
     if not load_weights:  # Loaded after loading model weights when reloading
         optimizer = torch.optim.AdamW(
@@ -275,7 +311,7 @@ def main(rank, world_size, conf, backend=None, trial=False):
 
     # Initialize a trainer object
     trainer_cls = load_trainer(conf)
-    trainer = trainer_cls(model, rank)
+    trainer = trainer_cls(model, rank, conf)
 
     # Fit the model
     result = trainer.fit(
@@ -402,8 +438,9 @@ def main_cli():
     # ======================================================== #
     # handling config args
 
-    conf = credit_main_parser(conf, parse_training=True, parse_predict=False, print_summary=False)
-    if "datasets" not in conf["data"].keys() and (
+    if "source" not in conf["data"]:
+        conf = credit_main_parser(conf, parse_training=True, parse_predict=False, print_summary=False)
+    if "datasets" not in conf["data"].keys() and "source" not in conf["data"] and (
         conf["data"]["dataset_type"] not in ("Ocean_MultiStep_Batcher", "Ocean_Tensor_Batcher")
     ):
         training_data_check(conf, print_summary=False)

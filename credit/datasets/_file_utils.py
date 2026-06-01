@@ -77,6 +77,7 @@ def _infer_period_freq(fmt: str) -> str:
 def _map_files(
     file_list: list[str],
     time_fmt: str,
+    match_index: int = 0,
 ) -> list[tuple[pd.Timestamp, pd.Timestamp, str]]:
     """Build a sorted list of ``(start, end, path)`` intervals.
 
@@ -105,13 +106,14 @@ def _map_files(
     intervals: list[tuple[pd.Timestamp, pd.Timestamp, str]] = []
     for f in file_list:
         basename = os.path.basename(f)
-        m = pattern.search(basename)
-        if m is None:
+        all_matches = list(pattern.finditer(basename))
+        if not all_matches:
             raise ValueError(
                 f"filename_time_format '{time_fmt}' did not match "
                 f"filename '{basename}'. Verify that the format matches "
                 "the date portion of your filenames."
             )
+        m = all_matches[match_index]
         parsed = dt_cls.strptime(m.group(0), time_fmt)
         period = pd.Period(parsed, freq)
         intervals.append((period.start_time, period.end_time, f))

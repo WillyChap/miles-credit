@@ -4,12 +4,27 @@ from datetime import datetime
 from credit.losses.weighted_loss import latitude_weights
 
 
+def _extract_vars(conf):
+    """Extract atmos/surface/diagnostic variable lists from v1 or v2 config."""
+    if "source" in conf["data"]:
+        src = next(iter(conf["data"]["source"].values()))
+        vars_conf = src["variables"]
+        return (
+            vars_conf.get("prognostic", {}).get("vars_3D", []),
+            vars_conf.get("prognostic", {}).get("vars_2D", []),
+            vars_conf.get("diagnostic", {}).get("vars_2D", []),
+        )
+    return (
+        conf["data"]["variables"],
+        conf["data"]["surface_variables"],
+        conf["data"]["diagnostic_variables"],
+    )
+
+
 class LatWeightedMetrics:
     def __init__(self, conf, training_mode=True):
         self.conf = conf
-        atmos_vars = conf["data"]["variables"]
-        surface_vars = conf["data"]["surface_variables"]
-        diag_vars = conf["data"]["diagnostic_variables"]
+        atmos_vars, surface_vars, diag_vars = _extract_vars(conf)
 
         levels = conf["model"]["levels"] if "levels" in conf["model"] else conf["model"]["frames"]
 
@@ -95,9 +110,7 @@ class LatWeightedMetricsClimatology:
         self.conf = conf
         self.climatology = climatology  # xarray Dataset with climatology data
 
-        atmos_vars = conf["data"]["variables"]
-        surface_vars = conf["data"]["surface_variables"]
-        diag_vars = conf["data"]["diagnostic_variables"]
+        atmos_vars, surface_vars, diag_vars = _extract_vars(conf)
 
         levels = conf["model"]["levels"] if "levels" in conf["model"] else conf["model"]["frames"]
 
@@ -226,9 +239,7 @@ class LatWeightedMetricsEnsemble:
 
     def __init__(self, conf, training_mode=True):
         self.conf = conf
-        atmos_vars = conf["data"]["variables"]
-        surface_vars = conf["data"]["surface_variables"]
-        diag_vars = conf["data"]["diagnostic_variables"]
+        atmos_vars, surface_vars, diag_vars = _extract_vars(conf)
 
         levels = conf["model"]["levels"] if "levels" in conf["model"] else conf["model"]["frames"]
 

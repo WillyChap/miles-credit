@@ -63,6 +63,11 @@ class EMATracker:
     Typical max_decay: 0.9999 for long runs, 0.999 for short runs.
     """
 
+    # Spectral-norm power-iteration buffers must NOT be EMA'd — they are unit
+    # vectors maintained by power iteration and averaging them off the unit sphere
+    # corrupts the computed spectral norm for every affected layer.
+    _SPECTRAL_BUFS = ("weight_u", "weight_v")
+
     def __init__(self, model: torch.nn.Module, decay: float = 0.9999):
         self.decay = decay
         self.step = 0
@@ -70,7 +75,8 @@ class EMATracker:
         self.shadow: OrderedDict = OrderedDict()
         state = model.module.state_dict() if hasattr(model, "module") else model.state_dict()
         for k, v in state.items():
-            self.shadow[k] = v.detach().float().cpu().clone()
+            if not k.endswith(self._SPECTRAL_BUFS):
+                self.shadow[k] = v.detach().float().cpu().clone()
 
     @torch.no_grad()
     def update(self, model: torch.nn.Module):
@@ -78,11 +84,16 @@ class EMATracker:
         effective_decay = min(self.decay, (1 + self.step) / (10 + self.step))
         state = model.module.state_dict() if hasattr(model, "module") else model.state_dict()
         for k, v in state.items():
-            self.shadow[k].mul_(effective_decay).add_(v.detach().float().cpu(), alpha=1.0 - effective_decay)
+            if k in self.shadow:
+                self.shadow[k].mul_(effective_decay).add_(v.detach().float().cpu(), alpha=1.0 - effective_decay)
 
     @torch.no_grad()
     def swap(self, model: torch.nn.Module):
-        """Swap model weights with EMA shadow weights (and vice-versa)."""
+        """Swap model weights with EMA shadow weights (and vice-versa).
+
+        Only shadowed keys are swapped; spectral-norm buffers (weight_u/weight_v)
+        stay untouched so power-iteration state remains valid.
+        """
         state = model.module.state_dict() if hasattr(model, "module") else model.state_dict()
         device = next(iter(state.values())).device
         dtype = next(iter(state.values())).dtype

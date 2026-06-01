@@ -378,8 +378,9 @@ class ERA5_MultiStep_Batcher(torch.utils.data.Dataset):
         batch = {}
 
         # If the forecast_step_count exceeds forecast_len, reset the item
-        # If one exceeds, they all exceed and all neet reset
-        if self.forecast_step_counts[0] == self.forecast_len + 1:
+        # If one exceeds, they all exceed and all need reset.
+        # Also initialize on first call (workers start with forecast_step_counts=None).
+        if self.forecast_step_counts is None or self.forecast_step_counts[0] == self.forecast_len + 1:
             # Get a new starting index for this item (randomly selected)
             self.initialize_batch()
 

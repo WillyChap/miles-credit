@@ -32,7 +32,8 @@ def latitude_weights(conf):
     lon_dim = ds["longitude"].shape[0]
 
     # Calculate weights using PyTorch operations
-    weights = torch.cos(torch.deg2rad(lat))
+    power = conf["loss"].get("latitude_weight_power", 1.0)
+    weights = torch.cos(torch.deg2rad(lat)).clamp(min=1e-4) ** power
     weights = weights / weights.mean()
 
     # Create a 2D tensor of weights
@@ -141,9 +142,17 @@ class VariableTotalLoss2D(torch.nn.Module):
         self.conf = conf
         self.training_loss = conf["loss"]["training_loss"]
 
-        atmos_vars = conf["data"]["variables"]
-        surface_vars = conf["data"]["surface_variables"]
-        diag_vars = conf["data"]["diagnostic_variables"]
+        if "source" in conf["data"]:
+            # v2 schema: variables nested under data.source.<name>.variables
+            src = next(iter(conf["data"]["source"].values()))
+            vars_conf = src["variables"]
+            atmos_vars = vars_conf.get("prognostic", {}).get("vars_3D", [])
+            surface_vars = vars_conf.get("prognostic", {}).get("vars_2D", [])
+            diag_vars = vars_conf.get("diagnostic", {}).get("vars_2D", [])
+        else:
+            atmos_vars = conf["data"]["variables"]
+            surface_vars = conf["data"]["surface_variables"]
+            diag_vars = conf["data"]["diagnostic_variables"]
 
         levels = conf["model"]["levels"] if "levels" in conf["model"] else conf["model"]["frames"]
 
@@ -162,12 +171,21 @@ class VariableTotalLoss2D(torch.nn.Module):
         self.var_weights = None
         if conf["loss"]["use_variable_weights"]:
             logger.info("Using variable weights in loss calculations")
+            wt_cfg = conf["loss"]["variable_weights"]
 
-            var_weights = [
-                value if isinstance(value, list) else [value] for value in conf["loss"]["variable_weights"].values()
-            ]
+            if "source" in conf["data"]:
+                # v2: wt_cfg is name→scalar dict; look up each var by base name
+                def _base(v):
+                    # strip level suffix _0, _1, ... from 3D var names
+                    parts = v.rsplit("_", 1)
+                    return parts[0] if len(parts) == 2 and parts[1].isdigit() else v
 
-            var_weights = np.array([item for sublist in var_weights for item in sublist])
+                var_weights = np.array([float(wt_cfg.get(_base(v), 1.0)) for v in self.vars])
+            else:
+                var_weights = [
+                    value if isinstance(value, list) else [value] for value in wt_cfg.values()
+                ]
+                var_weights = np.array([item for sublist in var_weights for item in sublist])
 
             self.var_weights = torch.from_numpy(var_weights)
         # ------------------------------------------------------------- #
@@ -178,6 +196,12 @@ class VariableTotalLoss2D(torch.nn.Module):
             self.spectral_loss_surface = SpectralLoss2D(
                 wavenum_init=conf["loss"]["spectral_wavenum_init"], reduction="none"
             )
+            spectral_vars = conf["loss"].get("spectral_vars", None)
+            if spectral_vars is not None:
+                self.spectral_var_inds = [i for i, v in enumerate(self.vars) if v in spectral_vars]
+                logger.info("Spectral loss applied to vars: %s (inds: %s)", spectral_vars, self.spectral_var_inds)
+            else:
+                self.spectral_var_inds = None  # apply to all channels
 
         self.use_power_loss = conf["loss"]["use_power_loss"] if "use_power_loss" in conf["loss"] else False
         if self.use_power_loss:
@@ -233,6 +257,11 @@ class VariableTotalLoss2D(torch.nn.Module):
             loss += self.power_lambda_reg * self.power_loss(target, pred, weights=self.lat_weights)
 
         if not self.validation and self.use_spectral_loss:
-            loss += self.spectral_lambda_reg * self.spectral_loss_surface(target, pred, weights=self.lat_weights).mean()
+            if self.spectral_var_inds is not None:
+                s_pred = pred[:, self.spectral_var_inds, ...]
+                s_target = target[:, self.spectral_var_inds, ...]
+            else:
+                s_pred, s_target = pred, target
+            loss += self.spectral_lambda_reg * self.spectral_loss_surface(s_target, s_pred, weights=self.lat_weights).mean()
 
         return loss

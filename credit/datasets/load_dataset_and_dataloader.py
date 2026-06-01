@@ -13,6 +13,8 @@ from credit.datasets.om4_multistep_batcher import (
     Ocean_Tensor_Batcher,
 )
 from credit.datasets.downscaling_dataset import DownscalingDataset
+from credit.datasets.multi_source import MultiSourceDataset
+from credit.samplers import DistributedMultiStepBatchSampler
 from credit.datasets import setup_data_loading
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
@@ -189,6 +191,14 @@ def load_dataset(conf, rank=0, world_size=1, is_train=True):
             dataset.mode = "infer"
 
         logging.info("Loaded downscaling dataset")
+        return dataset
+
+    if "source" in conf["data"]:
+        from credit.datasets.multi_source import MultiSourceDataset
+
+        data_key = "data" if is_train else "data_valid"
+        dataset = MultiSourceDataset(conf[data_key], return_target=True)
+        logging.info(f"Loaded MultiSourceDataset from conf['{data_key}']['source'] keys: {list(conf[data_key]['source'].keys())}")
         return dataset
 
     seed = conf["seed"]
@@ -441,6 +451,9 @@ def load_dataloader(conf, dataset, rank=0, world_size=1, is_train=True):
     num_workers = conf["trainer"]["thread_workers"] if is_train else conf["trainer"]["valid_thread_workers"]
     if type(dataset) is DownscalingDataset:
         forecast_len = conf["data"]["forecast_len"]
+    elif "source" in conf["data"]:
+        # v2 schema: validation forecast_len lives in data_valid block
+        forecast_len = conf["data"]["forecast_len"] if is_train else conf["data_valid"]["forecast_len"]
     else:
         forecast_len = conf["data"]["forecast_len"] if is_train else conf["data"]["valid_forecast_len"]
     prefetch_factor = conf["trainer"].get("prefetch_factor")
@@ -548,6 +561,57 @@ def load_dataloader(conf, dataset, rank=0, world_size=1, is_train=True):
         dataloader = BatchForecastLenDataLoader(dataset)
     elif type(dataset) is MultiprocessingBatcherPrefetch:
         dataloader = BatchForecastLenDataLoader(dataset)
+    elif type(dataset) is MultiSourceDataset:
+        if forecast_len > 1:
+            # Multi-step training/validation: consecutive next(dl) calls in the trainer's
+            # inner rollout loop must yield genuinely consecutive time steps (T0, T0+dt, …).
+            # DistributedMultiStepBatchSampler provides the consecutive-timestamp logic but
+            # yields step_index i>0 for continuation steps.  ERA5Dataset skips prognostic
+            # fields at i>0, which causes ConcatPreblock to produce a partial batch["x"]
+            # (only forcing channels) — making n_prog negative and breaking the trainer.
+            # The wrapper below forces step_index=0 at every step so ERA5Dataset always
+            # loads the full state (prognostic+static+forcing).  The trainer then overwrites
+            # the disk-loaded prognostic channels with y_pred as usual.
+            class _FullStateMultiStepSampler:
+                def __init__(self, inner):
+                    self._inner = inner
+
+                def __iter__(self):
+                    for batch_list in self._inner:
+                        yield [(t, 0) for t, _ in batch_list]
+
+                def __len__(self):
+                    return len(self._inner)
+
+            _inner_sampler = DistributedMultiStepBatchSampler(
+                dataset,
+                batch_size=batch_size,
+                num_forecast_steps=forecast_len,
+                num_replicas=world_size,
+                rank=rank,
+                shuffle=shuffle,
+                seed=seed,
+            )
+            sampler = _FullStateMultiStepSampler(_inner_sampler)
+            dataloader = DataLoader(
+                dataset,
+                batch_sampler=sampler,
+                num_workers=num_workers,
+                prefetch_factor=prefetch_factor if num_workers > 0 else None,
+                pin_memory=True,
+                persistent_workers=num_workers > 0,
+            )
+        else:
+            sampler = DistributedSampler(dataset, num_replicas=world_size, rank=rank, shuffle=shuffle)
+            dataloader = DataLoader(
+                dataset,
+                batch_size=batch_size,
+                sampler=sampler,
+                num_workers=num_workers,
+                prefetch_factor=prefetch_factor if num_workers > 0 else None,
+                pin_memory=True,
+                persistent_workers=num_workers > 0,
+            )
     else:
         raise ValueError(f"Unsupported dataset type: {type(dataset)}")
 

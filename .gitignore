@@ -170,3 +170,11 @@ cython_debug/
 
 # local dev / HPC-specific test scripts
 test_energy_fixer_updown.py
+
+# editor backup files
+*~
+
+# GraphCast assets too large for git; download from DeepMind's public
+# Google Cloud bucket -- see README.md SUMO porting guide.
+graphcast/params/
+graphcast/stats/

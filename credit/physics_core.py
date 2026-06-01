@@ -274,9 +274,12 @@ class physics_pressure_level:
         Returns:
             Weighted sum (PyTorch tensor)
         """
-        q_w = q * self.area.to(q.device)
+        # Cast to float64 for accumulation to avoid ~0.6% rounding error from
+        # summing ~55k float32 values, then cast result back to input dtype.
+        in_dtype = q.dtype
+        q_w = q.double() * self.area.double().to(q.device)
         q_sum = torch.sum(q_w, dim=axis, keepdim=keepdims)
-        return q_sum
+        return q_sum.to(in_dtype)
 
     def total_dry_air_mass(self, q: torch.Tensor) -> torch.Tensor:
         """
@@ -493,9 +496,12 @@ class physics_hybrid_sigma_level:
         Returns:
             Weighted sum (PyTorch tensor)
         """
-        q_w = q * self.area.to(q.device)
+        # Cast to float64 for accumulation to avoid ~0.6% rounding error from
+        # summing ~55k float32 values, then cast result back to input dtype.
+        in_dtype = q.dtype
+        q_w = q.double() * self.area.double().to(q.device)
         q_sum = torch.sum(q_w, dim=axis, keepdim=keepdims)
-        return q_sum
+        return q_sum.to(in_dtype)
 
     def total_dry_air_mass(self, q: torch.Tensor, surface_pressure: torch.Tensor) -> torch.Tensor:
         """
