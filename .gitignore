@@ -178,3 +178,7 @@ test_energy_fixer_updown.py
 # Google Cloud bucket -- see README.md SUMO porting guide.
 graphcast/params/
 graphcast/stats/
+# Preserved local clone of DeepMind's GraphCast repo (was graphcast/.git);
+# kept around so `cd graphcast && git --git-dir=.git_DEEPMIND_UPSTREAM ...`
+# still works for upstream syncs, but not tracked in this repo.
+graphcast/.git_DEEPMIND_UPSTREAM/

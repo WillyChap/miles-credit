@@ -1,40 +1,221 @@
-# SUMO / GraphCast / CAMulator + CESM2.1.5 — porting guide
+# SUMO Supermodel — CAM6 (CESM2.1.5) steered by GraphCast / CAMulator
 
-This is a customized fork of NSF NCAR MILES CREDIT that adds the **SUMO supermodel coupling layer**: CAM6 (CESM2.1.5) nudged at 6-hour intervals toward a consensus of neural-surrogate atmospheric models (GraphCast and/or CAMulator) via a file-based handshake on a shared filesystem. The upstream CREDIT documentation begins below; this section is what you need to **port the full coupled stack to a new HPC**.
+> Run CESM2.1.5 with CAM6 nudged at 6-hour intervals toward a neural-surrogate atmospheric prediction (GraphCast and/or CAMulator). Designed to be portable to any HPC that can build CESM and host a single NVIDIA A100 GPU. **Operational details: see [`climate/To_Run_SUMO.md`](./climate/To_Run_SUMO.md).**
+
+---
+
+## Overview
+
+**SUMO** ("supermodel") couples CESM2.1.5 / CAM6 with one or two neural-network atmospheric models that run as **external GPU services**. The cycle at every 6 h CAM6 coupling boundary:
+
+1. CAM6 writes its instantaneous atmospheric state to an `h1` history file, then pauses at a Fortran barrier (`sumo_barrier_after_h1` in `cam_comp.F90`).
+2. A neural surrogate — **GraphCast** (JAX, 0.25° ERA5 grid), **CAMulator** (PyTorch, CAM6 native grid), or both blended — reads the h1, predicts the state at T+6 h, and writes a nudge-target file in the CESM run directory.
+3. CAM6 reads that nudge file via the standard CESM nudging toolbox, relaxes its U/V (and optionally T, Q, PS) toward the target, and integrates forward.
+
+The coupling is **file-handshake**, not in-process: CESM and the neural surrogates are independent batch jobs that synchronize through lifecycle flag files on a shared scratch filesystem. **The only modification to CAM6 is the barrier subroutine, gated on a sentinel file** (`sumo_active.flag`) in the run directory. The same `cesm.exe` runs in SUMO and non-SUMO mode unchanged — without the sentinel the barrier is a single integer compare per call.
 
 ## Architecture
 
-CESM (compute partition) and the neural-surrogate server + coordinator (GPU partition) run as **independent batch jobs** that synchronize through lifecycle flag files in the CESM run directory. The Fortran barrier lives in `cam_comp.F90:sumo_barrier_after_h1` and activates only when `sumo_active.flag` is present; absent the flag, CESM runs free with zero overhead.
+```
+   Compute partition                                    GPU partition
+   (CESM compute nodes)                                 (single A100 node)
+   ┌──────────────────────────┐                       ┌──────────────────────────┐
+   │  CESM2.1.5 / CAM6        │                       │  Neural-surrogate server │
+   │   ├─ writes h1 every 6h  │     cesm_h1_ready ───►│   ├─ reads h1            │
+   │   ├─ sumo_barrier_after  │     ◄─── nudge.nc     │   ├─ runs inference      │
+   │   │   _h1 (cam_comp.F90) │                       │   ├─ reverse-translates  │
+   │   │   gated on           │     coord_done.flag◄──┤   └─ writes nudge.nc     │
+   │   │   sumo_active.flag   │                       │                          │
+   │   └─ CESM nudging        │                       │  Coordinator             │
+   │      toolbox reads       │                       │   ├─ flag protocol       │
+   │      sumo_cam6_nudge.*nc │                       │   └─ orchestrates server │
+   └──────────────────────────┘                       └──────────────────────────┘
+              ▲                                                  ▲
+              └─────── shared /scratch filesystem ───────────────┘
+                       (h1 files, nudge files, lifecycle flags)
+```
 
-## What to port
+## Pick your mode
 
-| Component | How to get it |
+| Mode | Surrogate | Where it runs | Status |
+|---|---|---|---|
+| `graphcast` | GraphCast (DeepMind, JAX) at 0.25° ERA5 grid | 1× A100 (40 GB OK warm, 80 GB cold) | Validated (Jun 2026) |
+| `camulator` | CAMulator (CREDIT, PyTorch) on CAM6 native grid | 1× A100 (40 GB) | Validated (May 2026) |
+| `both` | CAMulator + GraphCast blended on CAM6 grid | 2× A100 | Servers + reverse translator done; blend coordinator TODO |
+
+---
+
+## Prerequisites
+
+You should already know how to:
+- Build and submit a CESM case (`create_newcase`, `case.setup`, `case.build`, `case.submit`)
+- Submit a batch job on your HPC
+- Manage conda environments
+
+Your HPC must have:
+- A compute partition that can build CESM2.1.5 at `f09_g17` resolution (~290 PEs typical)
+- At least one NVIDIA A100 GPU node (80 GB recommended for the first cold JAX compile of GraphCast; 40 GB is fine for steady-state inference and for CAMulator)
+- A **shared scratch filesystem** visible from both partitions with POSIX semantics (the file-flag handshake assumes new files become visible within seconds across both jobs)
+- The usual CESM build dependencies (Intel/GCC, MPI, NetCDF, PnetCDF, PIO)
+
+You do **not** need FTorch. `USE_FTORCH` defaults to `FALSE` in this CESM fork; the SUMO neural surrogates run out-of-process.
+
+---
+
+## Install on a new HPC
+
+### 1. Clone the CESM2.1.5 fork
+
+This fork is CESM2.1.5 + the SUMO barrier in CAM6 + the SST=0 fix for DATA ATM + a portable Makefile (FTorch made optional).
+
+```bash
+git clone -b release-cesm2.1.5-camulator git@github.com:WillyChap/CESM.git
+cd CESM
+./manage_externals/checkout_externals
+```
+
+`manage_externals` pulls the matching CAM and CIME forks automatically (`WillyChap/CAM:coupled_camulator`, `WillyChap/cime:coupled_camulator`).
+
+### 2. Clone this CREDIT fork
+
+```bash
+git clone -b camulator-sumo git@github.com:WillyChap/miles-credit.git
+cd miles-credit
+```
+
+### 3. Build the conda environment
+
+A single env (`supermodel`) serves the whole stack — GraphCast (JAX), CAMulator (PyTorch), and the CREDIT package itself. The `environment.yml` at the repo root is **curated from a verified working build on NCAR Casper** (Python 3.10, PyTorch 2.6 + CUDA 12.4, JAX 0.6 + CUDA 12); major versions are pinned, the rest is left to the solver so it ports cleanly to other HPCs.
+
+```bash
+conda env create -f environment.yml -n supermodel
+conda activate supermodel
+pip install -e .                 # install CREDIT (this repo) editable
+pip install -e ./graphcast       # install vendored DeepMind GraphCast
+```
+
+The env builds for **CUDA 12.x on linux-x86_64**. On a host with a different CUDA major (e.g. 11.x), edit the pip section of `environment.yml`: bump the `--extra-index-url` to the matching PyTorch wheel index and swap the `jax-cuda12-*` plugins for the `jax-cuda11-*` equivalents.
+
+For an exact lockfile-style reproduction of the NCAR Casper build (less portable, more reproducible), see the comment at the bottom of `environment.yml`. The legacy `credit-coupling` env (PyTorch only, no JAX) also still works for the CAMulator-only path — it's a strict subset of what `supermodel` provides.
+
+### 4. Stage the model weights and initial conditions
+
+**GraphCast** weights are not in git (140 MB params exceeds GitHub limits). Download from DeepMind's public bucket:
+
+```bash
+mkdir -p graphcast/params graphcast/stats
+# Public bucket: https://console.cloud.google.com/storage/browser/dm_graphcast
+# Required files:
+#   params/  : graphcast_params_GraphCast - ERA5 1979-2017 - resolution 0.25 -
+#              pressure levels 37 - mesh 2to6 - precipitation input and output.npz
+#   stats/   : diffs_stddev_by_level.nc, mean_by_level.nc, stddev_by_level.nc
+```
+
+**CAMulator** weights and the matching normalization/static/IC files live on NCAR's glade. If you are not on glade, request copies from the maintainers and place them at any local paths; update `climate/camulator_config.yml` accordingly. Originals:
+
+| Asset | Source path on glade |
 |---|---|
-| CESM2.1.5 fork (CAM6 + DATM-camulator + SST=0 fix) | `git clone -b release-cesm2.1.5-camulator git@github.com:WillyChap/CESM.git && cd CESM && ./manage_externals/checkout_externals` |
-| This repo (SUMO orchestration + CAMulator + GraphCast Python) | `git clone -b camulator-sumo git@github.com:WillyChap/miles-credit.git` then `pip install -e .` inside the active conda env |
-| `credit-coupling` conda env | PyTorch 2.4.1+cu121 base + this repo; used by the CAMulator server and all `climate/` scripts |
-| `supermodel` conda env | JAX + PyTorch; used only by the GraphCast coordinator/server |
-| GraphCast source code | Vendored at `./graphcast/` in this repo (DeepMind release, Apache 2.0) |
-| GraphCast weights + stats | **NOT in git** (140 MB params file exceeds GitHub limits). Download `params/*.npz` and `stats/*.nc` from DeepMind's public bucket: https://console.cloud.google.com/storage/browser/dm_graphcast — drop into `./graphcast/params/` and `./graphcast/stats/` |
-| CAMulator checkpoint (active model: `extended_v2`) | `/glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended_v2/checkpoint.pt00044.pt` (3.3 GB) |
-| CAMulator config referenced by the checkpoint | `/glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended_v2/camulator_config_extended_v2.yml` — all sub-paths below are listed inside it |
-| CAMulator normalization stats (mean / std) | `/glade/derecho/scratch/wchapman/b_credit_runs/mean_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc` and the matching `std_6h_…` file in the same directory |
-| CAMulator static fields (statics / physics) | `/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc` |
-| CAMulator initial-condition tensors | `/glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended_v2/init_times/init_camulator_condition_tensor_YYYY-MM-DDTHHz.pth` (and the `sumo_init_…` variant used by SUMO restart) |
-| `env_mach_specific.xml` | per-machine MPI/compiler config; edit in the CESM case after `create_newcase` |
+| Checkpoint (`extended_v2`, 3.3 GB) | `/glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended_v2/checkpoint.pt00044.pt` |
+| Training config (sub-paths inside) | `/glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended_v2/camulator_config_extended_v2.yml` |
+| Mean / std stats | `/glade/derecho/scratch/wchapman/b_credit_runs/{mean,std}_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc` |
+| Static fields (orography, land mask) | `/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc` |
+| Initial-condition tensors | `/glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended_v2/init_times/init_camulator_condition_tensor_YYYY-MM-DDTHHz.pth` (plus a `sumo_init_…` variant matched to a CAM6 restart, generated by `climate/make_sumo_ic_from_cam6_restart.py`) |
 
-## Quick-start
+### 5. Per-machine config
 
-1. Build a CESM case the usual way against the fork above. `USE_FTORCH` defaults to `FALSE` — **no FTorch install needed for SUMO**.
-2. Activate `credit-coupling` (or `supermodel` for GraphCast) and `pip install -e .`.
-3. See **[`climate/To_Run_SUMO.md`](./climate/To_Run_SUMO.md)** for the full three-mode launch protocol (camulator-only, graphcast-only, both-consensus) and the file-handshake details.
-4. Drop `sumo_active.flag` into the CESM run directory before `case.submit` to arm the CAM6 barrier.
+- On Cray/MPICH systems, add to `env_mach_specific.xml`: `MPICH_GPU_SUPPORT_ENABLED=0`, `FI_CXI_DISABLE_HOST_REGISTER=1`, `MPICH_SMP_SINGLE_COPY_MODE=NONE`. (The example case-setup script `climate/setup_SUMO_B_case.sh` does this automatically for Derecho — adapt for your machine.)
+- For GraphCast, set a persistent JAX XLA compilation cache directory (`JAX_COMPILATION_CACHE_DIR` env var, defaulted by `regrid/graphcast_server.py`). Cold compile ~18 min on first call; warm cache ~10 s per inference after.
+- Edit the absolute paths near the top of `climate/setup_SUMO_B_case.sh` (`CESM_ROOT`, `CASE_DIR`, `REFDIR`, `PROJECT`, `MACH`, `COMPILER`) to match your install.
 
-## Per-machine notes
+---
 
-- On Cray/MPICH systems set in `env_mach_specific.xml`: `MPICH_GPU_SUPPORT_ENABLED=0`, `FI_CXI_DISABLE_HOST_REGISTER=1`, `MPICH_SMP_SINGLE_COPY_MODE=NONE`.
-- For GraphCast, configure a persistent JAX XLA compilation cache directory (warm cache ~60 s vs cold ~18 min on first run).
-- CESM runs on the compute partition; the coordinator + neural-surrogate server run on a GPU node sharing the **same scratch filesystem** as CESM's run directory (lifecycle flags assume POSIX visibility within seconds across both jobs).
+## Set up the CESM case
+
+The case is shared between modes — same CAM6 build, same `user_nl_cam` nudging setup, same `fincl2` history variables. Mode selection happens on the GPU side.
+
+```bash
+cd miles-credit/climate
+bash setup_SUMO_B_case.sh         # create + setup + build (one-shot, ~25-50 min)
+```
+
+This script does, in order: `create_newcase` (B compset, `f09_g17`, hybrid run from a CESM2-LE refdate), all the SUMO-specific `xmlchange` and `user_nl_*` writes, restart symlinking from your `REFDIR`, the MPICH env-var patches, and `case.build`. It also creates `sumo_active.flag` in the run directory to arm the CAM6 barrier.
+
+Read the script — every section is annotated with the physics rationale (FV CFL, Force_Opt, Nudge_Vwin, fincl2 fields required by GraphCast vs. CAMulator, etc.).
+
+---
+
+## Run a SUMO experiment
+
+Pick the mode you want. **Both modes require the CESM case from the previous step, both use the same `sumo_cam6_nudge.*.nc` file format, both share `climate/reset_run_dir.sh` between attempts.** What differs is which GPU-side server you launch.
+
+### Mode A — GraphCast
+
+```bash
+# (1) Reset the run directory (one-time per attempt)
+bash climate/reset_run_dir.sh
+
+# (2) Submit the GPU-side stack (one A100; starts server + coordinator)
+qsub -v MODE=graphcast,RUNDIR=/path/to/case/run \
+     climate/submit_supermodel.pbs
+
+# (3) Submit CESM (separate job, any time after step 2 — coordinator polls)
+cd /path/to/case && ./case.submit
+```
+
+The GPU job starts `regrid/graphcast_server.py` (long-lived JAX inference server) and `climate/gc_coordinator.py` (orchestrates the per-step file handshake). The very first coupling boundary is free-running because GraphCast needs a 12 h input bundle (T-6h and T) which CAM6 does not yet have at step 0.
+
+### Mode B — CAMulator
+
+```bash
+# (1) Reset
+bash climate/reset_run_dir.sh
+
+# (2) Start the CAMulator server (Casper / GPU node)
+conda activate supermodel  # or: credit-coupling
+python climate/camulator_sumo_server.py \
+    --config     climate/camulator_config.yml \
+    --model_name checkpoint.pt00044.pt \
+    --rundir     /path/to/case/run \
+    --init_cond  /path/to/sumo_init_YYYY-MM-DDTHHz.pth \
+    --sumo --sumo_vars U V --sumo_tau 6.0 \
+    --save_atm_nc camulator_out --daily_mean
+
+# (3) Start the coordinator (any CPU / login node)
+python climate/sumo_coordinator.py \
+    --rundir   /path/to/case/run \
+    --cam6dir  /path/to/case/run \
+    --cam6_case <CASENAME> \
+    --vars U V --alpha_cam 0.5 \
+    --start_ymd YYYYMMDD
+
+# (4) Submit CESM
+cd /path/to/case && ./case.submit
+```
+
+Generate the `sumo_init_*.pth` IC from a CAM6 restart and a CAMulator-format IC using `climate/make_sumo_ic_from_cam6_restart.py` — call signature in the `setup_SUMO_B_case.sh` epilogue.
+
+### Smoke-test the GraphCast server in isolation
+
+```bash
+conda activate supermodel
+python -m regrid.smoke_test_graphcast_server
+```
+Three phases (lifecycle, SIGTERM, SIGKILL). ~20 min cold, ~3 min subsequent. Populates the JAX cache.
+
+---
+
+## Where to read next
+
+| For… | See |
+|---|---|
+| **Full operational guide** — per-mode launch sequence, file-handshake protocol step-by-step, status / stop commands, troubleshooting matrix | **[`climate/To_Run_SUMO.md`](./climate/To_Run_SUMO.md)** |
+| Reference case setup (commented, every namelist explained) | `climate/setup_SUMO_B_case.sh` |
+| GraphCast server internals (warmup, bundle build, reverse-translate) | `regrid/graphcast_server.py` + `regrid/run_graphcast_inference.py` |
+| CAMulator server internals (state injection, SST/ICEFRAC reads) | `climate/camulator_sumo_server.py` + `climate/Model_State.py` |
+| Coordinator internals (flag protocol) | `climate/gc_coordinator.py` (GraphCast) and `climate/sumo_coordinator.py` (CAMulator) |
+| GraphCast ↔ CAM6 stencil and vertical interpolation | `regrid/` directory (translator blocks, hybrid pressure, blender) |
+
+If you hit an issue not in the troubleshooting matrix, please open an issue against this fork.
 
 ---
 
