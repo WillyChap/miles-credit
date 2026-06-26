@@ -810,13 +810,21 @@ def initialize_camulator(config_path: str, model_name: str = None, device: str =
     chunk_size = conf["data"].get("forcing_chunk_size", 32)
     forcing_ds = xr.open_dataset(forcing_file, chunks={"time": chunk_size})
 
-    # Cast lat/lon coords to float32 so they align with the normalization
-    # mean_ds/std_ds (which are float32). If the forcing file stores coords as
-    # float64, xarray aligns transform_dataset() on the coord intersection and
-    # silently collapses the grid (e.g. latitude 192 -> 2). Casting fixes this
-    # for any forcing file regardless of how its coords were written.
-    for _c in ("latitude", "longitude"):
-        if _c in forcing_ds.coords and forcing_ds[_c].dtype != np.float32:
+    # Align the forcing grid coords to the normalization datasets before
+    # transform_dataset() does `(forcing - mean_ds) / std_ds`. xarray inner-joins
+    # on coord VALUES, so a dtype/precision mismatch between the forcing file and
+    # mean/std (e.g. forcing latitude float32 -89.057594 vs mean float64
+    # -89.05759162) drops every row that isn't bit-for-bit equal — silently
+    # collapsing the grid (latitude 192 -> 2). Copy the mean/std coord values onto
+    # the forcing so they align exactly; fall back to a float32 cast if the
+    # normalization dataset doesn't carry that coord.
+    _ref = getattr(state_transformer, "mean_ds", None)
+    for _c in ("latitude", "longitude", "lat", "lon"):
+        if _c not in forcing_ds.coords:
+            continue
+        if _ref is not None and _c in _ref.coords and _ref[_c].size == forcing_ds[_c].size:
+            forcing_ds = forcing_ds.assign_coords({_c: _ref[_c].values})
+        elif forcing_ds[_c].dtype != np.float32:
             forcing_ds = forcing_ds.assign_coords({_c: forcing_ds[_c].astype("float32")})
 
     # Normalize forcing data
