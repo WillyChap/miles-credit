@@ -55,8 +55,11 @@ git clone -b camulator_huggingface \
     https://github.com/WillyChap/miles-credit.git camulator && cd camulator
 conda env create -f environment.yml -n camulator   # PyTorch + CREDIT deps
 conda activate camulator
-pip install -e .                                    # from repo root: installs ./credit
+pip install -e . --no-deps                          # from repo root: installs ./credit
 cd climate
+#  NOTE: use --no-deps. environment.yml already pins the exact runtime stack
+#  (torch 2.4.1 + torch_harmonics 0.7.2 + numpy<2); a plain `pip install -e .`
+#  re-resolves and upgrades numpy/torch_harmonics, which breaks `import credit`.
 #    (NCAR users may instead: conda activate /glade/work/wchapman/conda-envs/credit-coupling-ud)
 
 # 1. get the model + inputs into ./assets/

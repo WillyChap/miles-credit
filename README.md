@@ -20,7 +20,7 @@ Two parts:
 # install the package + its environment (once)
 conda env create -f environment.yml -n camulator
 conda activate camulator
-pip install -e .
+pip install -e . --no-deps      # --no-deps: environment.yml already pins the runtime stack
 
 # run CAMulator inference (full instructions in climate/README.md)
 cd climate

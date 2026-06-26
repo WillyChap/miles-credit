@@ -1,15 +1,16 @@
 # CAMulator environment — CREDIT (PyTorch) for training and climate inference.
 #
-# Versions (tested on NCAR Casper, June 2026 — not yet verified on other hosts):
+# Verified CAMulator-inference combo (clean-room tested from a fresh clone on
+# NCAR Casper, June 2026):
 #   Python  3.11
-#   PyTorch 2.6.0  + CUDA 12.4 (pip wheel from pytorch.org index)
-#   NumPy   2.2.x
-#   Xarray  2025.6.x
+#   PyTorch 2.4.1  + CUDA 12.1 (pip wheel from pytorch.org index)
+#   NumPy   1.26.x  (must stay <2 for the compiled torch extensions)
+#   Xarray  2024.x
 #
 # Targets linux-x86_64 + NVIDIA CUDA 12.x. On a different host CUDA, change the
 # torch index-url / version below to match (or use CPU wheels — inference works
-# on CPU, just slower). Known-good alternative for the CAMulator path: the NCAR
-# env at /glade/work/wchapman/conda-envs/credit-coupling-ud (PyTorch 2.x).
+# on CPU, just slower). Bumping torch to 2.6 breaks torch_harmonics (see note by
+# the pip section).
 #
 # Build:
 #   conda env create -f environment.yml -n camulator
@@ -32,12 +33,15 @@ dependencies:
   - pip>=24
 
   # ── Core scientific stack ──────────────────────────────────────────
-  - numpy=2.2.*
-  - scipy>=1.15
-  - pandas>=2.3
-  - xarray>=2025.6
-  - dask>=2025.0
+  # numpy MUST stay <2: torch 2.4.1 and the torch_harmonics/torch_geometric
+  # C extensions are built against the numpy-1.x ABI.
+  - numpy=1.26.*
+  - scipy>=1.11,<1.14
+  - pandas>=2.1
+  - xarray>=2024.3,<2025
+  - dask>=2024.0
   - zarr=2.18.*                  # pin: CREDIT datasets use zarr v2 stores
+  - gcsfs                        # credit.parser import chain pulls this in
   - matplotlib-base>=3.9
   - tqdm
   - pyyaml
@@ -60,22 +64,26 @@ dependencies:
   - setuptools-scm
 
   # ── Pip: PyTorch (from pytorch.org index) + CREDIT deps ────────────
+  # This exact torch stack is the verified, clean-room-tested CAMulator
+  # inference combo (matches the NCAR credit-coupling-ud env). Do NOT bump torch
+  # to 2.6: torch_harmonics 0.9.x's compiled extension is ABI-incompatible with
+  # torch 2.6 (undefined symbol parseSchema) and breaks `import credit.models`.
   - pip:
-      # PyTorch 2.6 + CUDA 12.4 wheels.
+      # PyTorch 2.4.1 + CUDA 12.1 wheels.
       # If solving fails, install torch separately with:
-      #   pip install torch==2.6.0 torchvision==0.21.0 \
-      #     --index-url https://download.pytorch.org/whl/cu124
-      - --extra-index-url https://download.pytorch.org/whl/cu124
-      - torch==2.6.0
-      - torchvision==0.21.0
+      #   pip install torch==2.4.1 torchvision==0.19.1 \
+      #     --index-url https://download.pytorch.org/whl/cu121
+      - --extra-index-url https://download.pytorch.org/whl/cu121
+      - torch==2.4.1
+      - torchvision==0.19.1
       - torchinfo==1.8.0
-      - torchmetrics==1.9.0
-      - torch-geometric==2.7.0
-      - torch-harmonics==0.9.1
+      - torchmetrics==1.7.1
+      - torch-geometric==2.6.1
+      - torch-harmonics==0.7.2
 
       # CREDIT auxiliaries
       - einops>=0.8            # tensor ops in the model
-      - bridgescaler>=0.8      # CREDIT normalization
+      - bridgescaler>=0.7      # CREDIT normalization
       - accelerate>=1.6
       - ema-pytorch>=0.7
       - bitsandbytes>=0.45     # 8-bit Adam (training; harmless at inference)

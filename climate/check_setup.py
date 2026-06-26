@@ -37,15 +37,25 @@ def main():
             print(f"{BAD} import {mod}: {e}")
             fails += 1
 
-    # 2. CREDIT importable (the #1 install pitfall)
+    # 2. CREDIT importable — exercise the FULL inference import chain that
+    #    Model_State.initialize_camulator uses, not just credit.parser. This is
+    #    what catches a broken torch/torch_harmonics combo (credit.models pulls
+    #    the torch_harmonics C extension, which is ABI-tied to the torch version).
     try:
         import credit  # noqa: F401
         from credit.parser import credit_main_parser  # noqa: F401
-        print(f"{OK} import credit  (from {os.path.dirname(sys.modules['credit'].__file__)})")
+        from credit.models import load_model, load_model_name  # noqa: F401
+        from credit.distributed import distributed_model_wrapper  # noqa: F401
+        from credit.postblock import GlobalMassFixer  # noqa: F401
+        print(f"{OK} import credit (full inference chain) from {os.path.dirname(sys.modules['credit'].__file__)}")
     except Exception as e:  # noqa: BLE001
-        print(f"{BAD} import credit: {e}")
-        print("       -> install THIS repo's CREDIT:  pip install -e .  (from the repo root)")
-        print("          or, from this climate/ dir:  pip install -e ..")
+        print(f"{BAD} import credit: {type(e).__name__}: {e}")
+        if "parseSchema" in str(e) or "undefined symbol" in str(e) or "torch_harmonics" in str(e):
+            print("       -> torch / torch_harmonics ABI mismatch. Use the pinned combo in")
+            print("          environment.yml (torch 2.4.1 + torch_harmonics 0.7.2), not torch 2.6.")
+        else:
+            print("       -> install THIS repo's CREDIT:  pip install -e . --no-deps  (from repo root)")
+            print("          (use --no-deps; environment.yml already pins the runtime stack)")
         fails += 1
 
     # 3. config exists + parses with the CREDIT parser
