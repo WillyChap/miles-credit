@@ -84,6 +84,12 @@ def main():
         # model card -> README.md, config -> inference_config.yaml (ACE2-style)
         uploads.append((os.path.join(HERE, "MODEL_CARD.md"), "README.md"))
         uploads.append((os.path.join(HERE, "camulator_config.yml"), "inference_config.yaml"))
+        # model-card figures -> figs/ (referenced by the model card)
+        figdir = os.path.join(HERE, "model_card_figs")
+        if os.path.isdir(figdir):
+            for fig in sorted(os.listdir(figdir)):
+                if fig.endswith((".png", ".jpg", ".svg")):
+                    uploads.append((os.path.join(figdir, fig), f"figs/{fig}"))
         for f in SHARED + (OPTIONAL if args.include_optional else []):
             uploads.append((os.path.join(args.assets_dir, f), repo_path(f)))
     ckpt_dir = args.checkpoint_dir or args.assets_dir

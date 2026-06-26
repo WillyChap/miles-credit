@@ -182,3 +182,6 @@ graphcast/stats/
 # kept around so `cd graphcast && git --git-dir=.git_DEEPMIND_UPSTREAM ...`
 # still works for upstream syncs, but not tracked in this repo.
 graphcast/.git_DEEPMIND_UPSTREAM/
+
+# internal readiness notes — not for GitHub
+climate/HF_READINESS.md

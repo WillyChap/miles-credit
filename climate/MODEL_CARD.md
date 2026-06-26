@@ -17,19 +17,19 @@ pipeline_tag: other
 
 **CAMulator** is an AI emulator of NSF NCAR's CAM6 atmosphere, trained and run
 within the [CREDIT](https://github.com/WillyChap/miles-credit) framework. It
-rolls a 1° (192×288), 32-level, 6-hourly atmospheric state forward for
+rolls a 1 degree (192x288), 32-level, 6-hourly atmospheric state forward for
 climate-length simulations (years to decades), driven by prescribed SST, sea-ice,
-solar, and CO₂ forcing.
+solar, and CO2 forcing.
 
-> ⚠️ CAMulator is a research tool. It emulates a specific CAM6 configuration and
-> is not a substitute for an operational forecast or a full Earth-system model.
+CAMulator is a research tool. It emulates a specific CAM6 configuration and is
+not a substitute for an operational forecast or a full Earth-system model.
 
 ### Quick links
 
-- 📦 **Inference toolbox (code):** https://github.com/WillyChap/miles-credit (branch `camulator_huggingface`, dir `climate/`)
-- 📖 **CREDIT framework:** https://github.com/NCAR/miles-credit
-- 📄 **Paper:** CAMulator (Chapman et al.) — *add DOI/link*
-- 🤗 **This model + data:** https://huggingface.co/willychap/camulator
+- Inference toolbox (code): https://github.com/WillyChap/miles-credit (branch `camulator_huggingface`, dir `climate/`)
+- CREDIT framework: https://github.com/NCAR/miles-credit
+- Paper: CAMulator (Chapman et al.) -- add DOI/link
+- This model + data: https://huggingface.co/willychap/camulator
 
 ### Inference quickstart
 
@@ -55,20 +55,56 @@ bash RunQuickClimate.sh
 Full instructions, configuration, and the asset manifest are in
 [`climate/README.md`](https://github.com/WillyChap/miles-credit/blob/camulator_huggingface/climate/README.md).
 
-### Strengths and weaknesses
+### Evaluation
 
-**Strengths**
-- **Conserves mass, water, and energy** via CREDIT's physics post-blocks (applied every step).
-- **Stable multi-year / multi-decadal rollouts** with a no-leap calendar that stays aligned to the forcing.
-- **Fast** — a year of 6-hourly climate runs on a single GPU in minutes.
-- **Cyclic or transient forcing** — repeat a climatological year, or follow the real 1980–2014 SST/ICE/CO₂ record.
-- **Multiple checkpoints** (training epochs) hosted so you can study sensitivity to training stage.
+The default checkpoint (**epoch 65**) was chosen by a two-stage,
+observation-anchored evaluation. Each of 60 candidate checkpoints (epochs 20-79)
+was run as a free-running, autoregressive 35-year rollout (1980-2014, 6-hourly,
+no-leap) from a 1 January 1980 initial state and scored against the CREDIT
+ERA5-scaled training target on the identical 1 degree grid. All statistics are
+latitude-weighted.
 
-**Known limitations**
-- Research use only; emulates one CAM6 configuration at 1°.
-- Small near-surface temperature bias (~1–2 K) typical of the architecture.
-- A single deterministic realization (no built-in ensemble).
-- Skill depends on the fidelity of the prescribed forcing.
+**Stage 1 - climatological skill (monthly means).** Twelve metrics per field
+(bias, pattern RMSE, interannual correlation, decadal-trend fidelity, drift) for
+2 m temperature (TREFHT) and total precipitation (PRECT). Checkpoint 65 wins the
+combined score, wins precipitation outright, and wins an independent average-rank
+cross-check.
+
+![Checkpoint scorecard - top 20 by combined skill (green = better)](figs/monthly_scorecard.png)
+
+**Checkpoint 65 climatology (latitude-weighted, full 35-yr record):**
+
+| Field | Spatiotemporal RMSE | Global-mean bias | Decadal-trend error | Global-mean monthly RMSE | Annual corr. |
+|---|---|---|---|---|---|
+| TREFHT | 1.564 K | +0.033 K | -0.007 K/decade | 0.159 K | 0.985 |
+| PRECT  | 6.09e-4 (2.4 mm/day) | -3.9e-6 (essentially neutral) | -- | clim. RMSE 7.49e-5 | -- |
+
+Annual-mean spatial bias is small and coherent (TREFHT RMSE 0.325 K, largest at
+high-latitude land and sea-ice margins; PRECT RMSE 7.49e-5, modest tropical
+structure with no large-scale offset):
+
+![Checkpoint 65 annual-mean bias maps](figs/monthly_ckpt65_biasmaps.png)
+
+The global-mean warming trend and interannual variability are reproduced
+(decadal-trend error -0.007 K/decade, annual correlation 0.985):
+
+![Global-mean TREFHT, 1980-2014: truth vs checkpoints (65 bold)](figs/monthly_gmt_timeseries.png)
+
+**Stage 2 - extremes tiebreaker (6-hourly).** The top four checkpoints were
+compared on the distribution tails of 6-hourly TREFHT and PRECT. Temperature
+extremes are a statistical tie across the finalists; the heavy-precipitation tail
+is decisive, and checkpoint 65 tracks the truth wet tail most closely.
+
+![6-hourly PRECT distribution and wet tail (winner: ckpt 65)](figs/extremes_pdf_PRECT.png)
+
+A 50/50 blend of the monthly and extremes scores selects **checkpoint 65** as the
+only candidate strong on both timescales (checkpoint 63 is the temperature-leaning
+runner-up). Other epochs are hosted too, so you can study sensitivity to training
+stage; pick one with `download_assets.py --checkpoint checkpoint.pt000NN.pt`.
+
+> Note on PRECT units: native values are metres of liquid-water equivalent per
+> 6-hourly step (ERA5 `tp` convention); mm/day = native x 4000. Checkpoint 65's
+> global-mean precipitation is 2.92 mm/day vs. truth 2.93.
 
 ### Repository layout
 
@@ -85,15 +121,16 @@ willychap/camulator
 ├── normalization/
 │   ├── mean_*.nc, std_*.nc                                # z-score
 │   └── *statics*.nc                                       # statics + latitude weights
-└── metadata/
-    └── era5.yaml
+├── metadata/
+│   └── era5.yaml
+└── figs/                                                  # model-card figures
 ```
 
 `download_assets.py` pulls these into the toolbox's `./assets/` for you.
 
 ### Training data
 
-CAMulator was trained on a CAM6 / ERA5-scaled climate dataset (1980–2014). The
+CAMulator was trained on a CAM6 / ERA5-scaled climate dataset (1980-2014). The
 full training archive is not hosted here; the inputs needed to *run* the model
 (forcing, initial conditions, normalization, statics) are.
 
