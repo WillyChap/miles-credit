@@ -76,6 +76,17 @@ def main():
             "init_cond_fast_climate (IC)": conf["predict"]["init_cond_fast_climate"],
             "metadata": conf["predict"]["metadata"],
         }
+        # post-block conservation fixers read their own statics (hybrid-sigma
+        # coeffs); a rollout fails mid-run if this is missing, so check it too.
+        try:
+            pc = conf["model"]["post_conf"]
+            for fixer in ("global_mass_fixer", "global_water_fixer", "global_energy_fixer_updown"):
+                p = pc.get(fixer, {}).get("save_loc_physics")
+                if p:
+                    req[f"post_conf {fixer} statics"] = p
+                    break
+        except Exception:  # noqa: BLE001
+            pass
         for label, path in req.items():
             if path and os.path.exists(path):
                 print(f"{OK} {label}: {path}")

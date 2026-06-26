@@ -464,7 +464,7 @@ if __name__ == "__main__":
     # distributed branch and demand torchrun/MPI env vars, so a plain
     # `python Make_Climate_Initial_Conditions.py ... -m none` would crash on a
     # normal node. predict.mode defaults to "none" and is overridden by -m.
-    rank_mode = conf["predict"].get("mode") or conf["trainer"]["mode"]
+    rank_mode = conf.get("predict", {}).get("mode") or "none"
     local_rank, world_rank, world_size = get_rank_info(rank_mode)
 
     with mp.Pool(num_cpus) as p:

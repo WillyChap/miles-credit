@@ -24,6 +24,8 @@ pip install -e .
 
 # run CAMulator inference (full instructions in climate/README.md)
 cd climate
+# NOTE: the public HuggingFace asset repo is not published yet, so this download
+# is not yet runnable off-NCAR — see climate/README.md "Getting the assets".
 python download_assets.py --repo_id <org>/camulator   # or ./stage_assets.sh on NCAR
 python check_setup.py                                  # preflight
 bash RunQuickClimate.sh                                # rollout -> output/<run>/<init>/pred_*.nc
