@@ -204,24 +204,31 @@ run with the progressive file writes `pred_*.nc` correctly.
 > path in the config) is **not** needed for inference — only
 > `Make_Climate_Initial_Conditions.py` reads it, when generating a brand-new IC.
 
-**Hosting layout.** Code (this folder) lives in git; the assets live in a
-HuggingFace **model** repo with the manifest files at the repo root:
+**Hosting layout.** Code (this folder) lives in git; the model + inputs live in a
+HuggingFace **model** repo, organized into subdirectories (the `MODEL_CARD.md` is
+uploaded as the repo's `README.md`):
 
 ```
 willychap/camulator        (HF model repo)
-├── checkpoint.pt00065.pt          # default epoch (others: checkpoint.pt000NN.pt)
-├── checkpoint.pt00040.pt … 00079  # additional epochs (optional)
-├── mean_6h_...nc, std_6h_...nc
-├── *statics*.nc
-├── b.e21.CREDIT_climate_cyclic_1yr_f32coords.nc
-├── init_camulator_condition_tensor_1981-01-01T00Z.pth
-└── era5.yaml
+├── README.md                          # the model card (from climate/MODEL_CARD.md)
+├── inference_config.yaml              # = camulator_config.yml
+├── checkpoint.pt00065.pt              # default epoch (others: checkpoint.pt000NN.pt)
+├── forcing_data/
+│   ├── b.e21.CREDIT_climate_cyclic_1yr_f32coords.nc   # cyclic (default)
+│   └── b.e21.CREDIT_climate_branch_1980_2014.nc       # progressive (slim, ~10 GB)
+├── initial_conditions/
+│   └── init_camulator_condition_tensor_1981-01-01T00Z.pth
+├── normalization/
+│   ├── mean_*.nc, std_*.nc
+│   └── *statics*.nc                                    # statics + latitude weights
+└── metadata/
+    └── era5.yaml
 ```
 
-`download_assets.py --repo_id willychap/camulator` pulls the shared files + the
-default checkpoint into `./assets/`. Maintainers publish the repo with
-`upload_assets.py`, e.g. shared files + a range of epochs straight from the run
-dir:
+`download_assets.py --repo_id willychap/camulator` pulls these (flattening the
+subdirs) into `./assets/` + the default checkpoint. Maintainers publish the repo
+with `upload_assets.py`, which lays out the tree above; e.g. model card + config +
+shared inputs + a range of epochs straight from the run dir:
 
 ```bash
 python upload_assets.py --repo_id willychap/camulator --create \

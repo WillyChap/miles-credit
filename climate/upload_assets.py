@@ -30,8 +30,23 @@ SHARED = [
 OPTIONAL = [
     "ERA5_clim_1990_2019_6h_interp.nc",
     "truth_be21_tensor_2013-01-01T00Z.pth",
-    "b.e21.CREDIT_climate_branch_1980_2014.nc",   # progressive/transient forcing (~85 GB)
+    "b.e21.CREDIT_climate_branch_1980_2014.nc",   # progressive/transient forcing (slim, ~10 GB)
 ]
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+
+
+def repo_path(name):
+    """Map a flat asset basename to its path in the HF repo (ACE2-style tree)."""
+    if name.startswith("checkpoint.pt"):
+        return name                                   # checkpoints at repo root
+    if "cyclic" in name or "branch_1980_2014" in name:
+        return f"forcing_data/{name}"
+    if name.startswith("init_camulator_condition_tensor"):
+        return f"initial_conditions/{name}"
+    if name == "era5.yaml":
+        return f"metadata/{name}"
+    return f"normalization/{name}"                    # mean/std/statics/lat-weights/clim/truth
 
 
 def main():
@@ -66,13 +81,15 @@ def main():
     # Resolve what to upload to (local_path, name_in_repo) pairs.
     uploads = []
     if not args.skip_shared:
-        shared = SHARED + (OPTIONAL if args.include_optional else [])
-        for f in shared:
-            uploads.append((os.path.join(args.assets_dir, f), f))
+        # model card -> README.md, config -> inference_config.yaml (ACE2-style)
+        uploads.append((os.path.join(HERE, "MODEL_CARD.md"), "README.md"))
+        uploads.append((os.path.join(HERE, "camulator_config.yml"), "inference_config.yaml"))
+        for f in SHARED + (OPTIONAL if args.include_optional else []):
+            uploads.append((os.path.join(args.assets_dir, f), repo_path(f)))
     ckpt_dir = args.checkpoint_dir or args.assets_dir
     for c in args.checkpoints or []:
         src = c if os.path.isabs(c) else os.path.join(ckpt_dir, c)
-        uploads.append((src, os.path.basename(c)))
+        uploads.append((src, repo_path(os.path.basename(c))))
 
     missing = [p for p, _ in uploads if not os.path.exists(p)]
     if missing:

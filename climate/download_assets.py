@@ -46,6 +46,20 @@ OPTIONAL = [
 DEFAULT_REPO = os.environ.get("CAMULATOR_HF_REPO", "willychap/camulator")
 
 
+def repo_path(name):
+    """Map a flat asset basename to its path in the HF repo (ACE2-style tree).
+    Kept in sync with upload_assets.py."""
+    if name.startswith("checkpoint.pt"):
+        return name
+    if "cyclic" in name or "branch_1980_2014" in name:
+        return f"forcing_data/{name}"
+    if name.startswith("init_camulator_condition_tensor"):
+        return f"initial_conditions/{name}"
+    if name == "era5.yaml":
+        return f"metadata/{name}"
+    return f"normalization/{name}"
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--repo_id", default=DEFAULT_REPO, help=f"HuggingFace repo id (default: {DEFAULT_REPO})")
@@ -84,18 +98,30 @@ def main():
     if ckpts:
         print(f"  checkpoint(s): {', '.join(ckpts)}  (set MODEL_NAME to match when you run)")
 
+    import shutil
     failed = []
     for fname in wanted:
+        rp = repo_path(fname)   # subdir path in the HF repo (ACE2-style tree)
         try:
             path = hf_hub_download(
-                repo_id=args.repo_id, filename=fname, repo_type=args.repo_type,
+                repo_id=args.repo_id, filename=rp, repo_type=args.repo_type,
                 revision=args.revision, token=args.token,
                 local_dir=args.assets_dir, local_dir_use_symlinks=False,
             )
+            # flatten subdir -> ./assets/<basename> so the config's ./assets/<file> paths resolve
+            dest = os.path.join(args.assets_dir, fname)
+            if os.path.abspath(path) != os.path.abspath(dest):
+                os.makedirs(os.path.dirname(dest) or ".", exist_ok=True)
+                shutil.move(path, dest)
             print(f"  ok    {fname}")
         except Exception as e:
             failed.append((fname, str(e)))
             print(f"  FAIL  {fname}: {e}")
+    # tidy any now-empty subdirs the download created
+    for d in ("forcing_data", "initial_conditions", "normalization", "metadata"):
+        dp = os.path.join(args.assets_dir, d)
+        if os.path.isdir(dp) and not os.listdir(dp):
+            os.rmdir(dp)
 
     if failed:
         print(f"\n{len(failed)} file(s) failed. Check the repo id / filenames / access token.")
