@@ -12,17 +12,16 @@
 #PBS -M wchapman@ucar.edu
 
 # ============================================================================
-# CAMulator climate inference  —  end-to-end driver
+# CAMulator climate inference  —  driver
 # ============================================================================
-# Two output modes, both driven by ONE yaml file (camulator_config.yml):
+# Roll a trained CAMulator checkpoint forward and write NetCDF, driven by ONE
+# yaml file (camulator_config.yml). Output granularity is set by AVG:
 #
-#   AVG=none  (default)  full 6-hourly resolution -> YEARLY zarr
-#       1. Quick_Climate.py   roll the model forward -> per-step pred_*.nc
-#       2. netcdf_to_zarr.py  consolidate pred_*.nc  -> <prefix>_<year>.zarr
+#   AVG=none  (default)  one NetCDF per 6-hourly step   -> pred_*.nc
+#   AVG=daily            one daily-mean NetCDF per day   (--daily_mean)
+#   AVG=monthly          one monthly-mean NetCDF per month (--monthly_mean)
 #
-#   AVG=daily | monthly     compact time-averaged NetCDF (no zarr step)
-#       1. Quick_Climate.py --{daily,monthly}_mean -> one averaged pred_*.nc
-#          per day/month  (this replaces the old Post_Process.py)
+# Files land in:  <save_forecast>/<FOLD_OUT>/<init_time>/pred_*.nc
 #
 # All model inputs are read from ./assets/ (see stage_assets.sh / README.md).
 #
@@ -39,11 +38,10 @@ cd "$(dirname "$0")"
 
 # ----------------------------- user settings --------------------------------
 CONFIG=./camulator_config.yml
-CONDA_ENV=/glade/work/wchapman/conda-envs/credit-coupling   # <-- your env
+CONDA_ENV=/glade/work/wchapman/conda-envs/credit-coupling-ud   # <-- your env
 FOLD_OUT=run_default                 # experiment subfolder under save_forecast
 MODEL_NAME=checkpoint.pt             # checkpoint file inside save_loc (./assets)
-ZARR_PREFIX=camulator                # output zarr name: <prefix>_<year>.zarr
-AVG=none                             # none -> yearly zarr | daily | monthly
+AVG=none                             # none | daily | monthly
 # ----------------------------------------------------------------------------
 
 case "$AVG" in
@@ -57,34 +55,15 @@ if command -v module >/dev/null 2>&1; then module load conda || true; fi
 # shellcheck disable=SC1091
 conda activate "$CONDA_ENV"
 
-# Derive save_forecast dir + init-time string straight from the yaml so the
-# downstream zarr step knows exactly where Quick_Climate wrote its files.
-read -r SAVE_FORECAST INIT_STR < <(python3 - "$CONFIG" <<'PY'
-import sys, yaml, datetime
-c = yaml.safe_load(open(sys.argv[1]))
-sf = c["predict"]["save_forecast"]
-dt = c["predict"]["start_datetime"]
-if isinstance(dt, str):
-    dt = datetime.datetime.strptime(dt, "%Y-%m-%d %H:%M:%S")
-print(sf, dt.strftime("%Y-%m-%dT%HZ"))
-PY
-)
-PRED_DIR="${SAVE_FORECAST%/}/${FOLD_OUT}/${INIT_STR}"
-ZARR_DIR="${SAVE_FORECAST%/}/${FOLD_OUT}/zarr"
-
 echo "============================================================"
 echo " CAMulator inference"
 echo "   config         : $CONFIG"
 echo "   checkpoint     : $MODEL_NAME"
 echo "   experiment     : $FOLD_OUT"
 echo "   output mode    : $AVG"
-echo "   pred dir       : $PRED_DIR"
-[ "$AVG" = "none" ] && echo "   zarr out       : $ZARR_DIR"
 echo "   start          : $(date)"
 echo "============================================================"
 
-# --------------------------- 1. roll the model ------------------------------
-echo "[1/2] Quick_Climate.py $AVG_FLAG ..."
 python ./Quick_Climate.py \
   --config "$CONFIG" \
   --model_name "$MODEL_NAME" \
@@ -92,20 +71,6 @@ python ./Quick_Climate.py \
   --save_append "$FOLD_OUT" \
   $AVG_FLAG
 
-# --------------------------- 2. consolidate ---------------------------------
-if [ "$AVG" = "none" ]; then
-  echo "[2/2] netcdf_to_zarr.py  (-> yearly zarr) ..."
-  python ./netcdf_to_zarr.py \
-    --input_dir "$PRED_DIR" \
-    --out_dir   "$ZARR_DIR" \
-    --prefix    "$ZARR_PREFIX" \
-    --statics   ./assets/b.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc
-  echo "    -> $(ls -d "$ZARR_DIR"/*.zarr 2>/dev/null | wc -l) yearly zarr store(s) in $ZARR_DIR"
-else
-  echo "[2/2] zarr step skipped — $AVG-mean NetCDF written to $PRED_DIR"
-fi
-
 echo "============================================================"
-echo " Done at $(date)."
-[ "$AVG" = "none" ] && echo " Yearly zarr: $ZARR_DIR" || echo " $AVG means: $PRED_DIR"
+echo " Done at $(date).  Output under <save_forecast>/$FOLD_OUT/"
 echo "============================================================"

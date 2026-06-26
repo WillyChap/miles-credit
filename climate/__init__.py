@@ -2,7 +2,7 @@
 CAMulator climate-inference toolbox.
 
 A small, self-contained set of scripts that roll a trained CAMulator checkpoint
-forward for climate-length runs and write per-year zarr stores. The scripts are
+forward for climate-length runs and write NetCDF output. The scripts are
 meant to be run directly (``python Quick_Climate.py ...``) from this directory,
 which is why this package does not eagerly import the heavy modules here (doing
 so would require a GPU + the full ``credit`` stack just to ``import climate``).
@@ -14,7 +14,6 @@ Quick_Climate                  : roll the model forward; per-6-hourly-step
                                  time-averaged NetCDF
 Model_State                    : state container + CAMulatorStepper (physics step)
 WindPP                         : wind-artifact post-filter (called by Model_State)
-netcdf_to_zarr                 : consolidate 6-hourly pred_*.nc -> <prefix>_<year>.zarr
 Make_Climate_Initial_Conditions: build a new initial-condition tensor
 
 See README.md for the end-to-end workflow and the asset manifest.
@@ -25,6 +24,5 @@ __all__ = [
     "Quick_Climate",
     "Model_State",
     "WindPP",
-    "netcdf_to_zarr",
     "Make_Climate_Initial_Conditions",
 ]
