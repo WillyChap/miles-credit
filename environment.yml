@@ -1,30 +1,25 @@
-# SUMO supermodel environment — single env for GraphCast (JAX) + CAMulator (PyTorch)
-# + the CREDIT package + the vendored DeepMind GraphCast code.
+# CAMulator environment — CREDIT (PyTorch) for training and climate inference.
 #
-# Curated from a working build at /glade/work/wchapman/conda-envs/supermodel on
-# NCAR's Casper (June 2026). Verified versions:
-#
-#   Python  3.10.12
+# Verified versions (NCAR Casper, June 2026):
+#   Python  3.10 / 3.11
 #   PyTorch 2.6.0  + CUDA 12.4 (pip wheel from pytorch.org index)
-#   JAX     0.6.0  + CUDA 12   (pip wheels for the GPU plugin)
 #   NumPy   2.2.x
 #   Xarray  2025.6.x
 #
-# Builds on linux-x86_64 + NVIDIA A100; should work on any CUDA 12.x GPU node.
-# On non-CUDA-12 hosts: bump pytorch-cuda and jax cuda12-plugin versions to
-# match the host CUDA, or pin CPU wheels and accept slower inference.
+# Builds on linux-x86_64 + NVIDIA GPU; works on any CUDA 12.x node.
+# On non-CUDA-12 hosts, change the torch index-url / version to match the host
+# CUDA, or use CPU wheels (inference works on CPU, just slower).
 #
 # Build:
-#   conda env create -f environment.yml -n supermodel
-#   conda activate supermodel
-#   pip install -e .                       # CREDIT (this repo) editable install
-#   pip install -e ./graphcast             # vendored DeepMind GraphCast
+#   conda env create -f environment.yml -n camulator
+#   conda activate camulator
+#   pip install -e .            # CREDIT (this repo) editable install
 #
-# If you hit a solver conflict, drop the explicit version pins under "Optional
-# pins" and let conda-forge resolve more freely — the pins exist to match the
-# NCAR build exactly and most are not load-bearing.
+# Then, for inference (see climate/README.md):
+#   cd climate && python download_assets.py --repo_id <user>/camulator
+#   bash RunQuickClimate.sh
 
-name: supermodel
+name: camulator
 
 channels:
   - conda-forge
@@ -32,7 +27,7 @@ channels:
 
 dependencies:
   # ── Python ─────────────────────────────────────────────────────────
-  - python=3.10
+  - python=3.11
   - pip>=24
 
   # ── Core scientific stack ──────────────────────────────────────────
@@ -41,41 +36,29 @@ dependencies:
   - pandas>=2.3
   - xarray>=2025.6
   - dask>=2025.0
-  - zarr=2.18.*                  # pin: graphcast checkpoint loader uses v2 format
+  - zarr=2.18.*                  # pin: CREDIT datasets use zarr v2 stores
   - matplotlib-base>=3.9
   - tqdm
   - pyyaml
   - click
   - ipython
   - ipykernel
-  - jupyter_client
 
-  # ── NetCDF / GRIB I/O ──────────────────────────────────────────────
+  # ── NetCDF I/O ─────────────────────────────────────────────────────
   - netcdf4>=1.7
-  - cftime>=1.6
-  - cfgrib>=0.9.15
-  - eccodes>=2.44
-  - python-eccodes>=2.44
+  - cftime>=1.6                  # no-leap rollout clock + output time stamps
   - hdf5=1.14.*                  # pin: matches netCDF4 + zarr v2 build
 
-  # ── JAX (CUDA 12) ──────────────────────────────────────────────────
-  # jax + jaxlib via conda-forge; the CUDA 12 device plugin is pip-only.
-  - jax=0.6.*
-  - jaxlib=0.6.*
-  - ml_dtypes>=0.5
-  - opt_einsum
-
-  # ── GeoSpatial (optional, but used by validation / plotting scripts) ─
+  # ── GeoSpatial (optional: plotting / validation) ───────────────────
   - cartopy>=0.24
   - pyproj
   - shapely
 
-  # ── Build tooling (only needed if a pip dep hits a wheel build) ────
+  # ── Build tooling (only if a pip dep builds a wheel) ───────────────
   - cython
   - setuptools-scm
 
-  # ── Pip section: PyTorch (from pytorch.org index) + JAX CUDA plugin +
-  #    GraphCast deps + CREDIT auxiliaries.                            ─
+  # ── Pip: PyTorch (from pytorch.org index) + CREDIT deps ────────────
   - pip:
       # PyTorch 2.6 + CUDA 12.4 wheels.
       # If solving fails, install torch separately with:
@@ -89,33 +72,17 @@ dependencies:
       - torch-geometric==2.7.0
       - torch-harmonics==0.9.1
 
-      # JAX CUDA 12 device plugin (pip-only; pairs with jax/jaxlib from conda).
-      - jax-cuda12-pjrt==0.6.0
-      - jax-cuda12-plugin==0.6.0
-
-      # GraphCast deps (DeepMind package, pip-installable extras).
-      - chex>=0.1.90
-      - dm-haiku>=0.0.15
-      - dm-tree>=0.1.9
-      - jraph>=0.0.6
-      - optax>=0.2
-      - einops>=0.8
-      - trimesh>=4.0           # icosahedral mesh construction
-      - tree-math>=0.2
-
-      # CREDIT auxiliaries.
+      # CREDIT auxiliaries
+      - einops>=0.8            # tensor ops in the model
       - bridgescaler>=0.8      # CREDIT normalization
-      - bitsandbytes>=0.45     # 8-bit Adam (training; harmless at inference)
       - accelerate>=1.6
       - ema-pytorch>=0.7
+      - bitsandbytes>=0.45     # 8-bit Adam (training; harmless at inference)
       - tensorboard
 
-      # CDS API for any users pulling ERA5 directly.
+      # Asset download from HuggingFace (climate/download_assets.py)
+      - huggingface_hub>=0.24
+
+      # CDS API for users pulling ERA5 directly (optional)
       - cdsapi>=0.7
       - ecmwf-api-client
-
-# To pin to the *exact* NCAR build (lockfile-style, less portable):
-#   conda env export --prefix /glade/work/wchapman/conda-envs/supermodel \
-#                    --no-builds > environment.lock.yml
-# That file captures every transitive dependency at the exact version the
-# working env has, but is platform-specific and may not solve on other HPCs.
