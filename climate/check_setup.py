@@ -44,7 +44,8 @@ def main():
         print(f"{OK} import credit  (from {os.path.dirname(sys.modules['credit'].__file__)})")
     except Exception as e:  # noqa: BLE001
         print(f"{BAD} import credit: {e}")
-        print("       -> install THIS repo's CREDIT:  pip install -e ..  (from the repo root)")
+        print("       -> install THIS repo's CREDIT:  pip install -e .  (from the repo root)")
+        print("          or, from this climate/ dir:  pip install -e ..")
         fails += 1
 
     # 3. config exists + parses with the CREDIT parser

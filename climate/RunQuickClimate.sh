@@ -1,12 +1,15 @@
 #!/bin/bash
 #-*- coding: utf-8 -*-
+# These #PBS lines are ONLY used if you `qsub` this file on an NCAR PBS cluster;
+# they are inert under `bash RunQuickClimate.sh`. NCAR users: edit -A (your
+# allocation) and -M (your email) before submitting.
 #PBS -N CAMulator_Climate
 #PBS -A NAML0001
 #PBS -l walltime=12:00:00
 #PBS -o RUN_Climate.out
 #PBS -e RUN_Climate.out
 #PBS -q casper
-#PBS -l select=1:ncpus=32:ngpus=1:mem=250GB
+#PBS -l select=1:ncpus=16:ngpus=1:mem=64GB
 #PBS -l gpu_type=a100
 #PBS -m a
 #PBS -M wchapman@ucar.edu

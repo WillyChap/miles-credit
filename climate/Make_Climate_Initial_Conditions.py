@@ -458,7 +458,14 @@ if __name__ == "__main__":
     seed = 1000 if "seed" not in conf else conf["seed"]
     seed_everything(seed)
 
-    local_rank, world_rank, world_size = get_rank_info(conf["trainer"]["mode"])
+    # Use the PREDICT mode (not trainer.mode) for rank info: IC generation is a
+    # single-GPU inference task. The config's trainer.mode may be "ddp" (a leftover
+    # from training); reading that here would send get_rank_info down the
+    # distributed branch and demand torchrun/MPI env vars, so a plain
+    # `python Make_Climate_Initial_Conditions.py ... -m none` would crash on a
+    # normal node. predict.mode defaults to "none" and is overridden by -m.
+    rank_mode = conf["predict"].get("mode") or conf["trainer"]["mode"]
+    local_rank, world_rank, world_size = get_rank_info(rank_mode)
 
     with mp.Pool(num_cpus) as p:
         if conf["predict"]["mode"] in ["fsdp", "ddp"]:  # multi-gpu inference

@@ -597,7 +597,7 @@ predict:
 # ===================================================================================================================== #
 # credit.pbs supports NSF NCAR HPCs (casper.ucar.edu and derecho.hpc.ucar.edu)
 pbs: #derecho
-    conda: "/glade/work/wchapman/conda-envs/credit-derecho"
+    conda: "camulator"   # your training conda env (TRAINING ONLY; unused for inference)
     project: "NAML0001"
     job_name: "ps_wxformer_CESM_6h"
     walltime: "12:00:00"

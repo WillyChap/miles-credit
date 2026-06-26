@@ -38,23 +38,28 @@ Quick_Climate.py ──► NetCDF in <save_forecast>/<run>/<init_time>/pred_*.nc
 
 ## 2. Quick start
 
-Requirements: a CUDA GPU (~6 GB free; the model is JIT-traced) and ~6.5 GB of
-asset downloads (4.8 GB checkpoint + 1.3 GB forcing + statics).
+Requirements: a CUDA GPU (~6 GB free; the rollout JIT-traces the model at run
+time) and ~6.5 GB of asset downloads (4.8 GB checkpoint + 1.3 GB forcing +
+statics). Host RAM ~16 GB is plenty (the `#PBS mem` in `RunQuickClimate.sh` is
+deliberately over-provisioned for NCAR).
 
 ```bash
 # 0. install CREDIT (this repo) + its environment — do this ONCE.
 #    `climate/` depends on the parent repo's `credit/` package, so install from
 #    the repo ROOT, and use THIS repo's credit (do not `pip install miles-credit`).
-git clone <this-repo-url> camulator && cd camulator
+git clone -b camulator_huggingface \
+    https://github.com/WillyChap/miles-credit.git camulator && cd camulator
 conda env create -f environment.yml -n camulator   # PyTorch + CREDIT deps
 conda activate camulator
-pip install -e .                                    # installs ./credit
+pip install -e .                                    # from repo root: installs ./credit
 cd climate
 #    (NCAR users may instead: conda activate /glade/work/wchapman/conda-envs/credit-coupling-ud)
 
 # 1. get the model + inputs into ./assets/
-python download_assets.py --repo_id <user>/camulator   # anywhere (HuggingFace)
-#   ... or, on NCAR, symlink the GLADE copies instead:
+#    Pass the real HuggingFace repo id (or set CAMULATOR_HF_REPO). See "Getting
+#    the assets" below — there is no runnable default until the repo is published.
+python download_assets.py --repo_id <org>/camulator    # off-NCAR (HuggingFace)
+#   ... or, on NCAR, symlink the GLADE copies instead (no download):
 ./stage_assets.sh
 
 # 2. verify everything is in place (deps, CREDIT, assets, GPU) — takes seconds
@@ -119,12 +124,25 @@ variable metadata from `era5.yaml`.
 
 ## 4. Asset manifest (what `./assets/` must contain)
 
-All paths in the config are `./assets/<file>`. On NCAR, `stage_assets.sh`
-symlinks these from GLADE. To host elsewhere, ship these files.
+### Getting the assets
 
-**Required for a basic run**
+All config paths are `./assets/<file>`. Fill `./assets/` one of two ways:
 
-| File in `assets/` | ~Size | Used for | GLADE source |
+- **NCAR users:** `./stage_assets.sh` symlinks the GLADE copies (no download).
+- **Everyone else:** `python download_assets.py --repo_id <org>/camulator` pulls
+  them from HuggingFace.
+
+> ⚠️ **The public HuggingFace asset repo is not published yet.** Until a
+> maintainer creates it (see *Hosting layout* below) and updates the
+> `--repo_id`, off-NCAR users cannot auto-download — request the assets from the
+> maintainers. `download_assets.py` deliberately errors on the placeholder id
+> rather than failing silently. Set `CAMULATOR_HF_REPO=<org>/camulator` to avoid
+> passing `--repo_id` each time.
+
+**Required for a basic run** (the "origin" column is the NCAR-internal source
+`stage_assets.sh` links from; off-NCAR users get these from the HF repo):
+
+| File in `assets/` | ~Size | Used for | NCAR origin |
 |---|---|---|---|
 | `checkpoint.pt` | 4.8 G | the trained model | `…/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended_v2/checkpoint.pt` |
 | `mean_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc` | 0.5 M | normalization mean | `…/b_credit_runs/` |

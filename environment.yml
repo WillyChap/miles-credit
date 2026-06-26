@@ -1,14 +1,15 @@
 # CAMulator environment — CREDIT (PyTorch) for training and climate inference.
 #
-# Verified versions (NCAR Casper, June 2026):
-#   Python  3.10 / 3.11
+# Versions (tested on NCAR Casper, June 2026 — not yet verified on other hosts):
+#   Python  3.11
 #   PyTorch 2.6.0  + CUDA 12.4 (pip wheel from pytorch.org index)
 #   NumPy   2.2.x
 #   Xarray  2025.6.x
 #
-# Builds on linux-x86_64 + NVIDIA GPU; works on any CUDA 12.x node.
-# On non-CUDA-12 hosts, change the torch index-url / version to match the host
-# CUDA, or use CPU wheels (inference works on CPU, just slower).
+# Targets linux-x86_64 + NVIDIA CUDA 12.x. On a different host CUDA, change the
+# torch index-url / version below to match (or use CPU wheels — inference works
+# on CPU, just slower). Known-good alternative for the CAMulator path: the NCAR
+# env at /glade/work/wchapman/conda-envs/credit-coupling-ud (PyTorch 2.x).
 #
 # Build:
 #   conda env create -f environment.yml -n camulator
