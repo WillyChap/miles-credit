@@ -39,9 +39,13 @@ Quick_Climate.py ──► NetCDF in <save_forecast>/<run>/<init_time>/pred_*.nc
 ## 2. Quick start
 
 Requirements: a CUDA GPU (~6 GB free; the rollout JIT-traces the model at run
-time) and ~6.5 GB of asset downloads (4.8 GB checkpoint + 1.3 GB forcing +
+time) and ~6 GB of asset downloads (~4.5 GB checkpoint + 1.3 GB forcing +
 statics). Host RAM ~16 GB is plenty (the `#PBS mem` in `RunQuickClimate.sh` is
 deliberately over-provisioned for NCAR).
+
+The default model is **`checkpoint.pt00065.pt`** (training epoch 65). The HF repo
+hosts many epochs; pick one with `download_assets.py --checkpoint <name>` and set
+`MODEL_NAME` to match — see *Choosing a checkpoint* below.
 
 ```bash
 # 0. install CREDIT (this repo) + its environment — do this ONCE.
@@ -113,8 +117,22 @@ Edit `camulator_config.yml` → `predict:`
 | `save_forecast` | Output root (default `./output/`). |
 
 …and the experiment knobs in `RunQuickClimate.sh`: `FOLD_OUT` (run name),
-`MODEL_NAME` (checkpoint file in `./assets/`), and `AVG`
-(`none` → 6-hourly, `daily`/`monthly` → averaged).
+`MODEL_NAME` (checkpoint file in `./assets/`, default `checkpoint.pt00065.pt`),
+and `AVG` (`none` → 6-hourly, `daily`/`monthly` → averaged).
+
+### Choosing a checkpoint
+
+Many training epochs are hosted (`checkpoint.pt000NN.pt`). Default is epoch 65.
+To use a different one, download it and set `MODEL_NAME` to the same name:
+
+```bash
+python download_assets.py --repo_id <org>/camulator --checkpoint checkpoint.pt00058.pt
+MODEL_NAME=checkpoint.pt00058.pt bash RunQuickClimate.sh
+# (download several at once: --checkpoints checkpoint.pt000{50..60}.pt)
+```
+
+`save_loc` (`./assets/`) is the checkpoint *directory*; `MODEL_NAME` selects the
+file within it, so multiple checkpoints can coexist in `./assets/`.
 
 Output NetCDF is written per step/day/month to
 `<save_forecast>/<FOLD_OUT>/<init_time>/pred_*.nc`, in physical units, with
@@ -144,7 +162,7 @@ All config paths are `./assets/<file>`. Fill `./assets/` one of two ways:
 
 | File in `assets/` | ~Size | Used for | NCAR origin |
 |---|---|---|---|
-| `checkpoint.pt` | 4.8 G | the trained model | `…/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended_v2/checkpoint.pt` |
+| `checkpoint.pt00065.pt` | 4.5 G | the trained model (default epoch; other epochs hosted too) | `…/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended_v2/checkpoint.pt00065.pt` |
 | `mean_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc` | 0.5 M | normalization mean | `…/b_credit_runs/` |
 | `std_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc` | 0.5 M | normalization std | `…/b_credit_runs/` |
 | `statics_b_credit_runs_f32_02.nc` | 50 M | static inputs + mass/water fixers | `…/b_credit_runs/` |
@@ -169,8 +187,9 @@ All config paths are `./assets/<file>`. Fill `./assets/` one of two ways:
 HuggingFace **model** repo with the manifest files at the repo root:
 
 ```
-<user>/camulator        (HF model repo)
-├── checkpoint.pt
+<org>/camulator        (HF model repo)
+├── checkpoint.pt00065.pt          # default epoch (others: checkpoint.pt000NN.pt)
+├── checkpoint.pt00040.pt … 00079  # additional epochs (optional)
 ├── mean_6h_...nc, std_6h_...nc
 ├── *statics*.nc
 ├── b.e21.CREDIT_climate_cyclic_1yr_f32coords.nc
@@ -178,10 +197,18 @@ HuggingFace **model** repo with the manifest files at the repo root:
 └── era5.yaml
 ```
 
-`download_assets.py --repo_id <user>/camulator` pulls them into `./assets/`.
-Maintainers publish the repo once with
-`python upload_assets.py --repo_id <user>/camulator --create` (after staging the
-real files into `./assets/`), then set that as the default `--repo_id`.
+`download_assets.py --repo_id <org>/camulator` pulls the shared files + the
+default checkpoint into `./assets/`. Maintainers publish the repo with
+`upload_assets.py`, e.g. shared files + a range of epochs straight from the run
+dir:
+
+```bash
+python upload_assets.py --repo_id <org>/camulator --create \
+    --checkpoint_dir /glade/.../NEW_CLI_JOHN_CASPER_extended_v2 \
+    --checkpoints checkpoint.pt000{40..79}.pt
+```
+
+then set that repo id as the default `--repo_id` (or `CAMULATOR_HF_REPO`).
 
 > **Forcing file note:** `b.e21.CREDIT_climate_cyclic_1yr_f32coords.nc` must
 > contain the model's static fields (`z_norm`, `LANDM_COSLAT`) in addition to the
@@ -198,7 +225,7 @@ the training zarr on NCAR), then point `init_cond_fast_climate` and
 
 ```bash
 python Make_Climate_Initial_Conditions.py -c ./camulator_config.yml \
-       --model_name checkpoint.pt
+       --model_name checkpoint.pt00065.pt
 ```
 
 ---

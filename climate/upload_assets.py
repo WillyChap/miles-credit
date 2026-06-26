@@ -15,9 +15,9 @@ import argparse
 import os
 import sys
 
-# Same manifest as download_assets.py — keep in sync.
-REQUIRED = [
-    "checkpoint.pt",
+# Shared inputs (keep in sync with download_assets.py SHARED). Checkpoints are
+# uploaded separately via --checkpoints since there are many (epochs).
+SHARED = [
     "mean_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc",
     "std_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc",
     "statics_b_credit_runs_f32_02.nc",
@@ -41,6 +41,14 @@ def main():
     ap.add_argument("--create", action="store_true", help="create the repo if it does not exist")
     ap.add_argument("--private", action="store_true", help="create as a private repo")
     ap.add_argument("--include_optional", action="store_true")
+    ap.add_argument("--checkpoints", nargs="*", default=["checkpoint.pt00065.pt"],
+                    help="checkpoint files to upload (names or paths; default checkpoint.pt00065.pt). "
+                         "Many epochs are fine, e.g. --checkpoints checkpoint.pt000{40..79}.pt")
+    ap.add_argument("--checkpoint_dir", default=None,
+                    help="directory the --checkpoints names live in (default: --assets_dir). Lets you "
+                         "upload straight from the training run dir without staging into ./assets/.")
+    ap.add_argument("--skip_shared", action="store_true",
+                    help="upload only the checkpoints (e.g. to add more epochs to an existing repo)")
     ap.add_argument("--token", default=None)
     args = ap.parse_args()
 
@@ -54,20 +62,30 @@ def main():
         api.create_repo(args.repo_id, repo_type=args.repo_type, private=args.private, exist_ok=True)
         print(f"repo ready: {args.repo_type}:{args.repo_id}")
 
-    wanted = REQUIRED + (OPTIONAL if args.include_optional else [])
-    missing = [f for f in wanted if not os.path.exists(os.path.join(args.assets_dir, f))]
+    # Resolve what to upload to (local_path, name_in_repo) pairs.
+    uploads = []
+    if not args.skip_shared:
+        shared = SHARED + (OPTIONAL if args.include_optional else [])
+        for f in shared:
+            uploads.append((os.path.join(args.assets_dir, f), f))
+    ckpt_dir = args.checkpoint_dir or args.assets_dir
+    for c in args.checkpoints or []:
+        src = c if os.path.isabs(c) else os.path.join(ckpt_dir, c)
+        uploads.append((src, os.path.basename(c)))
+
+    missing = [p for p, _ in uploads if not os.path.exists(p)]
     if missing:
-        print("Missing locally (stage them into ./assets/ first):")
-        for f in missing:
-            print("  -", f)
+        print("Missing locally:")
+        for p in missing:
+            print("  -", p)
         sys.exit(1)
 
-    for f in wanted:
-        path = os.path.join(args.assets_dir, f)
+    for path, name in uploads:
         sz = os.path.getsize(path) / 1e6
-        print(f"uploading {f} ({sz:.0f} MB) ...", flush=True)
-        api.upload_file(path_or_fileobj=path, path_in_repo=f, repo_id=args.repo_id, repo_type=args.repo_type)
-    print(f"\nDone. Set download_assets.py default --repo_id to {args.repo_id}")
+        print(f"uploading {name} ({sz:.0f} MB) ...", flush=True)
+        api.upload_file(path_or_fileobj=path, path_in_repo=name, repo_id=args.repo_id, repo_type=args.repo_type)
+    print(f"\nDone ({len(uploads)} files). Users pick a checkpoint with "
+          f"`download_assets.py --repo_id {args.repo_id} --checkpoint <name>`.")
 
 
 if __name__ == "__main__":

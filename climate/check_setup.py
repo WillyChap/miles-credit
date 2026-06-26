@@ -24,7 +24,7 @@ WARN = "  \033[33mwarn\033[0m"
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("-c", "--config", default="./camulator_config.yml")
-    ap.add_argument("--model_name", default="checkpoint.pt", help="checkpoint filename inside save_loc")
+    ap.add_argument("--model_name", default="checkpoint.pt00065.pt", help="checkpoint filename inside save_loc")
     args = ap.parse_args()
     fails = 0
 

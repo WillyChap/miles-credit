@@ -67,13 +67,17 @@ link_one () {
 echo "Staging assets into $ASSETS (mode: $MODE)"
 for s in "${SRC[@]}"; do link_one "$s"; done
 
-# checkpoint.pt -> assets/checkpoint.pt  (config save_loc points at ./assets/)
-if [ -e "$CKPT_DIR/checkpoint.pt" ]; then
-  if [ "$MODE" = "copy" ]; then cp -n "$CKPT_DIR/checkpoint.pt" "$ASSETS/checkpoint.pt"
-  else ln -sfn "$CKPT_DIR/checkpoint.pt" "$ASSETS/checkpoint.pt"; fi
-  echo "  ${MODE/symlink/linked}  checkpoint.pt"
-else
-  echo "  !! MISSING checkpoint: $CKPT_DIR/checkpoint.pt"
-fi
+# Checkpoint(s) -> assets/. Default is checkpoint.pt00065.pt (the MODEL_NAME
+# default); override with CKPT env var, e.g.  CKPT=checkpoint.pt00058.pt ./stage_assets.sh
+# or stage several:  CKPT="checkpoint.pt000{40..79}.pt" ./stage_assets.sh
+for ckpt in ${CKPT:-checkpoint.pt00065.pt}; do
+  if [ -e "$CKPT_DIR/$ckpt" ]; then
+    if [ "$MODE" = "copy" ]; then cp -n "$CKPT_DIR/$ckpt" "$ASSETS/$ckpt"
+    else ln -sfn "$CKPT_DIR/$ckpt" "$ASSETS/$ckpt"; fi
+    echo "  ${MODE/symlink/linked}  $ckpt"
+  else
+    echo "  !! MISSING checkpoint: $CKPT_DIR/$ckpt"
+  fi
+done
 
-echo "Done. Verify with:  ls -lh assets/"
+echo "Done. Verify with:  ls -lh assets/   (run with MODEL_NAME=<ckpt> to match)"

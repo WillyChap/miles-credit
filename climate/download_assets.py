@@ -19,10 +19,11 @@ import argparse
 import os
 import sys
 
-# Files expected in ./assets/ (basenames the config points at). Optional ones are
-# only needed for rollout_metrics / fast-climate scoring, not a plain run.
-REQUIRED = [
-    "checkpoint.pt",
+# Shared inputs every run needs (basenames the config points at), EXCEPT the
+# model checkpoint — there are many checkpoints (epochs), so you pick which
+# one(s) to download with --checkpoint/--checkpoints. Optional files are only
+# needed for rollout_metrics / fast-climate scoring, not a plain run.
+SHARED = [
     "mean_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc",
     "std_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc",
     "statics_b_credit_runs_f32_02.nc",
@@ -49,6 +50,13 @@ def main():
     ap.add_argument("--revision", default=None, help="Branch/tag/commit to pull (default: main)")
     ap.add_argument("--assets_dir", default=os.path.join(os.path.dirname(__file__), "assets"),
                     help="Where to place the files (default: ./assets)")
+    ap.add_argument("--checkpoint", default="checkpoint.pt00065.pt",
+                    help="checkpoint file to fetch from the repo (default: checkpoint.pt00065.pt). "
+                         "Set the same name as MODEL_NAME when you run.")
+    ap.add_argument("--checkpoints", nargs="+", default=None,
+                    help="fetch several checkpoints at once (overrides --checkpoint)")
+    ap.add_argument("--no_checkpoint", action="store_true",
+                    help="fetch only the shared inputs, no checkpoint")
     ap.add_argument("--include_optional", action="store_true", help="Also fetch the optional scoring files")
     ap.add_argument("--token", default=None, help="HF token for private repos (else uses cached login)")
     args = ap.parse_args()
@@ -67,8 +75,11 @@ def main():
         sys.exit("huggingface_hub not installed.  ->  pip install huggingface_hub")
 
     os.makedirs(args.assets_dir, exist_ok=True)
-    wanted = REQUIRED + (OPTIONAL if args.include_optional else [])
+    ckpts = [] if args.no_checkpoint else (args.checkpoints or [args.checkpoint])
+    wanted = ckpts + SHARED + (OPTIONAL if args.include_optional else [])
     print(f"Downloading {len(wanted)} files from {args.repo_type}:{args.repo_id} -> {args.assets_dir}")
+    if ckpts:
+        print(f"  checkpoint(s): {', '.join(ckpts)}  (set MODEL_NAME to match when you run)")
 
     failed = []
     for fname in wanted:
