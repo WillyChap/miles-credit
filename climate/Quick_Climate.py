@@ -90,19 +90,31 @@ def parse_datetime_from_config(conf: dict) -> datetime:
 # ============================================================================
 
 
-def _flush_monthly(pool, accum, month_dt, init_str, lead_time_periods, metadata, conf, lats, lons):
-    """Average accumulated predictions and save one NetCDF per month."""
+# Averaging-period helpers. The averaging modes (--daily_mean / --monthly_mean)
+# are a compact alternative to the default per-6-hourly-step output: they write
+# one time-averaged NetCDF per day or per month, replacing the old Post_Process.py.
+_PERIOD_FMT = {"daily": "%Y%m%d", "monthly": "%Y%m"}  # filename tag per period
+
+
+def _bucket_key(dt, period):
+    """Identity of the averaging bucket a timestamp falls in."""
+    return (dt.year, dt.month, dt.day) if period == "daily" else (dt.year, dt.month)
+
+
+def _flush_average(pool, accum, bucket_dt, init_str, period, metadata, conf, lats, lons):
+    """Average accumulated predictions and save one NetCDF per day/month."""
     if not accum:
         return
-    stacked = torch.stack(accum, dim=0).mean(dim=0)  # [1, C, 1, H, W] mean over month
-    upper_air, single_level = make_xarray(stacked, month_dt, lats, lons, conf)
-    file_tag = int(month_dt.strftime('%Y%m'))  # e.g. 200101, 200102 — human-readable
+    stacked = torch.stack(accum, dim=0).mean(dim=0)  # [1, C, 1, H, W] mean over bucket
+    upper_air, single_level = make_xarray(stacked, bucket_dt, lats, lons, conf)
+    file_tag = int(bucket_dt.strftime(_PERIOD_FMT[period]))  # YYYYMMDD or YYYYMM — human-readable
     pool.apply_async(save_netcdf_increment, (upper_air, single_level, init_str, file_tag, metadata, conf))
-    print(f"  Saved monthly mean for {month_dt.strftime('%Y-%m')}")
+    print(f"  Saved {period} mean for {bucket_dt.strftime('%Y-%m-%d')}")
 
 
 def run_climate_integration(pool: mp.Pool, context: dict, save_append: str = None, init_noise: float = None,
-                            monthly_mean: bool = False, track_moisture: bool = False):
+                            monthly_mean: bool = False, daily_mean: bool = False,
+                            track_moisture: bool = False, no_wind_pp: bool = False):
     """
     Run the CAMulator climate integration loop.
 
@@ -127,6 +139,12 @@ def run_climate_integration(pool: mp.Pool, context: dict, save_append: str = Non
     latlons = context["latlons"]
     metadata = context["metadata"]
     device = context["device"]
+
+    # Optionally disable WindPP wind-artifact filtering (default: leave it ON).
+    if no_wind_pp:
+        stepper.enable_wind_filtering = False
+        print("WindPP wind-artifact filtering DISABLED (--no_wind_pp)")
+    print(f"Wind filtering active: {stepper.enable_wind_filtering}")
 
     # Update save location if append specified
     if save_append:
@@ -198,17 +216,29 @@ def run_climate_integration(pool: mp.Pool, context: dict, save_append: str = Non
     # MAIN TIME-STEPPING LOOP
     # ========================================================================
 
+    # Pick the averaging mode (default: write every 6-hourly step).
+    if monthly_mean and daily_mean:
+        raise ValueError("Choose only one of monthly_mean / daily_mean")
+    avg_period = "monthly" if monthly_mean else ("daily" if daily_mean else None)
+
     print("Starting time-stepping loop...")
-    print(f"Output mode: {'monthly means' if monthly_mean else 'every 6-hourly step'}")
+    print(f"Output mode: {avg_period + ' means' if avg_period else 'every 6-hourly step'}")
     forecast_hour = 1
     timestep_counter = 0
     from datetime import timedelta
-    sim_dt = init_dt  # simulation clock — advances independently of cyclic forcing
+    import cftime
+    # No-leap (365-day) simulation clock to match the CESM / forcing calendar.
+    # A real datetime clock would insert Feb 29 and drift ~1 day every 4 yr away
+    # from the no-leap forcing (e.g. a 35-yr run ends ~9 days early). DatetimeNoLeap
+    # + timedelta skips Feb 29, so output stamps stay aligned with forcing time[i].
+    sim_dt = cftime.DatetimeNoLeap(init_dt.year, init_dt.month, init_dt.day,
+                                   init_dt.hour, init_dt.minute, init_dt.second)
+    # simulation clock — advances independently of cyclic forcing, no-leap calendar
 
-    # Monthly accumulation state
-    monthly_accum = []
-    current_month = None
-    month_start_dt = None
+    # Averaging accumulation state (used when avg_period is "daily" or "monthly")
+    avg_accum = []
+    current_bucket = None
+    bucket_start_dt = None
 
     # Moisture tracking state (Qtot channels 96-127, q_inds from post_conf)
     q_lo, q_hi = 96, 128  # 32 levels of Qtot
@@ -282,22 +312,23 @@ def run_climate_integration(pool: mp.Pool, context: dict, save_append: str = Non
             # climate_rescale_output: True in the config
             # ================================================================
 
-            if monthly_mean:
-                # Accumulate predictions; flush to disk when the month rolls over
+            if avg_period:
+                # Accumulate predictions; flush to disk when the day/month rolls over
                 pred_cpu = prediction.cpu()
-                if current_month is None:
-                    current_month = utc_datetime.month
-                    month_start_dt = utc_datetime
-                elif utc_datetime.month != current_month:
-                    _flush_monthly(
-                        pool, monthly_accum, month_start_dt, init_str,
-                        lead_time_periods, metadata, conf,
+                bucket = _bucket_key(utc_datetime, avg_period)
+                if current_bucket is None:
+                    current_bucket = bucket
+                    bucket_start_dt = utc_datetime
+                elif bucket != current_bucket:
+                    _flush_average(
+                        pool, avg_accum, bucket_start_dt, init_str,
+                        avg_period, metadata, conf,
                         latlons.latitude.values, latlons.longitude.values,
                     )
-                    monthly_accum = []
-                    current_month = utc_datetime.month
-                    month_start_dt = utc_datetime
-                monthly_accum.append(pred_cpu)
+                    avg_accum = []
+                    current_bucket = bucket
+                    bucket_start_dt = utc_datetime
+                avg_accum.append(pred_cpu)
             else:
                 # Convert prediction to xarray (fast, on CPU)
                 upper_air, single_level = make_xarray(
@@ -317,11 +348,11 @@ def run_climate_integration(pool: mp.Pool, context: dict, save_append: str = Non
             forecast_hour += 1
             sim_dt += timedelta(hours=6)
 
-    # Flush any remaining accumulated steps (final partial/full month)
-    if monthly_mean and monthly_accum:
-        _flush_monthly(
-            pool, monthly_accum, month_start_dt, init_str,
-            lead_time_periods, metadata, conf,
+    # Flush any remaining accumulated steps (final partial/full day or month)
+    if avg_period and avg_accum:
+        _flush_average(
+            pool, avg_accum, bucket_start_dt, init_str,
+            avg_period, metadata, conf,
             latlons.latitude.values, latlons.longitude.values,
         )
 
@@ -377,8 +408,16 @@ Example usage:
         help="Save monthly means instead of every 6-hourly step (much smaller output)"
     )
     parser.add_argument(
+        "--daily_mean", action="store_true", default=False,
+        help="Save daily means instead of every 6-hourly step (smaller output)"
+    )
+    parser.add_argument(
         "--track_moisture", action="store_true", default=False,
         help="Track global mean column Qtot each step and save to moisture_tracking.csv"
+    )
+    parser.add_argument(
+        "--no_wind_pp", action="store_true", default=False,
+        help="Disable WindPP wind-artifact filtering (sets stepper.enable_wind_filtering=False)"
     )
 
     # Deprecated arguments (kept for backwards compatibility but unused)
@@ -412,7 +451,8 @@ Example usage:
     with mp.Pool(num_cpus) as pool:
         flag_energy = run_climate_integration(
             pool=pool, context=context, save_append=args.save_append, init_noise=args.init_noise,
-            monthly_mean=args.monthly_mean, track_moisture=args.track_moisture,
+            monthly_mean=args.monthly_mean, daily_mean=args.daily_mean,
+            track_moisture=args.track_moisture, no_wind_pp=args.no_wind_pp,
         )
 
     end_time = time.time()

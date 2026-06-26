@@ -23,13 +23,28 @@ class WindArtifactFilterConfig:
     # detection & smoothing
     speed_threshold: float = 3.0193274566643846
     smooth_sigma: float = 1.0
+    # Anisotropic data smoothing: the residual artifact is a meridional stripe that
+    # oscillates in LONGITUDE (high zonal wavenumber, ~zero meridional wavenumber),
+    # while the jet is zonally uniform and meridionally sharp. So smooth strongly in
+    # the zonal (lon) direction to kill the stripe, and barely in the meridional (lat)
+    # direction to preserve the jet's latitude profile. If either is None it falls back
+    # to smooth_sigma (isotropic = original behavior).
+    smooth_sigma_zonal: float = None
+    smooth_sigma_meridional: float = None
     dilation_zonal: int = 13
     dilation_meridional: int = 5
     falloff_sigma: float = 4.0
+    # If True, after low-pass smoothing inside the flagged region, rescale the smoothed
+    # field so its mask-weighted RMS amplitude matches the original. This removes the
+    # grid-scale wiggle (the smoothed field has no near-2dx energy) but gives a genuine
+    # jet back the peak strength the Gaussian would otherwise shave off.
+    preserve_amplitude: bool = False
 
     def validate(self):
         assert self.dilation_zonal > 0 and self.dilation_meridional > 0, "Dilations must be positive"
         assert self.smooth_sigma > 0 and self.falloff_sigma > 0, "Sigmas must be positive"
+        for s in (self.smooth_sigma_zonal, self.smooth_sigma_meridional):
+            assert s is None or s > 0, "Anisotropic smooth sigmas must be None or positive"
         assert isinstance(self.target_levels, (list, tuple)), "target_levels must be a sequence"
         assert isinstance(self.target_vars, (list, tuple)), "target_vars must be a sequence"
 
@@ -57,17 +72,25 @@ def load_wind_filter_config(conf) -> WindArtifactFilterConfig:
         target_vars=tuple(raw.get("target_vars", ["U", "V", "T", "Qtot"])),
         speed_threshold=raw.get("speed_threshold", 3.0193274566643846),
         smooth_sigma=raw.get("smooth_sigma", 1.0),
+        smooth_sigma_zonal=raw.get("smooth_sigma_zonal", None),
+        smooth_sigma_meridional=raw.get("smooth_sigma_meridional", None),
         dilation_zonal=raw.get("dilation_zonal", 13),
         dilation_meridional=raw.get("dilation_meridional", 5),
         falloff_sigma=raw.get("falloff_sigma", 4.0),
+        preserve_amplitude=raw.get("preserve_amplitude", False),
     )
     cfg.validate()
     return cfg
 
 
-def wind_filter(field, gaussian_2d, kernel_size, smooth_blend_mask):
+def wind_filter(field, gaussian_2d, kernel_size, smooth_blend_mask, preserve_amplitude=False):
     """
     Apply wind filtering to a 2D field [height, width]
+
+    If preserve_amplitude is True, the smoothed field is rescaled so its
+    mask-weighted RMS amplitude matches the original before blending. This keeps the
+    jet's strength (the part a low-pass would erode) while still removing the
+    grid-scale wiggle, since the smoothed field carries no near-2dx energy to amplify.
     """
     # Ensure field is 4D for F.conv2d: [1, 1, height, width]
     if field.dim() == 2:
@@ -82,8 +105,24 @@ def wind_filter(field, gaussian_2d, kernel_size, smooth_blend_mask):
     elif gaussian_2d.dim() == 3:
         gaussian_2d = gaussian_2d.unsqueeze(1)  # Add in_channels=1 dimension
 
-    # Apply filtering
-    field_smooth = F.conv2d(field, gaussian_2d, padding=kernel_size // 2)
+    # Apply filtering. Derive padding from the kernel's own (possibly rectangular) shape
+    # so anisotropic zonal/meridional kernels keep the field dimensions; kernel_size arg
+    # is retained only for backward compatibility.
+    k_lat, k_lon = gaussian_2d.shape[-2], gaussian_2d.shape[-1]
+    field_smooth = F.conv2d(field, gaussian_2d, padding=(k_lat // 2, k_lon // 2))
+
+    if preserve_amplitude:
+        # Restore the mask-weighted RMS amplitude the low-pass removed: alpha scales the
+        # smooth field so sum(w*smooth^2) == sum(w*field^2) over the blended region.
+        # alpha >= 1 typically (smoothing reduces variance); the smooth field has no
+        # grid-scale energy, so this lifts the jet peak back without re-injecting noise.
+        w = smooth_blend_mask
+        num = (w * field**2).sum()
+        den = (w * field_smooth**2).sum()
+        alpha = torch.sqrt(num / (den + 1e-12))
+        alpha = torch.clamp(alpha, max=4.0)  # guard against pathological over-amplification
+        field_smooth = alpha * field_smooth
+
     field_filtered = smooth_blend_mask * field_smooth + (1 - smooth_blend_mask) * field
 
     if squeeze_output:
@@ -158,6 +197,9 @@ def post_process_wind_artifacts(x, conf, enable_filtering=True):
             dilation_zonal=wf_cfg.dilation_zonal,
             dilation_meridional=wf_cfg.dilation_meridional,
             falloff_sigma=wf_cfg.falloff_sigma,
+            preserve_amplitude=wf_cfg.preserve_amplitude,
+            smooth_sigma_zonal=wf_cfg.smooth_sigma_zonal,
+            smooth_sigma_meridional=wf_cfg.smooth_sigma_meridional,
         )
     except Exception as e:
         print(f"Wind artifact filtering failed: {e}")
@@ -175,6 +217,9 @@ def apply_wind_artifact_filter_to_tensor(
     dilation_zonal=15,
     dilation_meridional=5,
     falloff_sigma=4.0,
+    preserve_amplitude=False,
+    smooth_sigma_zonal=None,
+    smooth_sigma_meridional=None,
 ):
     """
     Complete wind artifact filtering pipeline:
@@ -224,6 +269,8 @@ def apply_wind_artifact_filter_to_tensor(
         dilation_zonal=dilation_zonal,
         dilation_meridional=dilation_meridional,
         falloff_sigma=falloff_sigma,
+        smooth_sigma_zonal=smooth_sigma_zonal,
+        smooth_sigma_meridional=smooth_sigma_meridional,
     )
 
     # Step 4: Apply mask to target levels of target variables
@@ -246,7 +293,9 @@ def apply_wind_artifact_filter_to_tensor(
             level_slice = var_dict[var_name][:, level, :, :].squeeze()
 
             # Apply wind filter with pre-calculated mask
-            filtered_slice = wind_filter(level_slice, gaussian_2d, kernel_size, smooth_blend_mask)
+            filtered_slice = wind_filter(
+                level_slice, gaussian_2d, kernel_size, smooth_blend_mask, preserve_amplitude=preserve_amplitude
+            )
 
             # Put back into original tensor x (IN-PLACE modification)
             tensor_position = start_idx + level
@@ -258,7 +307,8 @@ def apply_wind_artifact_filter_to_tensor(
 
 
 def simple_wind_artifact_filter(
-    u_wind, v_wind, speed_threshold=25.0, smooth_sigma=2.0, dilation_zonal=9, dilation_meridional=3, falloff_sigma=3.0
+    u_wind, v_wind, speed_threshold=25.0, smooth_sigma=2.0, dilation_zonal=9, dilation_meridional=3, falloff_sigma=3.0,
+    smooth_sigma_zonal=None, smooth_sigma_meridional=None,
 ):
     """
     Simple approach with ANISOTROPIC dilation - wider in zonal direction for jet-like features
@@ -320,22 +370,30 @@ def simple_wind_artifact_filter(
         expanded_mask_float, gaussian_2d_falloff, padding=(falloff_kernel_size_lat // 2, falloff_kernel_size_lon // 2)
     )
 
-    # Regular isotropic smoothing kernel for the actual data
-    kernel_size = int(2 * smooth_sigma * 3 + 1)
-    if kernel_size % 2 == 0:
-        kernel_size += 1
+    # Data-smoothing kernel (separable Gaussian). Anisotropic by default-when-set:
+    #   sig_lon (zonal, x) smooths along longitude -> kills the zonally-oscillating stripe
+    #   sig_lat (meridional, y) smooths along latitude -> kept small to spare the jet profile
+    # Falls back to isotropic smooth_sigma when the per-axis sigmas are None.
+    sig_lat = smooth_sigma if smooth_sigma_meridional is None else smooth_sigma_meridional
+    sig_lon = smooth_sigma if smooth_sigma_zonal is None else smooth_sigma_zonal
 
-    x = torch.arange(kernel_size, dtype=dtype, device=device)
-    x = x - kernel_size // 2
-    gaussian_1d = torch.exp(-0.5 * (x / smooth_sigma) ** 2)
-    gaussian_1d = gaussian_1d / gaussian_1d.sum()
+    def _gauss1d(sig):
+        ks = int(2 * sig * 3 + 1)
+        if ks % 2 == 0:
+            ks += 1
+        xx = torch.arange(ks, dtype=dtype, device=device) - ks // 2
+        g = torch.exp(-0.5 * (xx / sig) ** 2)
+        return g / g.sum(), ks
 
-    gaussian_2d = gaussian_1d.unsqueeze(0) * gaussian_1d.unsqueeze(1)
-    gaussian_2d = gaussian_2d.unsqueeze(0).unsqueeze(0)
+    g_lat, k_lat = _gauss1d(sig_lat)  # along latitude  (kernel height)
+    g_lon, k_lon = _gauss1d(sig_lon)  # along longitude (kernel width)
+    gaussian_2d = (g_lat.unsqueeze(1) * g_lon.unsqueeze(0)).unsqueeze(0).unsqueeze(0)  # [1,1,k_lat,k_lon]
+    kernel_size = max(k_lat, k_lon)  # retained for backward-compat return value
 
-    # Apply smoothing
-    u_smoothed = F.conv2d(u_wind, gaussian_2d, padding=kernel_size // 2)
-    v_smoothed = F.conv2d(v_wind, gaussian_2d, padding=kernel_size // 2)
+    # Apply smoothing (asymmetric padding so the rectangular kernel keeps the field shape)
+    pad = (k_lat // 2, k_lon // 2)
+    u_smoothed = F.conv2d(u_wind, gaussian_2d, padding=pad)
+    v_smoothed = F.conv2d(v_wind, gaussian_2d, padding=pad)
 
     # Smooth blending
     u_filtered = smooth_blend_mask * u_smoothed + (1 - smooth_blend_mask) * u_wind

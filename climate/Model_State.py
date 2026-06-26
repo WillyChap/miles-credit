@@ -810,17 +810,14 @@ def initialize_camulator(config_path: str, model_name: str = None, device: str =
     chunk_size = conf["data"].get("forcing_chunk_size", 32)
     forcing_ds = xr.open_dataset(forcing_file, chunks={"time": chunk_size})
 
-    # Align forcing_ds coordinates to exactly match the mean/std datasets before
-    # normalization.  transform_dataset does `(DS - mean_ds) / std_ds`, and
-    # xarray arithmetic defaults to inner-join: float32 forcing coords vs float64
-    # mean coords only agree at ±90, leaving 2 latitudes instead of 192.
-    for _coord in ("latitude", "longitude", "lat", "lon"):
-        for _ref_ds in (state_transformer.mean_ds, state_transformer.std_ds):
-            if _coord in forcing_ds.coords and _coord in _ref_ds.coords:
-                forcing_ds = forcing_ds.assign_coords(
-                    {_coord: _ref_ds[_coord].values}
-                )
-                break
+    # Cast lat/lon coords to float32 so they align with the normalization
+    # mean_ds/std_ds (which are float32). If the forcing file stores coords as
+    # float64, xarray aligns transform_dataset() on the coord intersection and
+    # silently collapses the grid (e.g. latitude 192 -> 2). Casting fixes this
+    # for any forcing file regardless of how its coords were written.
+    for _c in ("latitude", "longitude"):
+        if _c in forcing_ds.coords and forcing_ds[_c].dtype != np.float32:
+            forcing_ds = forcing_ds.assign_coords({_c: forcing_ds[_c].astype("float32")})
 
     # Normalize forcing data
     print("Normalizing forcing data...")

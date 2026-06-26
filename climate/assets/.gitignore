@@ -1,0 +1,3 @@
+# Inference assets are downloaded/staged, not committed.
+*
+!.gitignore
