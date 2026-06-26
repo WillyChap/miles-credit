@@ -30,6 +30,7 @@ SHARED = [
 OPTIONAL = [
     "ERA5_clim_1990_2019_6h_interp.nc",
     "truth_be21_tensor_2013-01-01T00Z.pth",
+    "b.e21.CREDIT_climate_branch_1980_2014.nc",   # progressive/transient forcing (~85 GB)
 ]
 
 

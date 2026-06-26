@@ -36,6 +36,9 @@ SHARED = [
 OPTIONAL = [
     "ERA5_clim_1990_2019_6h_interp.nc",
     "truth_be21_tensor_2013-01-01T00Z.pth",
+    # progressive/transient forcing (1980-2014, ~85 GB) — alternative to the
+    # cyclic forcing; only needed for transient-climate runs.
+    "b.e21.CREDIT_climate_branch_1980_2014.nc",
 ]
 
 # Default HuggingFace repo holding the assets. Override with --repo_id or the

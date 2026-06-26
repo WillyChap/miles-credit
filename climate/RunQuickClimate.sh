@@ -20,9 +20,9 @@
 # Roll a trained CAMulator checkpoint forward and write NetCDF, driven by ONE
 # yaml file (camulator_config.yml). Output granularity is set by AVG:
 #
-#   AVG=none  (default)  one NetCDF per 6-hourly step   -> pred_*.nc
-#   AVG=daily            one daily-mean NetCDF per day   (--daily_mean)
-#   AVG=monthly          one monthly-mean NetCDF per month (--monthly_mean)
+#   AVG=monthly (default) one monthly-mean NetCDF per month (--monthly_mean)
+#   AVG=daily             one daily-mean NetCDF per day      (--daily_mean)
+#   AVG=none              one NetCDF per 6-hourly step        -> pred_*.nc
 #
 # Files land in:  <save_forecast>/<FOLD_OUT>/<init_time>/pred_*.nc
 #
@@ -49,7 +49,7 @@ CONFIG=${CONFIG:-./camulator_config.yml}
 CONDA_ENV=${CONDA_ENV:-camulator}
 FOLD_OUT=${FOLD_OUT:-run_default}     # experiment subfolder under save_forecast
 MODEL_NAME=${MODEL_NAME:-checkpoint.pt00065.pt}  # checkpoint file inside save_loc (./assets)
-AVG=${AVG:-none}                      # none | daily | monthly
+AVG=${AVG:-monthly}                   # monthly (default) | daily | none(6-hourly)
 # ----------------------------------------------------------------------------
 
 case "$AVG" in

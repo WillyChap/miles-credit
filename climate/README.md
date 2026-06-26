@@ -10,9 +10,9 @@ config (camulator_config.yml)
         │
         ▼
 Quick_Climate.py ──► NetCDF in <save_forecast>/<run>/<init_time>/pred_*.nc
-                     • default      : one file per 6-hourly step
-                     • --daily_mean : one daily-mean file per day
-                     • --monthly_mean: one monthly-mean file per month
+                     • --monthly_mean (default): one monthly-mean file per month
+                     • --daily_mean            : one daily-mean file per day
+                     • (no flag)               : one file per 6-hourly step
 ```
 
 ---
@@ -77,7 +77,7 @@ bash RunQuickClimate.sh      # interactive GPU node
 #   ... or:  qsub RunQuickClimate.sh   (NCAR PBS; edit CONDA_ENV first)
 
 # result:
-ls output/run_default/1981-01-01T00Z/   # pred_*.nc
+ls output/run_default/1981-01-01T00Z/   # pred_*_198101.nc … (monthly means, default)
 ```
 
 `RunQuickClimate.sh` reads overridable env vars, so you can avoid editing it:
@@ -91,9 +91,9 @@ CONDA_ENV=camulator FOLD_OUT=myrun AVG=monthly bash RunQuickClimate.sh
 
 | `AVG` | What you get |
 |-------|--------------|
-| `none` (default) | one NetCDF per 6-hourly step (full resolution) |
+| `monthly` (default) | one monthly-mean NetCDF per month (`Quick_Climate.py --monthly_mean`) |
 | `daily` | one daily-mean NetCDF per day (`Quick_Climate.py --daily_mean`) |
-| `monthly` | one monthly-mean NetCDF per month (`Quick_Climate.py --monthly_mean`) |
+| `none` | one NetCDF per 6-hourly step (full resolution, large) |
 
 Averaging happens *inside the rollout* (no separate post-processing step), so
 `daily`/`monthly` produce far less data.
@@ -121,7 +121,7 @@ Edit `camulator_config.yml` → `predict:`
 
 …and the experiment knobs in `RunQuickClimate.sh`: `FOLD_OUT` (run name),
 `MODEL_NAME` (checkpoint file in `./assets/`, default `checkpoint.pt00065.pt`),
-and `AVG` (`none` → 6-hourly, `daily`/`monthly` → averaged).
+and `AVG` (`monthly` default → monthly means; `daily`; `none` → 6-hourly).
 
 ### Choosing a checkpoint
 
@@ -171,16 +171,34 @@ All config paths are `./assets/<file>`. Fill `./assets/` one of two ways:
 | `statics_b_credit_runs_f32_02.nc` | 50 M | static inputs + mass/water fixers | `…/b_credit_runs/` |
 | `b.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc` | 50 M | hybrid-sigma coeffs (conservation post-blocks) | `…/MLWPS/STAGING/` |
 | `f.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc` | 50 M | latitude weights | `…/MLWPS/STAGING/` |
-| `b.e21.CREDIT_climate_cyclic_1yr_f32coords.nc` | 1.3 G | cyclic 1-yr forcing | `…/CAMULATOR_FORCING/` |
+| `b.e21.CREDIT_climate_cyclic_1yr_f32coords.nc` | 1.3 G | cyclic 1-yr forcing (default) | `…/CAMULATOR_FORCING/` |
 | `init_camulator_condition_tensor_1981-01-01T00Z.pth` | 29 M | initial condition | `…/NEW_CLI_JOHN_CASPER_extended/init_times/` |
 | `era5.yaml` | <1 K | output variable metadata | `/glade/work/schreck/repos/credit/miles-credit/metadata/` |
 
-**Optional (only for `rollout_metrics` / fast-climate scores, not for a plain run)**
+**Optional**
 
-| File in `assets/` | Used for |
-|---|---|
-| `ERA5_clim_1990_2019_6h_interp.nc` | climatology baseline |
-| `truth_be21_tensor_2013-01-01T00Z.pth` | seasonal-mean reference |
+| File in `assets/` | ~Size | Used for |
+|---|---|---|
+| `b.e21.CREDIT_climate_branch_1980_2014.nc` | 85 G | progressive/transient forcing (alternative to cyclic — see below) |
+| `ERA5_clim_1990_2019_6h_interp.nc` | 1 G | climatology baseline (`rollout_metrics` only) |
+| `truth_be21_tensor_2013-01-01T00Z.pth` | 29 M | seasonal-mean reference (`rollout_metrics` only) |
+
+### Cyclic vs progressive forcing
+
+The default `forcing_file` is the **cyclic** 1-year file: every model year sees
+the same climatological SST/ICE/CO₂ (good for equilibrium/spin-up runs). For a
+**transient** run where the forcing evolves with real years, point `forcing_file`
+at the **progressive** 1980–2014 record and set `start_datetime` to a year inside
+that range:
+
+```yaml
+predict:
+  forcing_file: ./assets/b.e21.CREDIT_climate_branch_1980_2014.nc
+  start_datetime: '1981-01-01 00:00:00'   # tracks real years 1981, 1982, …
+```
+
+Both are drop-in (the rollout auto-aligns the forcing grid). Verified: an 8-step
+run with the progressive file writes `pred_*.nc` correctly.
 
 > The full ERA5/CESM training zarr (`data.save_loc`, still an absolute GLADE
 > path in the config) is **not** needed for inference — only

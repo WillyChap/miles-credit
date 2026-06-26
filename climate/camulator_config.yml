@@ -552,7 +552,14 @@ predict:
     # EDIT (what to write): list the fields to save; [] or remove this key saves ALL variables.
     save_vars: ['PRECT','TS','CLDHGH','CLDLOW','CLDMED','TAUX','TAUY','U10','QFLX','SHFLX','LHFLX','FSDS_J','FLDS_J','FSUS','FLUS','FSUTOA','FLUT','TREFHT','PS','Qtot','U','V','T']
 
-    # EDIT (forcing): cyclic forcing file (SOLIN, SST, ICEFRAC, CO2). One year long; auto-wrapped for multi-year runs.
+    # EDIT (forcing): the SOLIN/SST/ICEFRAC/CO2 boundary conditions. Two options:
+    #   CYCLIC (default): a single climatological year, auto-wrapped — every model
+    #     year sees the same forcing (good for equilibrium/spin-up runs).
+    #       ./assets/b.e21.CREDIT_climate_cyclic_1yr_f32coords.nc
+    #   PROGRESSIVE/TRANSIENT: the full 1980-2014 record (51100 steps) — forcing
+    #     evolves year-to-year (real SST/ICE/CO2 trend). Set start_datetime to a
+    #     year inside 1980-2014 so the rollout tracks real years:
+    #       ./assets/b.e21.CREDIT_climate_branch_1980_2014.nc
     forcing_file: './assets/b.e21.CREDIT_climate_cyclic_1yr_f32coords.nc'
 
     # Leave False (a metrics-only fast-climate mode, not the standard rollout).

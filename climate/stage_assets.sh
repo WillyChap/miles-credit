@@ -41,8 +41,10 @@ declare -a SRC=(
   "/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc"
   # latitude weights (loss block)
   "/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/f.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc"
-  # cyclic 1-yr forcing (SOLIN, SST, ICEFRAC, co2vmr_3d)
+  # cyclic 1-yr forcing (SOLIN, SST, ICEFRAC, co2vmr_3d) — default
   "/glade/derecho/scratch/wchapman/CAMULATOR_FORCING/b.e21.CREDIT_climate_cyclic_1yr_f32coords.nc"
+  # progressive/transient forcing: full 1980-2014 record (85 GB; optional)
+  "/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate_branch_1980_2014.nc"
   # initial condition tensor (default start 1981-01-01T00Z)
   "/glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended/init_times/init_camulator_condition_tensor_1981-01-01T00Z.pth"
   # output metadata
