@@ -7,7 +7,7 @@ Run this ONCE (with the real assets staged in ./assets/) to publish the model.
 
     # on NCAR, stage the real files first:
     ./stage_assets.sh --copy            # copy (not symlink) into ./assets/
-    python upload_assets.py --repo_id <user>/camulator --create
+    python upload_assets.py --repo_id willychap/camulator --create
 
 Requires:  pip install huggingface_hub   and   `huggingface-cli login`
 """
@@ -36,7 +36,7 @@ OPTIONAL = [
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--repo_id", required=True, help="e.g. myorg/camulator")
+    ap.add_argument("--repo_id", required=True, help="e.g. willychap/camulator")
     ap.add_argument("--repo_type", default="model", choices=["model", "dataset"])
     ap.add_argument("--assets_dir", default=os.path.join(os.path.dirname(__file__), "assets"))
     ap.add_argument("--create", action="store_true", help="create the repo if it does not exist")

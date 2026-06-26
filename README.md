@@ -26,14 +26,14 @@ pip install -e . --no-deps      # --no-deps: environment.yml already pins the ru
 cd climate
 # NOTE: the public HuggingFace asset repo is not published yet, so this download
 # is not yet runnable off-NCAR — see climate/README.md "Getting the assets".
-python download_assets.py --repo_id <org>/camulator   # or ./stage_assets.sh on NCAR
+python download_assets.py --repo_id willychap/camulator   # or ./stage_assets.sh on NCAR
 python check_setup.py                                  # preflight
 bash RunQuickClimate.sh                                # rollout -> output/<run>/<init>/pred_*.nc
 ```
 
-Requirements: a CUDA GPU (~6 GB free) and ~6.5 GB of model/forcing assets. The
+Requirements: a CUDA GPU (~6 GB free) and ~6 GB of model/forcing assets. The
 environment (`environment.yml`) is PyTorch + CREDIT only — no JAX. It was built
-and tested on NCAR Casper (Python 3.11, PyTorch 2.6 + CUDA 12.4); adjust the
+and tested on NCAR Casper (Python 3.11, PyTorch 2.4.1 + CUDA 12.1); adjust the
 torch wheel for a different host CUDA.
 
 ## What's here

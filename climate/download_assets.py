@@ -43,7 +43,7 @@ OPTIONAL = [
 
 # Default HuggingFace repo holding the assets. Override with --repo_id or the
 # CAMULATOR_HF_REPO environment variable.
-DEFAULT_REPO = os.environ.get("CAMULATOR_HF_REPO", "NCAR/camulator")
+DEFAULT_REPO = os.environ.get("CAMULATOR_HF_REPO", "willychap/camulator")
 
 
 def main():
@@ -65,10 +65,10 @@ def main():
     args = ap.parse_args()
 
     # Guard against the placeholder repo id (the HF repo must exist first).
-    if "<" in args.repo_id or args.repo_id == "NCAR/camulator":
+    if "<" in args.repo_id:
         sys.exit(
             f"--repo_id '{args.repo_id}' is a placeholder. Pass the real HuggingFace repo, e.g.\n"
-            "    python download_assets.py --repo_id myorg/camulator\n"
+            "    python download_assets.py --repo_id willychap/camulator\n"
             "(Maintainers: create+populate it with upload_assets.py first.)"
         )
 

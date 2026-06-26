@@ -102,7 +102,7 @@ def main():
                 print(f"{OK} {label}: {path}")
             else:
                 print(f"{BAD} {label} MISSING: {path}")
-                print("       -> stage assets:  python download_assets.py --repo_id <user>/camulator")
+                print("       -> stage assets:  python download_assets.py --repo_id willychap/camulator")
                 fails += 1
 
     # 5. GPU (recommended, not strictly required)

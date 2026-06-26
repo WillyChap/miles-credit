@@ -65,7 +65,7 @@ cd climate
 # 1. get the model + inputs into ./assets/
 #    Pass the real HuggingFace repo id (or set CAMULATOR_HF_REPO). See "Getting
 #    the assets" below — there is no runnable default until the repo is published.
-python download_assets.py --repo_id <org>/camulator    # off-NCAR (HuggingFace)
+python download_assets.py --repo_id willychap/camulator    # off-NCAR (HuggingFace)
 #   ... or, on NCAR, symlink the GLADE copies instead (no download):
 ./stage_assets.sh
 
@@ -129,7 +129,7 @@ Many training epochs are hosted (`checkpoint.pt000NN.pt`). Default is epoch 65.
 To use a different one, download it and set `MODEL_NAME` to the same name:
 
 ```bash
-python download_assets.py --repo_id <org>/camulator --checkpoint checkpoint.pt00058.pt
+python download_assets.py --repo_id willychap/camulator --checkpoint checkpoint.pt00058.pt
 MODEL_NAME=checkpoint.pt00058.pt bash RunQuickClimate.sh
 # (download several at once: --checkpoints checkpoint.pt000{50..60}.pt)
 ```
@@ -150,14 +150,14 @@ variable metadata from `era5.yaml`.
 All config paths are `./assets/<file>`. Fill `./assets/` one of two ways:
 
 - **NCAR users:** `./stage_assets.sh` symlinks the GLADE copies (no download).
-- **Everyone else:** `python download_assets.py --repo_id <org>/camulator` pulls
+- **Everyone else:** `python download_assets.py --repo_id willychap/camulator` pulls
   them from HuggingFace.
 
 > ⚠️ **The public HuggingFace asset repo is not published yet.** Until a
 > maintainer creates it (see *Hosting layout* below) and updates the
 > `--repo_id`, off-NCAR users cannot auto-download — request the assets from the
 > maintainers. `download_assets.py` deliberately errors on the placeholder id
-> rather than failing silently. Set `CAMULATOR_HF_REPO=<org>/camulator` to avoid
+> rather than failing silently. Set `CAMULATOR_HF_REPO=willychap/camulator` to avoid
 > passing `--repo_id` each time.
 
 **Required for a basic run** (the "origin" column is the NCAR-internal source
@@ -208,7 +208,7 @@ run with the progressive file writes `pred_*.nc` correctly.
 HuggingFace **model** repo with the manifest files at the repo root:
 
 ```
-<org>/camulator        (HF model repo)
+willychap/camulator        (HF model repo)
 ├── checkpoint.pt00065.pt          # default epoch (others: checkpoint.pt000NN.pt)
 ├── checkpoint.pt00040.pt … 00079  # additional epochs (optional)
 ├── mean_6h_...nc, std_6h_...nc
@@ -218,13 +218,13 @@ HuggingFace **model** repo with the manifest files at the repo root:
 └── era5.yaml
 ```
 
-`download_assets.py --repo_id <org>/camulator` pulls the shared files + the
+`download_assets.py --repo_id willychap/camulator` pulls the shared files + the
 default checkpoint into `./assets/`. Maintainers publish the repo with
 `upload_assets.py`, e.g. shared files + a range of epochs straight from the run
 dir:
 
 ```bash
-python upload_assets.py --repo_id <org>/camulator --create \
+python upload_assets.py --repo_id willychap/camulator --create \
     --checkpoint_dir /glade/.../NEW_CLI_JOHN_CASPER_extended_v2 \
     --checkpoints checkpoint.pt000{40..79}.pt
 ```
