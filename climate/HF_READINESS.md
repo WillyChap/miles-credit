@@ -25,8 +25,29 @@ because it requires action outside the repo.
 | m8 | no preflight verify | **fixed** — `check_setup.py` (deps, CREDIT, config, assets, GPU). |
 | m6 | config carries GLADE training paths | open (minor) — left absolute, clearly marked TRAINING-ONLY in the config. |
 
-**Remaining to reach turn-key:** create the HF repo (B1) and do one clean-room
-test on a non-NCAR GPU. Everything else a HF user needs is now in the repo.
+**Remaining to reach turn-key:** create the HF repo (B1). The clean-room
+install+run test is now DONE (see below). Everything else a HF user needs is in
+the repo.
+
+### Clean-room new-user test (DONE — June 2026)
+
+Simulated the full flow from a fresh `git clone` to NetCDF output: clone →
+`conda env create -f environment.yml` → `pip install -e . --no-deps` → stage
+assets → `check_setup.py` → 8-step rollout. **Passed end-to-end** (wrote
+`pred_*.nc`) after fixing three real blockers the simulation surfaced:
+
+1. **Missing `gcsfs`** — `credit.parser`'s import chain needs it; added to
+   environment.yml.
+2. **Broken torch stack** — environment.yml pinned torch 2.6.0 + torch_harmonics
+   0.9.1, whose C extension is ABI-incompatible with torch 2.6 (`import
+   credit.models` crashed). Repinned to the verified combo (torch 2.4.1+cu121,
+   torch_harmonics 0.7.2, torch-geometric 2.6.1, numpy<2).
+3. **`pip install -e .` re-breaks the env** — it re-resolves and upgrades
+   numpy→2.2 / torch_harmonics→0.8. README + check_setup now use `--no-deps`.
+
+`check_setup.py` was also hardened to import the full inference chain
+(credit.models/distributed/postblock), so it now catches this ABI class of
+failure (it previously passed while the rollout failed).
 
 ### End-to-end validation (run on NCAR Casper, V100)
 
