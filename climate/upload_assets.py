@@ -85,7 +85,7 @@ def main():
         uploads.append((os.path.join(HERE, "MODEL_CARD.md"), "README.md"))
         uploads.append((os.path.join(HERE, "camulator_config.yml"), "inference_config.yaml"))
         # model-card figures -> figs/ (referenced by the model card)
-        figdir = os.path.join(HERE, "model_card_figs")
+        figdir = os.path.join(HERE, "figs")
         if os.path.isdir(figdir):
             for fig in sorted(os.listdir(figdir)):
                 if fig.endswith((".png", ".jpg", ".svg")):
