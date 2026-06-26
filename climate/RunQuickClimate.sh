@@ -37,11 +37,16 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 # ----------------------------- user settings --------------------------------
-CONFIG=./camulator_config.yml
-CONDA_ENV=/glade/work/wchapman/conda-envs/credit-coupling-ud   # <-- your env
-FOLD_OUT=run_default                 # experiment subfolder under save_forecast
-MODEL_NAME=checkpoint.pt             # checkpoint file inside save_loc (./assets)
-AVG=none                             # none | daily | monthly
+# Each of these can be overridden from the environment, e.g.
+#   CONDA_ENV=camulator AVG=monthly bash RunQuickClimate.sh
+CONFIG=${CONFIG:-./camulator_config.yml}
+# Conda env to activate. Default is the name created by environment.yml.
+# NCAR users can point this at /glade/work/wchapman/conda-envs/credit-coupling-ud.
+# Set CONDA_ENV="" to skip activation (e.g. you already activated it).
+CONDA_ENV=${CONDA_ENV:-camulator}
+FOLD_OUT=${FOLD_OUT:-run_default}     # experiment subfolder under save_forecast
+MODEL_NAME=${MODEL_NAME:-checkpoint.pt}  # checkpoint file inside save_loc (./assets)
+AVG=${AVG:-none}                      # none | daily | monthly
 # ----------------------------------------------------------------------------
 
 case "$AVG" in
@@ -51,9 +56,14 @@ case "$AVG" in
   *) echo "AVG must be one of: none, daily, monthly (got '$AVG')"; exit 2 ;;
 esac
 
-if command -v module >/dev/null 2>&1; then module load conda || true; fi
-# shellcheck disable=SC1091
-conda activate "$CONDA_ENV"
+# Activate a conda env if requested and available (skipped on non-conda systems
+# or when CONDA_ENV is empty). The #PBS lines above are ignored unless this file
+# is submitted with qsub, so `bash RunQuickClimate.sh` works anywhere.
+if [ -n "$CONDA_ENV" ] && command -v conda >/dev/null 2>&1; then
+  if command -v module >/dev/null 2>&1; then module load conda 2>/dev/null || true; fi
+  # shellcheck disable=SC1091
+  conda activate "$CONDA_ENV" || echo "WARN: could not activate '$CONDA_ENV'; using current env"
+fi
 
 echo "============================================================"
 echo " CAMulator inference"

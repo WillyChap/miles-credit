@@ -53,6 +53,14 @@ def main():
     ap.add_argument("--token", default=None, help="HF token for private repos (else uses cached login)")
     args = ap.parse_args()
 
+    # Guard against the placeholder repo id (the HF repo must exist first).
+    if "<" in args.repo_id or args.repo_id == "NCAR/camulator":
+        sys.exit(
+            f"--repo_id '{args.repo_id}' is a placeholder. Pass the real HuggingFace repo, e.g.\n"
+            "    python download_assets.py --repo_id myorg/camulator\n"
+            "(Maintainers: create+populate it with upload_assets.py first.)"
+        )
+
     try:
         from huggingface_hub import hf_hub_download
     except ImportError:

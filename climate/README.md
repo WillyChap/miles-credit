@@ -28,7 +28,9 @@ Quick_Climate.py ──► NetCDF in <save_forecast>/<run>/<init_time>/pred_*.nc
 | `Make_Climate_Initial_Conditions.py` | *Optional* — build a new initial-condition tensor for a custom start date (NCAR data needed). |
 | `RunQuickClimate.sh` | End-to-end driver (rollout → NetCDF). PBS or interactive. |
 | `download_assets.py` | Pull model + inputs from a HuggingFace repo into `./assets/`. |
-| `stage_assets.sh` | NCAR alternative: symlink the GLADE copies into `./assets/`. |
+| `upload_assets.py` | *Maintainer:* create + populate that HuggingFace repo from `./assets/`. |
+| `check_setup.py` | Preflight: verify deps, CREDIT, assets, GPU before a run. |
+| `stage_assets.sh` | NCAR-only alternative: symlink the GLADE copies into `./assets/`. |
 | `assets/` | All model inputs live here (see manifest below). |
 | `output/` | Default run output directory. |
 
@@ -55,12 +57,22 @@ python download_assets.py --repo_id <user>/camulator   # anywhere (HuggingFace)
 #   ... or, on NCAR, symlink the GLADE copies instead:
 ./stage_assets.sh
 
-# 2. run the rollout
+# 2. verify everything is in place (deps, CREDIT, assets, GPU) — takes seconds
+python check_setup.py
+
+# 3. run the rollout
 bash RunQuickClimate.sh      # interactive GPU node
 #   ... or:  qsub RunQuickClimate.sh   (NCAR PBS; edit CONDA_ENV first)
 
 # result:
 ls output/run_default/1981-01-01T00Z/   # pred_*.nc
+```
+
+`RunQuickClimate.sh` reads overridable env vars, so you can avoid editing it:
+
+```bash
+CONDA_ENV=camulator FOLD_OUT=myrun AVG=monthly bash RunQuickClimate.sh
+# CONDA_ENV="" skips conda activation (if you already activated your env)
 ```
 
 **Output modes** — set `AVG` in `RunQuickClimate.sh`:
@@ -149,6 +161,14 @@ HuggingFace **model** repo with the manifest files at the repo root:
 ```
 
 `download_assets.py --repo_id <user>/camulator` pulls them into `./assets/`.
+Maintainers publish the repo once with
+`python upload_assets.py --repo_id <user>/camulator --create` (after staging the
+real files into `./assets/`), then set that as the default `--repo_id`.
+
+> **Forcing file note:** `b.e21.CREDIT_climate_cyclic_1yr_f32coords.nc` must
+> contain the model's static fields (`z_norm`, `LANDM_COSLAT`) in addition to the
+> dynamic forcing — the rollout reads static inputs from the forcing file. The
+> shipped file already includes them; only relevant if you build your own.
 
 ---
 

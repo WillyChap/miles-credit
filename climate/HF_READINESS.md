@@ -6,10 +6,31 @@ CAMulator **inference only**.
 
 **Bottom line:** the *inference code path is genuinely self-contained* — it reads
 nothing from GLADE beyond the documented `./assets/` files (verified by tracing
-`Model_State.initialize_camulator`). But the repo is **not yet turn-key for a
-HuggingFace-only user**: two hard blockers and several documentation/packaging
-gaps remain. Estimated work to turn-key: ~half a day (create the HF model repo,
-add clone/install instructions, one clean-room test).
+`Model_State.initialize_camulator`).
+
+## Status after this branch's fixes
+
+Most gaps below are now **addressed in code/docs**; one true blocker remains
+because it requires action outside the repo.
+
+| ID | Item | Status |
+|----|------|--------|
+| B1 | HuggingFace model repo not created | **OPEN** — needs maintainer to run `upload_assets.py` (added) and set the real `--repo_id`. `download_assets.py` now errors clearly on the placeholder. |
+| B2 | CREDIT must be the repo's own version | **fixed** — README Install section says clone + `pip install -e ..`; `check_setup.py` reports which `credit` is imported. |
+| M1 | toolbox depends on parent `credit/` | **fixed** — README Install section. |
+| M2 | no non-NCAR environment | **fixed** — inference `environment.yml` (JAX/GraphCast removed) + README points at it. |
+| M3 | `RunQuickClimate.sh` NCAR-shaped | **fixed** — env-var overrides (`CONDA_ENV`/`FOLD_OUT`/`AVG`), conda activation is optional, PBS header is inert under `bash`. |
+| M5 | hardware/footprint undocumented | **fixed** — README states GPU + ~6.5 GB download. |
+| m7 | forcing file must hold static vars | **fixed** — documented in README. |
+| m8 | no preflight verify | **fixed** — `check_setup.py` (deps, CREDIT, config, assets, GPU). |
+| m6 | config carries GLADE training paths | open (minor) — left absolute, clearly marked TRAINING-ONLY in the config. |
+
+**Remaining to reach turn-key:** create the HF repo (B1) and do one clean-room
+test on a non-NCAR GPU. Everything else a HF user needs is now in the repo.
+
+---
+
+## Original findings (for reference)
 
 ---
 
