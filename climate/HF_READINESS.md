@@ -28,6 +28,20 @@ because it requires action outside the repo.
 **Remaining to reach turn-key:** create the HF repo (B1) and do one clean-room
 test on a non-NCAR GPU. Everything else a HF user needs is now in the repo.
 
+### End-to-end validation (run on NCAR Casper, V100)
+
+Simulated the full user flow with assets staged into `./assets/`:
+`check_setup.py` → all green; a 4-step `Quick_Climate.py` rollout → wrote
+`pred_*.nc` (62 MB/step). This surfaced and fixed a real showstopper:
+
+- **Forcing-coord grid collapse (fixed).** The cyclic forcing stores lat/lon as
+  float32 while mean/std are float64; normalization inner-joined on coord values
+  and collapsed latitude 192→2, crashing the rollout at step 1. `Model_State` now
+  copies the normalization coords onto the forcing. *Every* user would have hit
+  this — caught only by actually running, not by static review.
+- Also fixed en route: `Make_Climate_Initial_Conditions.py` `torch.mps`
+  AttributeError on CPU/non-Mac hosts.
+
 ---
 
 ## Original findings (for reference)
