@@ -296,7 +296,7 @@ def save_netcdf_increment(
         save_location = os.path.join(conf["predict"]["save_forecast"], nc_filename)
         os.makedirs(save_location, exist_ok=True)
 
-        unique_filename = os.path.join(save_location, f"pred_{nc_filename}_{forecast_hour:03d}.nc")
+        unique_filename = os.path.join(save_location, f"pred_{nc_filename}_{forecast_hour:06d}.nc")
         # ---------------------------------------------------- #
         # If conf['predict']['save_vars'] provided --> drop useless vars
         if "save_vars" in conf["predict"]:
@@ -385,7 +385,7 @@ def save_netcdf_clean(
     Notes
     -----
     - Files are saved into:
-        ``{conf['predict']['save_forecast']}/{nc_filename}/pred_{nc_filename}_{forecast_hour:03d}.nc``
+        ``{conf['predict']['save_forecast']}/{nc_filename}/pred_{nc_filename}_{forecast_hour:06d}.nc``
 
     - If `meta_data` is provided, variable attributes are updated accordingly.
       Otherwise, a default gregorian calendar encoding is applied to the "time" variable.
@@ -422,7 +422,7 @@ def save_netcdf_clean(
     save_location = os.path.join(conf["predict"]["save_forecast"], nc_filename)
     os.makedirs(save_location, exist_ok=True)
 
-    unique_filename = os.path.join(save_location, f"pred_{nc_filename}_{forecast_hour:03d}.nc")
+    unique_filename = os.path.join(save_location, f"pred_{nc_filename}_{forecast_hour:06d}.nc")
 
     # ---------------------------------------------------- #
     # If conf['predict']['save_vars'] provided --> drop useless vars
@@ -484,7 +484,7 @@ def save_netcdf_diag(
 
     unique_filename = os.path.join(
         save_location,
-        f"pred_{nc_filename}.nc",  # _{forecast_hour:03d}.nc"
+        f"pred_{nc_filename}.nc",  # _{forecast_hour:06d}.nc"
     )
     # ---------------------------------------------------- #
     # If conf['predict']['save_vars'] provided --> drop useless vars
