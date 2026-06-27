@@ -43,8 +43,6 @@ declare -a SRC=(
   "/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/f.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc"
   # cyclic 1-yr forcing (SOLIN, SST, ICEFRAC, co2vmr_3d) — default
   "/glade/derecho/scratch/wchapman/CAMULATOR_FORCING/b.e21.CREDIT_climate_cyclic_1yr_f32coords.nc"
-  # progressive/transient forcing: full 1980-2014 record (85 GB; optional)
-  "/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate_branch_1980_2014.nc"
   # initial condition tensor (default start 1981-01-01T00Z)
   "/glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended/init_times/init_camulator_condition_tensor_1981-01-01T00Z.pth"
   # output metadata
@@ -55,19 +53,27 @@ declare -a SRC=(
 )
 
 link_one () {
-  local src="$1" dst="$ASSETS/$(basename "$1")"
+  # link_one <src> [dst_basename]   (default dst basename = basename of src)
+  local src="$1" dst="$ASSETS/${2:-$(basename "$1")}"
   if [ ! -e "$src" ]; then
     echo "  !! MISSING source: $src"; return
   fi
   if [ "$MODE" = "copy" ]; then
-    cp -n "$src" "$dst" && echo "  copied  $(basename "$src")"
+    cp -n "$src" "$dst" && echo "  copied  $(basename "$dst")"
   else
-    ln -sfn "$src" "$dst" && echo "  linked  $(basename "$src")"
+    ln -sfn "$src" "$dst" && echo "  linked  $(basename "$dst")"
   fi
 }
 
 echo "Staging assets into $ASSETS (mode: $MODE)"
 for s in "${SRC[@]}"; do link_one "$s"; done
+
+# progressive/transient forcing: slim 1980-2014 record (~9.7 GB), staged under
+# the clean name used everywhere else. Set STAGE_PROGRESSIVE=0 to skip it.
+if [ "${STAGE_PROGRESSIVE:-1}" != "0" ]; then
+  link_one "/glade/derecho/scratch/wchapman/CAMULATOR_FORCING/b.e21.CREDIT_climate_branch_1980_2014_slim.nc" \
+           "b.e21.CREDIT_climate_branch_1980_2014.nc"
+fi
 
 # Checkpoint(s) -> assets/. Default is checkpoint.pt00065.pt (the MODEL_NAME
 # default); override with CKPT env var, e.g.  CKPT=checkpoint.pt00058.pt ./stage_assets.sh
