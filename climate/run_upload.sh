@@ -10,9 +10,9 @@
 #
 # It stages the shared assets (symlinks), then uploads:
 #   model card -> README.md, config -> inference_config.yaml, figs/,
-#   normalization, forcing (cyclic + slim progressive), IC, metadata,
-#   and the 4 finalist checkpoints (65, 63, 70, 48) straight from the run dir.
-# ~29 GB total. Safe to re-run: HF LFS de-dups already-uploaded content.
+#   normalization, forcing (cyclic + slim progressive), all 69 initial
+#   conditions, and the 4 finalist checkpoints (65, 63, 70, 48) from the run dir.
+# ~31 GB total. Safe to re-run: HF LFS de-dups already-uploaded content.
 #
 # Usage (detach and walk away):
 #   huggingface-cli login            # once, paste willychap write token
@@ -28,6 +28,7 @@ REPO_ID="${REPO_ID:-willychap/camulator}"
 CONDA_ENV="${CONDA_ENV:-/glade/work/wchapman/conda-envs/credit-coupling-ud}"
 CKPT_DIR="${CKPT_DIR:-/glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended_v2}"
 CKPTS="${CKPTS:-checkpoint.pt00065.pt checkpoint.pt00063.pt checkpoint.pt00070.pt checkpoint.pt00048.pt}"
+INIT_DIR="${INIT_DIR:-/glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended_v2/init_times}"
 LOG="${LOG:-$HERE/upload_$(date +%Y%m%d_%H%M%S).log}"
 
 # activate env (works whether or not conda is already initialised in this shell)
@@ -60,7 +61,8 @@ conda activate "$CONDA_ENV" 2>/dev/null || source activate "$CONDA_ENV"
   python upload_assets.py \
     --repo_id "$REPO_ID" --create \
     --checkpoints $CKPTS \
-    --checkpoint_dir "$CKPT_DIR"
+    --checkpoint_dir "$CKPT_DIR" \
+    --init_dir "$INIT_DIR"
 
   echo "=== DONE  $(date) ==="
 } 2>&1 | tee -a "$LOG"

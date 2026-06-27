@@ -126,7 +126,7 @@ willychap/camulator
 │   ├── b.e21.CREDIT_climate_cyclic_1yr_f32coords.nc      # cyclic (default)
 │   └── b.e21.CREDIT_climate_branch_1980_2014.nc          # progressive/transient
 ├── initial_conditions/
-│   └── init_camulator_condition_tensor_1981-01-01T00Z.pth
+│   └── init_camulator_condition_tensor_*.pth                 # 69 ICs (Jan 1 & Jul 1, 1980/1981-2014)
 ├── normalization/
 │   ├── mean_*.nc, std_*.nc                                # z-score
 │   └── *statics*.nc                                       # statics + latitude weights

@@ -30,7 +30,7 @@ SHARED = [
     "b.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc",
     "f.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc",
     "b.e21.CREDIT_climate_cyclic_1yr_f32coords.nc",
-    "init_camulator_condition_tensor_1981-01-01T00Z.pth",
+    # initial conditions are fetched via --init_condition(s)/--all_init_conditions, not here.
 ]
 OPTIONAL = [
     "ERA5_clim_1990_2019_6h_interp.nc",
@@ -73,6 +73,15 @@ def main():
                     help="fetch several checkpoints at once (overrides --checkpoint)")
     ap.add_argument("--no_checkpoint", action="store_true",
                     help="fetch only the shared inputs, no checkpoint")
+    ap.add_argument("--init_condition", default="init_camulator_condition_tensor_1981-01-01T00Z.pth",
+                    help="initial-condition tensor to fetch (default: 1981-01-01T00Z). "
+                         "Set start_datetime in the config to match.")
+    ap.add_argument("--init_conditions", nargs="+", default=None,
+                    help="fetch several ICs at once (overrides --init_condition), e.g. "
+                         "init_camulator_condition_tensor_1990-07-01T00Z.pth ...")
+    ap.add_argument("--all_init_conditions", action="store_true",
+                    help="fetch every initial condition in the repo (~2 GB, 69 files)")
+    ap.add_argument("--no_init", action="store_true", help="do not fetch any initial condition")
     ap.add_argument("--include_optional", action="store_true", help="Also fetch the optional scoring files")
     ap.add_argument("--token", default=None, help="HF token for private repos (else uses cached login)")
     args = ap.parse_args()
@@ -92,7 +101,21 @@ def main():
 
     os.makedirs(args.assets_dir, exist_ok=True)
     ckpts = [] if args.no_checkpoint else (args.checkpoints or [args.checkpoint])
-    wanted = ckpts + SHARED + (OPTIONAL if args.include_optional else [])
+
+    # initial conditions
+    inits = []
+    if not args.no_init:
+        if args.all_init_conditions:
+            from huggingface_hub import HfApi
+            files = HfApi(token=args.token).list_repo_files(
+                args.repo_id, repo_type=args.repo_type, revision=args.revision)
+            inits = [os.path.basename(f) for f in files
+                     if f.startswith("initial_conditions/") and f.endswith(".pth")]
+            print(f"  fetching all {len(inits)} initial conditions (~2 GB)")
+        else:
+            inits = args.init_conditions or [args.init_condition]
+
+    wanted = ckpts + inits + SHARED + (OPTIONAL if args.include_optional else [])
     print(f"Downloading {len(wanted)} files from {args.repo_type}:{args.repo_id} -> {args.assets_dir}")
     if ckpts:
         print(f"  checkpoint(s): {', '.join(ckpts)}  (set MODEL_NAME to match when you run)")

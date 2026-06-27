@@ -28,7 +28,7 @@ SHARED = [
     # transient-climate run path works; download_assets keeps it OPT-IN (users
     # only pull it for transient runs).
     "b.e21.CREDIT_climate_branch_1980_2014.nc",
-    "init_camulator_condition_tensor_1981-01-01T00Z.pth",
+    # initial conditions are uploaded in bulk from --init_dir (see below), not here.
 ]
 # Scoring-only inputs (rollout_metrics / fast-climate). NOT hosted by default.
 # NOTE: ERA5_clim_1990_2019_6h_interp.nc is ~67 GB and EXCEEDS HuggingFace's
@@ -69,6 +69,14 @@ def main():
     ap.add_argument("--checkpoint_dir", default=None,
                     help="directory the --checkpoints names live in (default: --assets_dir). Lets you "
                          "upload straight from the training run dir without staging into ./assets/.")
+    ap.add_argument("--init_dir",
+                    default="/glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended_v2/init_times",
+                    help="directory of initial-condition .pth files to upload (default: the run init_times dir)")
+    ap.add_argument("--init_conditions", nargs="*", default=None,
+                    help="specific IC files to upload (names or paths). Default: ALL "
+                         "init_camulator_condition_tensor_*.pth found in --init_dir. Pass an empty "
+                         "selection with --no_init to skip ICs entirely.")
+    ap.add_argument("--no_init", action="store_true", help="do not upload any initial conditions")
     ap.add_argument("--skip_shared", action="store_true",
                     help="upload only the checkpoints (e.g. to add more epochs to an existing repo)")
     ap.add_argument("--token", default=None)
@@ -102,6 +110,18 @@ def main():
     for c in args.checkpoints or []:
         src = c if os.path.isabs(c) else os.path.join(ckpt_dir, c)
         uploads.append((src, repo_path(os.path.basename(c))))
+
+    # initial conditions: a named selection, else every IC tensor in --init_dir
+    if not args.no_init:
+        import glob
+        if args.init_conditions:
+            ic_files = [c if os.path.isabs(c) else os.path.join(args.init_dir, c)
+                        for c in args.init_conditions]
+        else:
+            ic_files = sorted(glob.glob(os.path.join(args.init_dir, "init_camulator_condition_tensor_*.pth")))
+        print(f"initial conditions: {len(ic_files)} file(s) from {args.init_dir}")
+        for ic in ic_files:
+            uploads.append((ic, repo_path(os.path.basename(ic))))
 
     missing = [p for p, _ in uploads if not os.path.exists(p)]
     if missing:

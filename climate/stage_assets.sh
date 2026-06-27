@@ -43,8 +43,7 @@ declare -a SRC=(
   "/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/f.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc"
   # cyclic 1-yr forcing (SOLIN, SST, ICEFRAC, co2vmr_3d) — default
   "/glade/derecho/scratch/wchapman/CAMULATOR_FORCING/b.e21.CREDIT_climate_cyclic_1yr_f32coords.nc"
-  # initial condition tensor (default start 1981-01-01T00Z)
-  "/glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended/init_times/init_camulator_condition_tensor_1981-01-01T00Z.pth"
+  # NOTE: initial conditions are staged in bulk below from INIT_DIR.
   # NOTE: output variable metadata now ships in-repo as camulator_metadata.yaml
   #       (no longer a downloaded asset) -- see predict.metadata in the config.
   # OPTIONAL: climatology + seasonal mean (only for rollout_metrics / fast-climate scores)
@@ -73,6 +72,23 @@ for s in "${SRC[@]}"; do link_one "$s"; done
 if [ "${STAGE_PROGRESSIVE:-1}" != "0" ]; then
   link_one "/glade/derecho/scratch/wchapman/CAMULATOR_FORCING/b.e21.CREDIT_climate_branch_1980_2014_slim.nc" \
            "b.e21.CREDIT_climate_branch_1980_2014.nc"
+fi
+
+# initial conditions: stage all IC tensors (Jan 1 & Jul 1, 1980/1981-2014; ~2 GB).
+# Set INIT_ONLY=<name> to stage just one, or STAGE_ALL_INIT=0 to stage only the
+# config default (1981-01-01T00Z).
+INIT_DIR="${INIT_DIR:-/glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended_v2/init_times}"
+if [ -n "${INIT_ONLY:-}" ]; then
+  link_one "$INIT_DIR/$INIT_ONLY"
+elif [ "${STAGE_ALL_INIT:-1}" = "0" ]; then
+  link_one "$INIT_DIR/init_camulator_condition_tensor_1981-01-01T00Z.pth"
+else
+  n=0
+  for ic in "$INIT_DIR"/init_camulator_condition_tensor_*.pth; do
+    [ -e "$ic" ] || continue
+    link_one "$ic"; n=$((n+1))
+  done
+  echo "  staged $n initial conditions from $INIT_DIR"
 fi
 
 # Checkpoint(s) -> assets/. Default is checkpoint.pt00065.pt (the MODEL_NAME

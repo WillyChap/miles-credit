@@ -178,7 +178,7 @@ All config paths are `./assets/<file>`. Fill `./assets/` one of two ways:
 | `b.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc` | 50 M | hybrid-sigma coeffs (conservation post-blocks) | `…/MLWPS/STAGING/` |
 | `f.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc` | 50 M | latitude weights | `…/MLWPS/STAGING/` |
 | `b.e21.CREDIT_climate_cyclic_1yr_f32coords.nc` | 1.3 G | cyclic 1-yr forcing (default) | `…/CAMULATOR_FORCING/` |
-| `init_camulator_condition_tensor_1981-01-01T00Z.pth` | 29 M | initial condition | `…/NEW_CLI_JOHN_CASPER_extended/init_times/` |
+| `init_camulator_condition_tensor_*.pth` | 29 M each (~2 G total) | 69 initial conditions: Jan 1 & Jul 1, 1980/1981–2014 | `…/NEW_CLI_JOHN_CASPER_extended_v2/init_times/` |
 | `camulator_metadata.yaml` | <2 K | output variable units/long-names | ships in-repo (`climate/`) — not downloaded |
 
 **Optional**
@@ -223,7 +223,7 @@ willychap/camulator        (HF model repo)
 │   ├── b.e21.CREDIT_climate_cyclic_1yr_f32coords.nc   # cyclic (default)
 │   └── b.e21.CREDIT_climate_branch_1980_2014.nc       # progressive (slim, ~10 GB)
 ├── initial_conditions/
-│   └── init_camulator_condition_tensor_1981-01-01T00Z.pth
+│   └── init_camulator_condition_tensor_*.pth        # 69 ICs (Jan 1 & Jul 1, 1980/1981-2014)
 └── normalization/
     ├── mean_*.nc, std_*.nc
     └── *statics*.nc                                    # statics + latitude weights
@@ -251,11 +251,28 @@ then set that repo id as the default `--repo_id` (or `CAMULATOR_HF_REPO`).
 
 ---
 
-## 5. Custom initial conditions (optional)
+## 5. Choosing / adding initial conditions
 
-To start from a date other than the shipped IC, generate a new tensor (requires
-the training zarr on NCAR), then point `init_cond_fast_climate` and
-`start_datetime` at it:
+The model repo ships **69 initial conditions** — Jan 1 and Jul 1 for 1980/1981–2014.
+`download_assets.py` fetches the default (`1981-01-01T00Z`); grab others with:
+
+```bash
+# one specific start date
+python download_assets.py --repo_id willychap/camulator \
+       --init_condition init_camulator_condition_tensor_1990-07-01T00Z.pth
+# several at once
+python download_assets.py --repo_id willychap/camulator \
+       --init_conditions init_camulator_condition_tensor_1990-07-01T00Z.pth \
+                         init_camulator_condition_tensor_2005-01-01T00Z.pth
+# everything (~2 GB)
+python download_assets.py --repo_id willychap/camulator --all_init_conditions
+```
+
+Then point `init_cond_fast_climate` and `start_datetime` (and `forecasts.start_*`)
+at the chosen date. On NCAR, `./stage_assets.sh` symlinks all 69 ICs into `./assets/`.
+
+To start from a date *not* in the set, generate a new tensor (requires the
+training zarr on NCAR):
 
 ```bash
 python Make_Climate_Initial_Conditions.py -c ./camulator_config.yml \
