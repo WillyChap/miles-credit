@@ -78,7 +78,10 @@ def main():
                          "selection with --no_init to skip ICs entirely.")
     ap.add_argument("--no_init", action="store_true", help="do not upload any initial conditions")
     ap.add_argument("--skip_shared", action="store_true",
-                    help="upload only the checkpoints (e.g. to add more epochs to an existing repo)")
+                    help="skip the shared inputs / model card / config / figs (e.g. to add only "
+                         "more checkpoints or initial conditions to an existing repo)")
+    ap.add_argument("--no_checkpoints", action="store_true",
+                    help="do not upload any checkpoints (e.g. an initial-conditions-only run)")
     ap.add_argument("--token", default=None)
     args = ap.parse_args()
 
@@ -107,7 +110,7 @@ def main():
         for f in SHARED + (OPTIONAL if args.include_optional else []):
             uploads.append((os.path.join(args.assets_dir, f), repo_path(f)))
     ckpt_dir = args.checkpoint_dir or args.assets_dir
-    for c in args.checkpoints or []:
+    for c in ([] if args.no_checkpoints else (args.checkpoints or [])):
         src = c if os.path.isabs(c) else os.path.join(ckpt_dir, c)
         uploads.append((src, repo_path(os.path.basename(c))))
 
