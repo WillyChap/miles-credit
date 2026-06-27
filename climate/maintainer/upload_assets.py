@@ -39,7 +39,9 @@ OPTIONAL = [
     "truth_be21_tensor_2013-01-01T00Z.pth",
 ]
 
-HERE = os.path.dirname(os.path.abspath(__file__))
+# this script lives in climate/maintainer/ ; the toolbox files (model card,
+# config, figs, assets/) are in the climate/ parent directory.
+HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def repo_path(name):
@@ -59,7 +61,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--repo_id", required=True, help="e.g. willychap/camulator")
     ap.add_argument("--repo_type", default="model", choices=["model", "dataset"])
-    ap.add_argument("--assets_dir", default=os.path.join(os.path.dirname(__file__), "assets"))
+    ap.add_argument("--assets_dir", default=os.path.join(HERE, "assets"))
     ap.add_argument("--create", action="store_true", help="create the repo if it does not exist")
     ap.add_argument("--private", action="store_true", help="create as a private repo")
     ap.add_argument("--include_optional", action="store_true")

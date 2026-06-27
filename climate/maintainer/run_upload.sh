@@ -14,8 +14,9 @@
 #   conditions, and the top-10 checkpoints (65,63,70,48,47,66,76,68,51,43)
 #   from the run dir. ~75 GB total. Safe to re-run: HF LFS de-dups uploaded content.
 #
-# Usage (detach and walk away):
+# Usage (detach and walk away), from climate/maintainer/ :
 #   huggingface-cli login            # once, paste willychap write token
+#   cd climate/maintainer
 #   nohup ./run_upload.sh > upload.out 2>&1 &
 #   disown; tail -f upload.out       # watch; Ctrl-C the tail anytime
 # ============================================================================

@@ -31,9 +31,9 @@ Quick_Climate.py ──► NetCDF in <save_forecast>/<run>/<init_time>/pred_*.nc
 | `Make_Climate_Initial_Conditions.py` | *Optional* — build a new initial-condition tensor for a custom start date (NCAR data needed). |
 | `RunQuickClimate.sh` | End-to-end driver (rollout → NetCDF). PBS or interactive. |
 | `download_assets.py` | Pull model + inputs from a HuggingFace repo into `./assets/`. |
-| `upload_assets.py` | *Maintainer:* create + populate that HuggingFace repo from `./assets/`. |
+| `maintainer/upload_assets.py` | *Maintainer:* create + populate that HuggingFace repo from `./assets/`. |
 | `check_setup.py` | Preflight: verify deps, CREDIT, assets, GPU before a run. |
-| `stage_assets.sh` | NCAR-only alternative: symlink the GLADE copies into `./assets/`. |
+| `maintainer/stage_assets.sh` | NCAR-only alternative: symlink the GLADE copies into `./assets/`. |
 | `assets/` | All model inputs live here (see manifest below). |
 | `output/` | Default run output directory. |
 
@@ -70,7 +70,7 @@ cd climate
 #    the assets" below — there is no runnable default until the repo is published.
 python download_assets.py --repo_id willychap/camulator    # off-NCAR (HuggingFace)
 #   ... or, on NCAR, symlink the GLADE copies instead (no download):
-./stage_assets.sh
+./maintainer/stage_assets.sh
 
 # 2. verify everything is in place (deps, CREDIT, assets, GPU) — takes seconds
 python check_setup.py
@@ -155,7 +155,7 @@ header for the exact conversions back to rates.
 
 All config paths are `./assets/<file>`. Fill `./assets/` one of two ways:
 
-- **NCAR users:** `./stage_assets.sh` symlinks the GLADE copies (no download).
+- **NCAR users:** `./maintainer/stage_assets.sh` symlinks the GLADE copies (no download).
 - **Everyone else:** `python download_assets.py --repo_id willychap/camulator` pulls
   them from HuggingFace.
 
@@ -167,7 +167,7 @@ All config paths are `./assets/<file>`. Fill `./assets/` one of two ways:
 > passing `--repo_id` each time.
 
 **Required for a basic run** (the "origin" column is the NCAR-internal source
-`stage_assets.sh` links from; off-NCAR users get these from the HF repo):
+`maintainer/stage_assets.sh` links from; off-NCAR users get these from the HF repo):
 
 | File in `assets/` | ~Size | Used for | NCAR origin |
 |---|---|---|---|
@@ -233,11 +233,11 @@ willychap/camulator        (HF model repo)
 
 `download_assets.py --repo_id willychap/camulator` pulls these (flattening the
 subdirs) into `./assets/` + the default checkpoint. Maintainers publish the repo
-with `upload_assets.py`, which lays out the tree above; e.g. model card + config +
+with `maintainer/upload_assets.py`, which lays out the tree above; e.g. model card + config +
 shared inputs + a range of epochs straight from the run dir:
 
 ```bash
-python upload_assets.py --repo_id willychap/camulator --create \
+python maintainer/upload_assets.py --repo_id willychap/camulator --create \
     --checkpoint_dir /glade/.../NEW_CLI_JOHN_CASPER_extended_v2 \
     --checkpoints checkpoint.pt000{40..79}.pt
 ```
@@ -269,7 +269,7 @@ python download_assets.py --repo_id willychap/camulator --all_init_conditions
 ```
 
 Then point `init_cond_fast_climate` and `start_datetime` (and `forecasts.start_*`)
-at the chosen date. On NCAR, `./stage_assets.sh` symlinks all 69 ICs into `./assets/`.
+at the chosen date. On NCAR, `./maintainer/stage_assets.sh` symlinks all 69 ICs into `./assets/`.
 
 To start from a date *not* in the set, generate a new tensor (requires the
 training zarr on NCAR):

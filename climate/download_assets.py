@@ -11,7 +11,7 @@ so once this finishes the toolbox is ready to run:
     python download_assets.py --repo_id <user>/<repo>
     bash RunQuickClimate.sh
 
-On NCAR you can instead symlink the GLADE copies with ./stage_assets.sh.
+On NCAR you can instead symlink the GLADE copies with ./maintainer/stage_assets.sh.
 
 Requires:  pip install huggingface_hub
 """
@@ -47,7 +47,7 @@ DEFAULT_REPO = os.environ.get("CAMULATOR_HF_REPO", "willychap/camulator")
 
 def repo_path(name):
     """Map a flat asset basename to its path in the HF repo (ACE2-style tree).
-    Kept in sync with upload_assets.py."""
+    Kept in sync with maintainer/upload_assets.py."""
     if name.startswith("checkpoint.pt"):
         return name
     if "cyclic" in name or "branch_1980_2014" in name:
@@ -91,7 +91,7 @@ def main():
         sys.exit(
             f"--repo_id '{args.repo_id}' is a placeholder. Pass the real HuggingFace repo, e.g.\n"
             "    python download_assets.py --repo_id willychap/camulator\n"
-            "(Maintainers: create+populate it with upload_assets.py first.)"
+            "(Maintainers: create+populate it with maintainer/upload_assets.py first.)"
         )
 
     try:

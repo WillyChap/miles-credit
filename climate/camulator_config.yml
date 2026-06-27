@@ -12,13 +12,13 @@
 #       save_forecast / save_vars            -> where/what to write
 #
 # ALL input file paths point to ./assets/<file>. Populate ./assets/ with `download_assets.py` (HuggingFace) or
-# `stage_assets.sh` (NCAR). Do NOT edit the ./assets/ paths unless you renamed a file. The variable lists, `model:`
+# `maintainer/stage_assets.sh` (NCAR). Do NOT edit the ./assets/ paths unless you renamed a file. The variable lists, `model:`
 # block, and `post_conf:` indices below MUST match the checkpoint -- leave them as-is for the shipped model.
 # ===================================================================================================================== #
 
 
 # Checkpoint directory: load_model() reads `<save_loc>/<MODEL_NAME>` (default MODEL_NAME=checkpoint.pt in
-# RunQuickClimate.sh). Leave at ./assets/ where download_assets.py / stage_assets.sh place the checkpoint.
+# RunQuickClimate.sh). Leave at ./assets/ where download_assets.py / maintainer/stage_assets.sh place the checkpoint.
 save_loc: './assets/'
 seed: 1000
 

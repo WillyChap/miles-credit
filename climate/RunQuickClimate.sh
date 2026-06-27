@@ -26,14 +26,14 @@
 #
 # Files land in:  <save_forecast>/<FOLD_OUT>/<init_time>/pred_*.nc
 #
-# All model inputs are read from ./assets/ (see stage_assets.sh / README.md).
+# All model inputs are read from ./assets/ (see maintainer/stage_assets.sh / README.md).
 #
 # Run it either as a PBS job  (qsub RunQuickClimate.sh)  or directly on an
 # interactive GPU node        (bash RunQuickClimate.sh).
 #
 # BEFORE RUNNING:
 #   - conda activate your CREDIT env (set CONDA_ENV below)
-#   - ./stage_assets.sh           (NCAR) or download assets per README.md
+#   - ./maintainer/stage_assets.sh           (NCAR) or download assets per README.md
 #   - edit FOLD_OUT / MODEL_NAME / AVG below as desired
 # ============================================================================
 set -euo pipefail

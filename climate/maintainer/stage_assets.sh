@@ -25,7 +25,8 @@ set -euo pipefail
 MODE="symlink"
 [ "${1:-}" = "--copy" ] && MODE="copy"
 
-ASSETS="$(cd "$(dirname "$0")" && pwd)/assets"
+# this script lives in climate/maintainer/ ; assets/ is in the climate/ parent
+ASSETS="$(cd "$(dirname "$0")/.." && pwd)/assets"
 mkdir -p "$ASSETS"
 
 # --- canonical GLADE sources -> assets/ basename ----------------------------

@@ -187,5 +187,7 @@ graphcast/.git_DEEPMIND_UPSTREAM/
 climate/HF_READINESS.md
 
 # HF upload logs (local only)
-climate/upload.out
+climate/upload*.out
 climate/upload_*.log
+climate/maintainer/upload*.out
+climate/maintainer/upload_*.log
