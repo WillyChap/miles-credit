@@ -31,7 +31,6 @@ SHARED = [
     "f.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc",
     "b.e21.CREDIT_climate_cyclic_1yr_f32coords.nc",
     "init_camulator_condition_tensor_1981-01-01T00Z.pth",
-    "era5.yaml",
 ]
 OPTIONAL = [
     "ERA5_clim_1990_2019_6h_interp.nc",

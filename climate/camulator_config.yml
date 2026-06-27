@@ -536,8 +536,11 @@ predict:
     # Keep True: Quick_Climate writes de-normalized (physical-unit) output.
     climate_rescale_output: True
 
-    # RUNTIME ASSET: variable metadata used to name/attribute output NetCDF. Leave as-is.
-    metadata: './assets/era5.yaml'
+    # Variable metadata (units + long_name) stamped onto every output NetCDF.
+    # Ships with the toolbox (not a downloaded asset). Units for the rescaled
+    # flux/accumulation fields (PRECT, QFLX, LHFLX, SHFLX, *_J) match the
+    # training-data rescaling; see the header of camulator_metadata.yaml.
+    metadata: './camulator_metadata.yaml'
 
     # EDIT (output location): files are written to  <save_forecast>/<save_append>/<init_time>/pred_*.nc
     # (save_append is the experiment name passed by RunQuickClimate.sh, e.g. run_default).

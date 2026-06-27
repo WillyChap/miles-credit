@@ -1,0 +1,118 @@
+# ============================================================================
+# camulator_metadata.yaml
+# ----------------------------------------------------------------------------
+# Variable metadata (units + long_name) stamped onto every output NetCDF by
+# credit.output.save_netcdf_increment (via conf['predict']['metadata']).
+#
+# Sources:
+#   * Unchanged fields  -> CESM/CAM6 metadata as in the training archive
+#       b.e21.CREDIT_climate_branch_1980_????_zmdata_ERA5scaled_zmdata_Qtot.zarr
+#   * FLUX / ACCUMULATION fields were RESCALED when the training data was built
+#     (Gather_CESM_b.e21_NoCoarsen.ipynb). The model therefore predicts these
+#     rescaled quantities, so the units below reflect the rescaling, NOT raw CAM6:
+#       PRECT  = CAM6 PRECT [m/s]   * 21600            -> m per 6hr step
+#       QFLX   = CAM6 QFLX  [kg/m2/s] * -21.6          -> m per 6hr step (positive down)
+#       LHFLX  = CAM6 LHFLX [W/m2]  * -21600           -> J m-2 per 6hr step (positive down)
+#       SHFLX  = CAM6 SHFLX [W/m2]  * -21600           -> J m-2 per 6hr step (positive down)
+#     (21600 s = one 6-hourly step; the negative sign flips CAM6's positive-up
+#     convention so positive = into the surface. The *_J surface radiative
+#     fluxes were likewise accumulated to J m-2 per 6hr step.)
+#
+# To convert the accumulated quantities back to rates:
+#   W m-2  = (J m-2 per 6hr step) / 21600
+#   mm/day = (m per 6hr step) * 4000        (1000 mm/m * 4 steps/day)
+# ============================================================================
+
+# --- prognostic upper-air (3D: time, lev, lat, lon) -------------------------
+U:
+  units: "m s**-1"
+  long_name: "Zonal wind"
+V:
+  units: "m s**-1"
+  long_name: "Meridional wind"
+T:
+  units: "K"
+  long_name: "Temperature"
+Qtot:
+  units: "kg kg**-1"
+  long_name: "Specific total water (vapor + condensate)"
+
+# --- prognostic surface -----------------------------------------------------
+PS:
+  units: "Pa"
+  long_name: "Surface pressure"
+TREFHT:
+  units: "K"
+  long_name: "Reference height (2 m) temperature"
+
+# --- diagnostic surface / flux fields ---------------------------------------
+PRECT:
+  units: "m per 6hr step"
+  long_name: "Total precipitation, liquid water equivalent accumulated over the 6-hour step (mm/day = value * 4000)"
+TS:
+  units: "K"
+  long_name: "Surface temperature (radiative)"
+CLDHGH:
+  units: "fraction"
+  long_name: "Vertically-integrated high cloud"
+CLDLOW:
+  units: "fraction"
+  long_name: "Vertically-integrated low cloud"
+CLDMED:
+  units: "fraction"
+  long_name: "Vertically-integrated mid-level cloud"
+TAUX:
+  units: "N m**-2"
+  long_name: "Zonal surface wind stress"
+TAUY:
+  units: "N m**-2"
+  long_name: "Meridional surface wind stress"
+U10:
+  units: "m s**-1"
+  long_name: "10 m wind speed"
+QFLX:
+  units: "m per 6hr step"
+  long_name: "Surface water (moisture) flux, liquid water equivalent accumulated over the 6-hour step; positive into the surface"
+SHFLX:
+  units: "J m-2 per 6hr step"
+  long_name: "Surface sensible heat flux accumulated over the 6-hour step; positive into the surface (W m-2 = value / 21600)"
+LHFLX:
+  units: "J m-2 per 6hr step"
+  long_name: "Surface latent heat flux accumulated over the 6-hour step; positive into the surface (W m-2 = value / 21600)"
+FSDS_J:
+  units: "J m-2 per 6hr step"
+  long_name: "Downwelling shortwave flux at surface accumulated over the 6-hour step (W m-2 = value / 21600)"
+FLDS_J:
+  units: "J m-2 per 6hr step"
+  long_name: "Downwelling longwave flux at surface accumulated over the 6-hour step (W m-2 = value / 21600)"
+FSUS:
+  units: "J m-2 per 6hr step"
+  long_name: "Upwelling shortwave flux at surface accumulated over the 6-hour step (W m-2 = value / 21600)"
+FLUS:
+  units: "J m-2 per 6hr step"
+  long_name: "Upwelling longwave flux at surface accumulated over the 6-hour step (W m-2 = value / 21600)"
+FSUTOA:
+  units: "W m**-2"
+  long_name: "Upwelling solar flux at top of atmosphere"
+FLUT:
+  units: "W m**-2"
+  long_name: "Upwelling longwave flux at top of model"
+
+# --- prescribed forcing (inputs; included in case they are echoed to output) -
+SOLIN:
+  units: "W m**-2"
+  long_name: "Solar insolation"
+SST:
+  units: "K"
+  long_name: "Sea surface temperature"
+ICEFRAC:
+  units: "fraction"
+  long_name: "Fraction of surface area covered by sea ice"
+co2vmr_3d:
+  units: "mol mol**-1"
+  long_name: "CO2 volume mixing ratio"
+
+# --- time coordinate encoding ----------------------------------------------
+time:
+  units: "hours since 1900-01-01 00:00:00"
+  calendar: "noleap"

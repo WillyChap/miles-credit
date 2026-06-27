@@ -45,8 +45,8 @@ declare -a SRC=(
   "/glade/derecho/scratch/wchapman/CAMULATOR_FORCING/b.e21.CREDIT_climate_cyclic_1yr_f32coords.nc"
   # initial condition tensor (default start 1981-01-01T00Z)
   "/glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended/init_times/init_camulator_condition_tensor_1981-01-01T00Z.pth"
-  # output metadata
-  "/glade/work/schreck/repos/credit/miles-credit/metadata/era5.yaml"
+  # NOTE: output variable metadata now ships in-repo as camulator_metadata.yaml
+  #       (no longer a downloaded asset) -- see predict.metadata in the config.
   # OPTIONAL: climatology + seasonal mean (only for rollout_metrics / fast-climate scores)
   "/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/ERA5_clim_1990_2019_6h_interp.nc"
   "/glade/work/wchapman/miles_branchs/CESM_Spatial_PS/truth_be21_tensor_2013-01-01T00Z.pth"

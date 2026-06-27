@@ -130,10 +130,12 @@ willychap/camulator
 ├── normalization/
 │   ├── mean_*.nc, std_*.nc                                # z-score
 │   └── *statics*.nc                                       # statics + latitude weights
-├── metadata/
-│   └── era5.yaml
 └── figs/                                                  # model-card figures
 ```
+
+(Output variable units/long-names ship with the inference toolbox as
+`climate/camulator_metadata.yaml`, so they are version-controlled with the code
+rather than hosted as a data asset.)
 
 `download_assets.py` pulls these into the toolbox's `./assets/` for you.
 

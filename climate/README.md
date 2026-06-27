@@ -142,7 +142,10 @@ file within it, so multiple checkpoints can coexist in `./assets/`.
 
 Output NetCDF is written per step/day/month to
 `<save_forecast>/<FOLD_OUT>/<init_time>/pred_*.nc`, in physical units, with
-variable metadata from `era5.yaml`.
+variable units + long names stamped from `camulator_metadata.yaml` (ships with
+the toolbox). The rescaled flux/accumulation fields (PRECT, QFLX, LHFLX, SHFLX
+and the `*_J` radiative fluxes) carry per-6-hour-step units; see that file's
+header for the exact conversions back to rates.
 
 ---
 
@@ -176,7 +179,7 @@ All config paths are `./assets/<file>`. Fill `./assets/` one of two ways:
 | `f.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc` | 50 M | latitude weights | `…/MLWPS/STAGING/` |
 | `b.e21.CREDIT_climate_cyclic_1yr_f32coords.nc` | 1.3 G | cyclic 1-yr forcing (default) | `…/CAMULATOR_FORCING/` |
 | `init_camulator_condition_tensor_1981-01-01T00Z.pth` | 29 M | initial condition | `…/NEW_CLI_JOHN_CASPER_extended/init_times/` |
-| `era5.yaml` | <1 K | output variable metadata | `/glade/work/schreck/repos/credit/miles-credit/metadata/` |
+| `camulator_metadata.yaml` | <2 K | output variable units/long-names | ships in-repo (`climate/`) — not downloaded |
 
 **Optional**
 
@@ -221,11 +224,11 @@ willychap/camulator        (HF model repo)
 │   └── b.e21.CREDIT_climate_branch_1980_2014.nc       # progressive (slim, ~10 GB)
 ├── initial_conditions/
 │   └── init_camulator_condition_tensor_1981-01-01T00Z.pth
-├── normalization/
-│   ├── mean_*.nc, std_*.nc
-│   └── *statics*.nc                                    # statics + latitude weights
-└── metadata/
-    └── era5.yaml
+└── normalization/
+    ├── mean_*.nc, std_*.nc
+    └── *statics*.nc                                    # statics + latitude weights
+# (output variable metadata is not hosted here -- it ships in-repo as
+#  climate/camulator_metadata.yaml)
 ```
 
 `download_assets.py --repo_id willychap/camulator` pulls these (flattening the

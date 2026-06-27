@@ -29,7 +29,6 @@ SHARED = [
     # only pull it for transient runs).
     "b.e21.CREDIT_climate_branch_1980_2014.nc",
     "init_camulator_condition_tensor_1981-01-01T00Z.pth",
-    "era5.yaml",
 ]
 # Scoring-only inputs (rollout_metrics / fast-climate). NOT hosted by default.
 # NOTE: ERA5_clim_1990_2019_6h_interp.nc is ~67 GB and EXCEEDS HuggingFace's
