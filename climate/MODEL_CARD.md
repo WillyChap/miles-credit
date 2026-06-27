@@ -15,7 +15,7 @@ pipeline_tag: other
 
 # CAMulator
 
-**CAMulator** is an auto-regressive machine-learned emulator of NSF NCAR's CAM6
+CAMulator is an auto-regressive machine-learned emulator of NSF NCAR's CAM6
 atmosphere, trained and run within the
 [CREDIT](https://github.com/WillyChap/miles-credit) framework. Given prescribed
 sea-surface temperature, sea-ice, incoming solar radiation, and CO2, it rolls a
@@ -23,7 +23,7 @@ sea-surface temperature, sea-ice, incoming solar radiation, and CO2, it rolls a
 climate-length simulations (years to decades). It conserves global dry-air mass,
 moisture, and total atmospheric energy, remains numerically stable over decadal
 rollouts, and reproduces the annual climatology together with major modes of
-variability such as ENSO and the NAO -- at roughly a **350x speedup over CAM6**,
+variability such as ENSO and the NAO -- at roughly a 350x speedup over CAM6,
 making it an efficient way to generate large climate ensembles.
 
 The model and method are described in Chapman et al. (2025), *CAMulator: Fast
@@ -66,22 +66,23 @@ Full instructions, configuration, and the asset manifest are in
 
 ### Evaluation
 
-The default checkpoint (**epoch 65**) was chosen by a two-stage,
+The default checkpoint (epoch 65) was chosen by a two-stage,
 observation-anchored evaluation. Each of 60 candidate checkpoints (epochs 20-79)
 was run as a free-running, autoregressive 35-year rollout (1980-2014, 6-hourly,
 no-leap) from a 1 January 1980 initial state and scored against the CREDIT
 ERA5-scaled training target on the identical 1 degree grid. All statistics are
 latitude-weighted.
 
-**Stage 1 - climatological skill (monthly means).** Twelve metrics per field
-(bias, pattern RMSE, interannual correlation, decadal-trend fidelity, drift) for
-2 m temperature (TREFHT) and total precipitation (PRECT). Checkpoint 65 wins the
-combined score, wins precipitation outright, and wins an independent average-rank
-cross-check.
+#### Stage 1 — climatological skill (monthly means)
+
+Twelve metrics per field (bias, pattern RMSE, interannual correlation,
+decadal-trend fidelity, drift) for 2 m temperature (TREFHT) and total
+precipitation (PRECT). Checkpoint 65 wins the combined score, wins precipitation
+outright, and wins an independent average-rank cross-check.
 
 ![Checkpoint scorecard - top 20 by combined skill (green = better)](figs/monthly_scorecard.png)
 
-**Checkpoint 65 climatology (latitude-weighted, full 35-yr record):**
+Checkpoint 65 climatology (latitude-weighted, full 35-yr record):
 
 | Field | Spatiotemporal RMSE | Global-mean bias | Decadal-trend error | Global-mean monthly RMSE | Annual corr. |
 |---|---|---|---|---|---|
@@ -99,16 +100,18 @@ The global-mean warming trend and interannual variability are reproduced
 
 ![Global-mean TREFHT, 1980-2014: truth vs checkpoints (65 bold)](figs/monthly_gmt_timeseries.png)
 
-**Stage 2 - extremes tiebreaker (6-hourly).** The top four checkpoints were
-compared on the distribution tails of 6-hourly TREFHT and PRECT. Temperature
-extremes are a statistical tie across the finalists; the heavy-precipitation tail
-is decisive, and checkpoint 65 tracks the truth wet tail most closely.
+#### Stage 2 — extremes tiebreaker (6-hourly)
+
+The top four checkpoints were compared on the distribution tails of 6-hourly
+TREFHT and PRECT. Temperature extremes are a statistical tie across the
+finalists; the heavy-precipitation tail is decisive, and checkpoint 65 tracks the
+truth wet tail most closely.
 
 ![6-hourly PRECT distribution and wet tail (winner: ckpt 65)](figs/extremes_pdf_PRECT.png)
 
-A 50/50 blend of the monthly and extremes scores selects **checkpoint 65** as the
+A 50/50 blend of the monthly and extremes scores selects checkpoint 65 as the
 only candidate strong on both timescales (checkpoint 63 is the temperature-leaning
-runner-up). The **top 10 checkpoints by combined score are hosted**
+runner-up). The top 10 checkpoints by combined score are hosted
 (epochs 65, 63, 70, 48, 47, 66, 76, 68, 51, 43), so you can build cheap
 checkpoint ensembles or study sensitivity to training stage; pick one with
 `download_assets.py --checkpoint checkpoint.pt000NN.pt`.
@@ -149,7 +152,7 @@ full training archive is not hosted here; the inputs needed to *run* the model
 (forcing, initial conditions, normalization, statics) are.
 
 If you would like access to our training Zarr datasets, please email
-**wchapman [at] colorado.edu**.
+wchapman [at] colorado.edu.
 
 ### Citation
 
