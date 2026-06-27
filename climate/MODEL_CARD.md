@@ -108,8 +108,10 @@ is decisive, and checkpoint 65 tracks the truth wet tail most closely.
 
 A 50/50 blend of the monthly and extremes scores selects **checkpoint 65** as the
 only candidate strong on both timescales (checkpoint 63 is the temperature-leaning
-runner-up). Other epochs are hosted too, so you can study sensitivity to training
-stage; pick one with `download_assets.py --checkpoint checkpoint.pt000NN.pt`.
+runner-up). The **top 10 checkpoints by combined score are hosted**
+(epochs 65, 63, 70, 48, 47, 66, 76, 68, 51, 43), so you can build cheap
+checkpoint ensembles or study sensitivity to training stage; pick one with
+`download_assets.py --checkpoint checkpoint.pt000NN.pt`.
 
 > Note on PRECT units: native values are metres of liquid-water equivalent per
 > 6-hourly step (ERA5 `tp` convention); mm/day = native x 4000. Checkpoint 65's
