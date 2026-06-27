@@ -224,11 +224,11 @@ willychap/camulator        (HF model repo)
 │   └── b.e21.CREDIT_climate_branch_1980_2014.nc       # progressive (slim, ~10 GB)
 ├── initial_conditions/
 │   └── init_camulator_condition_tensor_*.pth        # 69 ICs (Jan 1 & Jul 1, 1980/1981-2014)
-└── normalization/
-    ├── mean_*.nc, std_*.nc
-    └── *statics*.nc                                    # statics + latitude weights
-# (output variable metadata is not hosted here -- it ships in-repo as
-#  climate/camulator_metadata.yaml)
+├── normalization/
+│   ├── mean_*.nc, std_*.nc
+│   └── *statics*.nc                                    # statics + latitude weights
+└── metadata/
+    └── camulator_metadata.yaml                         # output variable units (also in-repo)
 ```
 
 `download_assets.py --repo_id willychap/camulator` pulls these (flattening the

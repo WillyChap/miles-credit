@@ -123,21 +123,22 @@ checkpoint ensembles or study sensitivity to training stage; pick one with
 willychap/camulator
 ├── README.md                          # this model card
 ├── inference_config.yaml              # ready-to-run config (= camulator_config.yml)
-├── checkpoint.pt00065.pt              # default model (epoch 65); other epochs alongside
+├── checkpoint.pt00065.pt              # default model (epoch 65); top-10 epochs alongside
 ├── forcing_data/
 │   ├── b.e21.CREDIT_climate_cyclic_1yr_f32coords.nc      # cyclic (default)
 │   └── b.e21.CREDIT_climate_branch_1980_2014.nc          # progressive/transient
 ├── initial_conditions/
-│   └── init_camulator_condition_tensor_*.pth                 # 69 ICs (Jan 1 & Jul 1, 1980/1981-2014)
+│   └── init_camulator_condition_tensor_*.pth            # 69 ICs (Jan 1 & Jul 1, 1980/1981-2014)
 ├── normalization/
-│   ├── mean_*.nc, std_*.nc                                # z-score
-│   └── *statics*.nc                                       # statics + latitude weights
-└── figs/                                                  # model-card figures
+│   ├── mean_*.nc, std_*.nc                               # z-score
+│   └── *statics*.nc                                      # statics + latitude weights
+├── metadata/
+│   └── camulator_metadata.yaml                           # output variable units / long-names
+└── figs/                                                 # model-card figures
 ```
 
-(Output variable units/long-names ship with the inference toolbox as
-`climate/camulator_metadata.yaml`, so they are version-controlled with the code
-rather than hosted as a data asset.)
+(The inference toolbox actually reads its units from the in-repo copy
+`climate/camulator_metadata.yaml`; the `metadata/` copy here is for reference.)
 
 `download_assets.py` pulls these into the toolbox's `./assets/` for you.
 
