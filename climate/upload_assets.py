@@ -24,13 +24,20 @@ SHARED = [
     "b.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc",
     "f.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc",
     "b.e21.CREDIT_climate_cyclic_1yr_f32coords.nc",
+    # progressive/transient forcing (slim, ~9.7 GB). Hosted by default so the
+    # transient-climate run path works; download_assets keeps it OPT-IN (users
+    # only pull it for transient runs).
+    "b.e21.CREDIT_climate_branch_1980_2014.nc",
     "init_camulator_condition_tensor_1981-01-01T00Z.pth",
     "era5.yaml",
 ]
+# Scoring-only inputs (rollout_metrics / fast-climate). NOT hosted by default.
+# NOTE: ERA5_clim_1990_2019_6h_interp.nc is ~67 GB and EXCEEDS HuggingFace's
+# 50 GB per-file limit -- it cannot be uploaded as a single file. Host it
+# elsewhere (or chunk to zarr) if needed; --include_optional will fail on it.
 OPTIONAL = [
     "ERA5_clim_1990_2019_6h_interp.nc",
     "truth_be21_tensor_2013-01-01T00Z.pth",
-    "b.e21.CREDIT_climate_branch_1980_2014.nc",   # progressive/transient forcing (slim, ~10 GB)
 ]
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -102,6 +109,17 @@ def main():
         print("Missing locally:")
         for p in missing:
             print("  -", p)
+        sys.exit(1)
+
+    # HuggingFace rejects single files over 50 GB. Catch it before uploading
+    # 30+ GB only to fail on the last file.
+    HF_FILE_LIMIT = 50 * 1e9
+    toobig = [(name, os.path.getsize(p)) for p, name in uploads if os.path.getsize(p) > HF_FILE_LIMIT]
+    if toobig:
+        print("These files exceed HuggingFace's 50 GB per-file limit and cannot be uploaded:")
+        for name, sz in toobig:
+            print(f"  - {name}  ({sz / 1e9:.1f} GB)")
+        print("Remove them from the manifest (host elsewhere / chunk to zarr) and re-run.")
         sys.exit(1)
 
     for path, name in uploads:
