@@ -185,3 +185,7 @@ graphcast/.git_DEEPMIND_UPSTREAM/
 
 # internal readiness notes — not for GitHub
 climate/HF_READINESS.md
+
+# HF upload logs (local only)
+climate/upload.out
+climate/upload_*.log
