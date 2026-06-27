@@ -66,21 +66,16 @@ Full instructions, configuration, and the asset manifest are in
 
 ### Evaluation
 
-The default checkpoint (epoch 65) was chosen by a two-stage,
-observation-anchored evaluation. Each of 60 candidate checkpoints (epochs 20-79)
-was run as a free-running, autoregressive 35-year rollout (1980-2014, 6-hourly,
-no-leap) from a 1 January 1980 initial state and scored against the CREDIT
-ERA5-scaled training target on the identical 1 degree grid. All statistics are
-latitude-weighted.
+We evaluate many training checkpoints by running each as a free-running,
+autoregressive 35-year rollout (1980-2014, 6-hourly, no-leap) and scoring it
+against the CREDIT ERA5-scaled training target on the same 1 degree grid
+(latitude-weighted), looking at both the monthly-mean climatology and the
+6-hourly distribution.
 
-#### Stage 1 — climatological skill (monthly means)
-
-Twelve metrics per field (bias, pattern RMSE, interannual correlation,
-decadal-trend fidelity, drift) for 2 m temperature (TREFHT) and total
-precipitation (PRECT). Checkpoint 65 wins the combined score, wins precipitation
-outright, and wins an independent average-rank cross-check.
-
-![Checkpoint scorecard - top 20 by combined skill (green = better)](figs/monthly_scorecard.png)
+Checkpoint 65 is selected as the default. The other top checkpoints
+(epochs 63, 70, 48, 47, 66, 76, 68, 51, 43) are provided as well, so you can
+evaluate them yourself, build cheap checkpoint ensembles, or study sensitivity to
+training stage — pick one with `download_assets.py --checkpoint checkpoint.pt000NN.pt`.
 
 Checkpoint 65 climatology (latitude-weighted, full 35-yr record):
 
@@ -89,32 +84,18 @@ Checkpoint 65 climatology (latitude-weighted, full 35-yr record):
 | TREFHT | 1.564 K | +0.033 K | -0.007 K/decade | 0.159 K | 0.985 |
 | PRECT  | 6.09e-4 (2.4 mm/day) | -3.9e-6 (essentially neutral) | -- | clim. RMSE 7.49e-5 | -- |
 
-Annual-mean spatial bias is small and coherent (TREFHT RMSE 0.325 K, largest at
-high-latitude land and sea-ice margins; PRECT RMSE 7.49e-5, modest tropical
-structure with no large-scale offset):
+The figures below summarize the metrics: a skill scorecard across the top
+checkpoints, checkpoint 65's annual-mean bias maps, the global-mean temperature
+evolution against the training target, and the 6-hourly precipitation
+distribution.
+
+![Checkpoint skill scorecard (green = better)](figs/monthly_scorecard.png)
 
 ![Checkpoint 65 annual-mean bias maps](figs/monthly_ckpt65_biasmaps.png)
 
-The global-mean warming trend and interannual variability are reproduced
-(decadal-trend error -0.007 K/decade, annual correlation 0.985):
+![Global-mean TREFHT, 1980-2014: checkpoints vs training target](figs/monthly_gmt_timeseries.png)
 
-![Global-mean TREFHT, 1980-2014: truth vs checkpoints (65 bold)](figs/monthly_gmt_timeseries.png)
-
-#### Stage 2 — extremes tiebreaker (6-hourly)
-
-The top four checkpoints were compared on the distribution tails of 6-hourly
-TREFHT and PRECT. Temperature extremes are a statistical tie across the
-finalists; the heavy-precipitation tail is decisive, and checkpoint 65 tracks the
-truth wet tail most closely.
-
-![6-hourly PRECT distribution and wet tail (winner: ckpt 65)](figs/extremes_pdf_PRECT.png)
-
-A 50/50 blend of the monthly and extremes scores selects checkpoint 65 as the
-only candidate strong on both timescales (checkpoint 63 is the temperature-leaning
-runner-up). The top 10 checkpoints by combined score are hosted
-(epochs 65, 63, 70, 48, 47, 66, 76, 68, 51, 43), so you can build cheap
-checkpoint ensembles or study sensitivity to training stage; pick one with
-`download_assets.py --checkpoint checkpoint.pt000NN.pt`.
+![6-hourly PRECT distribution](figs/extremes_pdf_PRECT.png)
 
 > Note on PRECT units: native values are metres of liquid-water equivalent per
 > 6-hourly step (ERA5 `tp` convention); mm/day = native x 4000. Checkpoint 65's
