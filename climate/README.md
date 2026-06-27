@@ -5,6 +5,9 @@ climate-length runs and get **NetCDF** output. Everything is driven by a single
 YAML file and reads its inputs from a local `./assets/` folder, so the whole
 thing is self-contained and easy to host (e.g. on HuggingFace).
 
+Method and evaluation: Chapman et al. (2025), *CAMulator: Fast Emulation of the
+Community Atmosphere Model*, [arXiv:2504.06007](https://arxiv.org/abs/2504.06007).
+
 ```
 config (camulator_config.yml)
         │

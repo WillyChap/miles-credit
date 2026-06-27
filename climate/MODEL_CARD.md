@@ -15,11 +15,20 @@ pipeline_tag: other
 
 # CAMulator
 
-**CAMulator** is an AI emulator of NSF NCAR's CAM6 atmosphere, trained and run
-within the [CREDIT](https://github.com/WillyChap/miles-credit) framework. It
-rolls a 1 degree (192x288), 32-level, 6-hourly atmospheric state forward for
-climate-length simulations (years to decades), driven by prescribed SST, sea-ice,
-solar, and CO2 forcing.
+**CAMulator** is an auto-regressive machine-learned emulator of NSF NCAR's CAM6
+atmosphere, trained and run within the
+[CREDIT](https://github.com/WillyChap/miles-credit) framework. Given prescribed
+sea-surface temperature, sea-ice, incoming solar radiation, and CO2, it rolls a
+1 degree (192x288), 32-level, 6-hourly atmospheric state forward for
+climate-length simulations (years to decades). It conserves global dry-air mass,
+moisture, and total atmospheric energy, remains numerically stable over decadal
+rollouts, and reproduces the annual climatology together with major modes of
+variability such as ENSO and the NAO -- at roughly a **350x speedup over CAM6**,
+making it an efficient way to generate large climate ensembles.
+
+The model and method are described in Chapman et al. (2025), *CAMulator: Fast
+Emulation of the Community Atmosphere Model*
+([arXiv:2504.06007](https://arxiv.org/abs/2504.06007)).
 
 CAMulator is a research tool. It emulates a specific CAM6 configuration and is
 not a substitute for an operational forecast or a full Earth-system model.
@@ -28,7 +37,7 @@ not a substitute for an operational forecast or a full Earth-system model.
 
 - Inference toolbox (code): https://github.com/WillyChap/miles-credit (branch `camulator_huggingface`, dir `climate/`)
 - CREDIT framework: https://github.com/NCAR/miles-credit
-- Paper: CAMulator (Chapman et al.) -- add DOI/link
+- Paper: Chapman et al. (2025), *CAMulator: Fast Emulation of the Community Atmosphere Model*, [arXiv:2504.06007](https://arxiv.org/abs/2504.06007)
 - This model + data: https://huggingface.co/willychap/camulator
 
 ### Inference quickstart
@@ -137,11 +146,14 @@ full training archive is not hosted here; the inputs needed to *run* the model
 ### Citation
 
 ```bibtex
-@misc{camulator,
-  title  = {CAMulator: an AI emulator of the CAM6 atmosphere},
-  author = {Chapman, William E. and others},
-  note   = {CREDIT framework, NSF NCAR},
-  year   = {2025}
+@article{chapman2025camulator,
+  title   = {CAMulator: Fast Emulation of the Community Atmosphere Model},
+  author  = {Chapman, William E. and Schreck, John S. and Sha, Yingkai and
+             Gagne II, David John and Kimpara, Dhamma and Zanna, Laure and
+             Mayer, Kirsten J. and Berner, Judith},
+  journal = {arXiv preprint arXiv:2504.06007},
+  year    = {2025},
+  doi     = {10.48550/arXiv.2504.06007},
+  url     = {https://arxiv.org/abs/2504.06007}
 }
 ```
-*(Replace with the published reference / DOI when available.)*
