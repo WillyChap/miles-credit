@@ -145,6 +145,9 @@ CAMulator was trained on a CAM6 / ERA5-scaled climate dataset (1980-2014). The
 full training archive is not hosted here; the inputs needed to *run* the model
 (forcing, initial conditions, normalization, statics) are.
 
+If you would like access to our training Zarr datasets, please email
+**wchapman [at] colorado.edu**.
+
 ### Citation
 
 ```bibtex
