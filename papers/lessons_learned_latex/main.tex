@@ -120,31 +120,32 @@ the global water-budget drift rose monotonically from about 2\% to a plateau nea
 in the same configuration reproduced the failure and drifted further, to roughly 45\%,
 which shows the behavior is a property of the configuration rather than of a single run.
 
-The mechanism is a closed feedback loop between the corrector and the optimizer
-(Fig.~\ref{fig:schematic}b). The corrector multiplies predicted precipitation by the
-closure factor $r$. When raw precipitation is too low to close the budget, $r$ exceeds 1
-and the corrector scales precipitation up. The loss, computed on the corrected field,
-then sees precipitation that slightly overshoots the target and produces a gradient that
-lowers raw precipitation further. Lower raw precipitation enlarges the residual, which
-raises $r$, which scales the next prediction up more. Because each optimizer step moves
-raw precipitation only slightly and the corrector responds in kind, the imbalance grows
-gradually rather than jumping, producing the multi-epoch ramp of Fig.~\ref{fig:drift}
-instead of a step change. That monotonic ramp is the fingerprint of the feedback, distinct
-from a static bias, which would instead appear as a fixed offset from the first epoch. The
-ramp halts when the corrected precipitation reaches the target: there the supervised
-gradient on raw precipitation vanishes, leaving a degenerate equilibrium in which raw
-precipitation is far too low and the closure factor is large. The plateau level is
-therefore set by the interplay of the loss and the corrector, not by any physical scale,
-which is why the two independent runs settle at different values, near 23\% and 45\%. At
-the 23\% plateau the corrector was inflating precipitation by roughly a quarter, implying
-a raw precipitation sink about 18\% below the reference.
+The mechanism is a symmetry that the corrector introduces into the loss
+(Fig.~\ref{fig:schematic}b). The corrector rescales the whole precipitation field by a
+single global factor $r$, and it chooses $r$ so that the global corrected precipitation
+equals the value the budget demands. That value is fixed by the storage tendency and the
+evaporation, and it does not depend on the raw precipitation. So if the network scales its
+raw precipitation up or down by any constant, the corrector scales $r$ inversely and the
+corrected field comes out unchanged. The loss is computed on that corrected field, so it
+cannot see the amplitude of the raw precipitation at all. Raw amplitude is a flat
+direction of the loss, free to take any value.
 
-Two design choices made this possible. First, gradients flowed through the corrector:
-because the loss was a function of the corrected output, and the correction depended on
-the network output through $r$, the optimizer could reduce the loss by manipulating the
-input to the corrector rather than by improving the physics. Second, nothing in the loss
-rewarded genuine closure. The corrector computed the budget imbalance but the training
-objective never included it, so a large closure factor carried no penalty.
+A flat direction does not stay put. Mean squared error favors smoother, weaker
+precipitation, because predicting closer to the local mean lowers the pointwise penalty,
+and the corrector restores the amplitude at no cost to the loss. Each optimizer step
+shaves the raw field down a little and lets $r$ grow to match. The corrected field stays
+near the target, the loss stays low, and nothing pushes back, because no term in the
+objective charges for a large correction. The drift in Fig.~\ref{fig:drift} is this slow
+slide, with raw precipitation falling and $r$ climbing over many epochs rather than in a
+single step. A monotonic ramp of this kind is the signature of the feedback. A static bias
+would instead sit at a fixed offset from the first epoch.
+
+The slide stalls only when a single global factor can no longer reshape the shrunken field
+to match the spatial pattern of the target. Where it stalls is set by the loss and the
+corrector together, and by the optimization path, not by any physical scale. This is why
+two independent runs settled at different plateaus, near 23\% and 45\%. At the 23\%
+plateau the corrector was inflating precipitation by about a quarter, leaving a raw
+precipitation sink roughly 18\% below the reference.
 
 This failure is dangerous because it hides. A diagnostic computed on the corrected
 field, the quantity a user would naturally monitor, reported a closed budget throughout,
