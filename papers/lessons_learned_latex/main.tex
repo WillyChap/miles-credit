@@ -317,17 +317,19 @@ work rather than on results presented here.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{figure}[t]
-  \noindent\includegraphics[width=19pc,angle=0]{fig01_drift.pdf}\\
-  \caption{Global water-budget drift across training. Drift (\%) versus epoch for the
-  failing configuration (corrector inside the loss, feedback present) and the decoupled
-  penalty configuration, overlaid on the CAM6 reference band (mean 0.024\%, $\pm$ one
-  standard deviation 2.22\%). In every configuration with the corrector active the
-  delivered global water budget closes to machine precision; the plotted drift is the
-  correction the model required, that is the imbalance of the uncorrected prediction, not
-  a violation of conservation in the delivered field. (b)~Global precipitation sink
-  versus epoch against the CAM6 reference; the raw sink collapses under feedback and
-  recovers under the penalty while the delivered budget closes throughout. (c)~Drift
-  distributions for the two model configurations and the CAM6 truth.}\label{fig:drift}
+  \noindent\includegraphics[width=33pc,angle=0]{fig01_drift.pdf}\\
+  \caption{Global water-budget drift, its controlled cause, and the field it hides.
+  (a)~A production fine-tune: the feedback configuration (loss on the corrected output)
+  drives drift to about 23\% before the conservation penalty is enabled at epoch 16, after
+  which drift holds near the CAM6 reference band (mean 0.024\%, $\pm$ one standard deviation
+  2.22\%) for tens of epochs. (b)~A controlled comparison isolating the cause: two runs
+  fine-tuned from the identical checkpoint differing only in the conservation-loss weight
+  (0.0 versus 0.1); with the penalty off the drift runs away, with it on the drift stays in
+  the reference band. (c)~The physical field the corrector conceals: the raw, pre-correction
+  precipitation sink relative to the CAM6 truth in the two controlled runs. In every
+  configuration with the corrector active the delivered budget closes to machine precision;
+  the plotted drift is the correction the model required, not a violation of conservation in
+  the delivered field.}\label{fig:drift}
 \end{figure}
 
 \begin{figure}[t]
