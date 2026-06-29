@@ -233,6 +233,22 @@ invariant on a trained emulator: mass and surface-pressure fixers, energy-balanc
 fixers, moisture fixers, and tracer non-negativity clamps all expose a correction factor
 that an end-to-end optimizer can manipulate if the loss sees the corrected output.
 
+Our result should be read alongside \citet{sha2025}, who integrate global mass, water,
+and energy conservation into an AIWP model during training and inference and report
+improved skill, reduced precipitation (drizzle) bias, and a stabilization effect that
+grows with forecast lead time. That work establishes the benefit of training-time
+conservation; the present finding identifies a failure mode in how the correction is
+coupled to the loss, and the two are consistent. Their baseline over-predicted
+precipitation and the water scheme reduced it, whereas our model under-predicted and a
+loss on the corrected output drove it lower still; the sign of the outcome depends on the
+initial bias and on whether the supervised gradient passes through the corrector. Keeping
+the corrector out of that gradient path (Eq.~\eqref{eq:total}) is what lets the
+conservation benefit be realized without the feedback. The regime where \citet{sha2025}
+report the largest gains, long free-running rollouts, is also where our per-step training
+diagnostics are silent: we verify closure at each training step but not over a
+multi-decade integration, and their stabilization effect is the natural target for that
+test.
+
 A speculative variant is worth noting as future work. One could supervise the corrected
 output directly, which a production model arguably should since that is the field it
 delivers, while relying on the conservation penalty to contain the feedback rather than
