@@ -592,12 +592,16 @@ def credit_main_parser(conf, parse_training=True, parse_predict=True, print_summ
                 tracer_inds.append(i_var)
                 tracer_thres.append(float(tracer_threshold_dict[var]))
                 if tracers_thres_maximum is not None:
-                    tracer_thres_max.append(float(tracer_threshold_dict_max[var]))
+                    val = tracer_threshold_dict_max[var]
+                    tracer_thres_max.append(float(val) if val is not None else None)
 
         conf["model"]["post_conf"]["tracer_fixer"]["tracer_inds"] = tracer_inds
         conf["model"]["post_conf"]["tracer_fixer"]["tracer_thres"] = tracer_thres
         if tracers_thres_maximum is not None:
             conf["model"]["post_conf"]["tracer_fixer"]["tracer_thres_max"] = tracer_thres_max
+        # Write per-channel var names so TracerFixer can look up correct mean/std
+        tracer_var_names = [varname_output[i] for i in tracer_inds]
+        conf["model"]["post_conf"]["tracer_fixer"]["tracer_var_names"] = tracer_var_names
 
     # --------------------------------------------------------------------- #
     # global mass fixer
@@ -809,6 +813,10 @@ def credit_main_parser(conf, parse_training=True, parse_predict=True, print_summ
             )
 
         def _find_ind(name_key, single=False):
+            ind_key = name_key.replace("_name", "_ind")
+            if name_key not in cfg_ud:
+                # keep hardcoded index if already present, else skip
+                return cfg_ud.get(ind_key, -1 if single else [])
             inds = [i for i, v in enumerate(varname_output) if v in cfg_ud[name_key]]
             return inds[0] if single else inds
 

@@ -1,0 +1,131 @@
+===== E1: multi-year ground-truth water budget (1980-1984) =====
+/glade/work/wchapman/Roman_Coupling/train_johns/compute_water_budget_truth.py:76: FutureWarning: The return type of `Dataset.dims` will be changed to return a set of dimension names in future, in order to be more consistent with `DataArray.dims`. To access a mapping from dimension names to lengths, please use `Dataset.sizes`.
+  ntimes = ds.dims["time"]
+/glade/work/wchapman/Roman_Coupling/train_johns/compute_water_budget_truth.py:76: FutureWarning: The return type of `Dataset.dims` will be changed to return a set of dimension names in future, in order to be more consistent with `DataArray.dims`. To access a mapping from dimension names to lengths, please use `Dataset.sizes`.
+  ntimes = ds.dims["time"]
+/glade/work/wchapman/Roman_Coupling/train_johns/compute_water_budget_truth.py:76: FutureWarning: The return type of `Dataset.dims` will be changed to return a set of dimension names in future, in order to be more consistent with `DataArray.dims`. To access a mapping from dimension names to lengths, please use `Dataset.sizes`.
+  ntimes = ds.dims["time"]
+/glade/work/wchapman/Roman_Coupling/train_johns/compute_water_budget_truth.py:76: FutureWarning: The return type of `Dataset.dims` will be changed to return a set of dimension names in future, in order to be more consistent with `DataArray.dims`. To access a mapping from dimension names to lengths, please use `Dataset.sizes`.
+  ntimes = ds.dims["time"]
+/glade/work/wchapman/Roman_Coupling/train_johns/compute_water_budget_truth.py:76: FutureWarning: The return type of `Dataset.dims` will be changed to return a set of dimension names in future, in order to be more consistent with `DataArray.dims`. To access a mapping from dimension names to lengths, please use `Dataset.sizes`.
+  ntimes = ds.dims["time"]
+Years to process: [1980, 1981, 1982, 1983, 1984]
+Building physics core (sigma-level, midpoint=True) ...
+  area shape: torch.Size([192, 288])   dtype: torch.float32
+
+Year 1980:
+  opening /glade/derecho/scratch/wchapman/b_credit_runs/b.e21.CREDIT_climate_branch_1980_1980_zmdata_ERA5scaled_zmdata_Qtot.zarr
+    t=200/1459  P_sink=1.7662e+10  E_src=-1.6557e+10  drift=-2.53%
+    t=400/1459  P_sink=1.5536e+10  E_src=-1.4564e+10  drift=-3.53%
+    t=600/1459  P_sink=1.7570e+10  E_src=-1.6595e+10  drift=-3.31%
+    t=800/1459  P_sink=1.7521e+10  E_src=-1.6604e+10  drift=-1.72%
+    t=1000/1459  P_sink=1.7883e+10  E_src=-1.6824e+10  drift=-2.73%
+    t=1200/1459  P_sink=1.7660e+10  E_src=-1.6332e+10  drift=-3.34%
+    t=1400/1459  P_sink=1.7641e+10  E_src=-1.6741e+10  drift=-3.71%
+
+Year 1981:
+  opening /glade/derecho/scratch/wchapman/b_credit_runs/b.e21.CREDIT_climate_branch_1980_1981_zmdata_ERA5scaled_zmdata_Qtot.zarr
+    t=200/1459  P_sink=1.5660e+10  E_src=-1.6255e+10  drift=-3.50%
+    t=400/1459  P_sink=1.7163e+10  E_src=-1.6116e+10  drift=-3.60%
+    t=600/1459  P_sink=1.7330e+10  E_src=-1.6987e+10  drift=-3.22%
+    t=800/1459  P_sink=1.8820e+10  E_src=-1.7847e+10  drift=-3.22%
+    t=1000/1459  P_sink=1.6962e+10  E_src=-1.6310e+10  drift=-1.62%
+    t=1200/1459  P_sink=1.7078e+10  E_src=-1.6549e+10  drift=-3.96%
+    t=1400/1459  P_sink=1.7735e+10  E_src=-1.7498e+10  drift=-4.07%
+
+Year 1982:
+  opening /glade/derecho/scratch/wchapman/b_credit_runs/b.e21.CREDIT_climate_branch_1980_1982_zmdata_ERA5scaled_zmdata_Qtot.zarr
+    t=200/1459  P_sink=1.6606e+10  E_src=-1.6561e+10  drift=-2.80%
+    t=400/1459  P_sink=1.7340e+10  E_src=-1.6933e+10  drift=-1.94%
+    t=600/1459  P_sink=1.8120e+10  E_src=-1.7531e+10  drift=-1.72%
+    t=800/1459  P_sink=1.7612e+10  E_src=-1.7417e+10  drift=-1.62%
+    t=1000/1459  P_sink=1.6644e+10  E_src=-1.6032e+10  drift=-2.18%
+    t=1200/1459  P_sink=1.7026e+10  E_src=-1.6386e+10  drift=-2.78%
+    t=1400/1459  P_sink=1.6575e+10  E_src=-1.6392e+10  drift=-2.35%
+
+Year 1983:
+  opening /glade/derecho/scratch/wchapman/b_credit_runs/b.e21.CREDIT_climate_branch_1980_1983_zmdata_ERA5scaled_zmdata_Qtot.zarr
+    t=200/1459  P_sink=1.7722e+10  E_src=-1.6796e+10  drift=-2.97%
+    t=400/1459  P_sink=1.7363e+10  E_src=-1.7075e+10  drift=-1.63%
+    t=600/1459  P_sink=1.7761e+10  E_src=-1.7355e+10  drift=-1.47%
+    t=800/1459  P_sink=1.7849e+10  E_src=-1.6414e+10  drift=-2.73%
+    t=1000/1459  P_sink=1.6853e+10  E_src=-1.5279e+10  drift=-3.06%
+    t=1200/1459  P_sink=1.6359e+10  E_src=-1.5579e+10  drift=-4.01%
+    t=1400/1459  P_sink=1.7132e+10  E_src=-1.7211e+10  drift=-3.44%
+
+Year 1984:
+  opening /glade/derecho/scratch/wchapman/b_credit_runs/b.e21.CREDIT_climate_branch_1980_1984_zmdata_ERA5scaled_zmdata_Qtot.zarr
+    t=200/1459  P_sink=1.6474e+10  E_src=-1.6239e+10  drift=-3.09%
+    t=400/1459  P_sink=1.5142e+10  E_src=-1.5814e+10  drift=-3.73%
+    t=600/1459  P_sink=1.8148e+10  E_src=-1.7276e+10  drift=-2.61%
+    t=800/1459  P_sink=1.7603e+10  E_src=-1.7093e+10  drift=-3.75%
+    t=1000/1459  P_sink=1.7840e+10  E_src=-1.6711e+10  drift=-3.38%
+    t=1200/1459  P_sink=1.6114e+10  E_src=-1.5589e+10  drift=-1.48%
+    t=1400/1459  P_sink=1.6994e+10  E_src=-1.6697e+10  drift=-4.02%
+
+Saved 7295 rows → experiments/out/water_budget_1980_1984.csv
+
+Summary:
+             P_sink         E_src      residual    drift_pct
+count  7.295000e+03  7.295000e+03  7.295000e+03  7295.000000
+mean   1.724311e+10 -1.724109e+10  3.805208e+05     0.025051
+std    8.355010e+08  8.526042e+08  3.751155e+08     2.187232
+min    1.414460e+10 -2.026849e+10 -9.382748e+08    -5.505586
+25%    1.668368e+10 -1.781646e+10 -3.045458e+08    -1.743390
+50%    1.723553e+10 -1.721862e+10  1.748173e+07     0.104123
+75%    1.779610e+10 -1.663162e+10  2.843720e+08     1.691125
+max    2.061492e+10 -1.456443e+10  9.766318e+08     5.355242
+
+Mean drift_pct : 0.025%
+Std  drift_pct : 2.187%
+P_sink > 0 frac: 1.000
+E_src  < 0 frac: 1.000  (negative = upward evap)
+===== E2: float32 vs float64 global-sum rounding demo =====
+/glade/work/wchapman/Roman_Coupling/train_johns/experiments/float_precision_demo.py:49: FutureWarning: The return type of `Dataset.dims` will be changed to return a set of dimension names in future, in order to be more consistent with `DataArray.dims`. To access a mapping from dimension names to lengths, please use `Dataset.sizes`.
+  nt = min(args.nsteps, ds.dims["time"])
+step  term     sum_f32          sum_f64          err_pct
+0     P_sink   1.495576e+10    1.495576e+10   -0.0000
+0     E_src   -1.682251e+10   -1.682251e+10   -0.0000
+1     P_sink   1.560199e+10    1.560200e+10   -0.0000
+1     E_src   -1.671934e+10   -1.671934e+10   -0.0000
+2     P_sink   1.585231e+10    1.585231e+10   -0.0000
+2     E_src   -1.739989e+10   -1.739989e+10   -0.0000
+3     P_sink   1.663388e+10    1.663388e+10   +0.0000
+3     E_src   -1.791546e+10   -1.791546e+10   -0.0000
+4     P_sink   1.650728e+10    1.650728e+10   -0.0000
+4     E_src   -1.676031e+10   -1.676031e+10   +0.0000
+5     P_sink   1.629556e+10    1.629555e+10   +0.0000
+5     E_src   -1.666189e+10   -1.666189e+10   -0.0000
+6     P_sink   1.668575e+10    1.668575e+10   -0.0000
+6     E_src   -1.739692e+10   -1.739692e+10   +0.0000
+7     P_sink   1.735679e+10    1.735679e+10   -0.0000
+7     E_src   -1.804462e+10   -1.804462e+10   +0.0000
+8     P_sink   1.697151e+10    1.697151e+10   +0.0000
+8     E_src   -1.707082e+10   -1.707082e+10   +0.0000
+9     P_sink   1.643584e+10    1.643584e+10   +0.0000
+9     E_src   -1.701714e+10   -1.701714e+10   +0.0000
+10    P_sink   1.680250e+10    1.680250e+10   -0.0000
+10    E_src   -1.779787e+10   -1.779787e+10   +0.0000
+11    P_sink   1.756757e+10    1.756757e+10   +0.0000
+11    E_src   -1.842373e+10   -1.842373e+10   -0.0000
+12    P_sink   1.744386e+10    1.744386e+10   -0.0000
+12    E_src   -1.747210e+10   -1.747210e+10   +0.0000
+13    P_sink   1.729847e+10    1.729847e+10   +0.0000
+13    E_src   -1.752129e+10   -1.752129e+10   -0.0000
+14    P_sink   1.749461e+10    1.749461e+10   -0.0000
+14    E_src   -1.834280e+10   -1.834280e+10   +0.0000
+15    P_sink   1.785815e+10    1.785816e+10   -0.0000
+15    E_src   -1.887621e+10   -1.887621e+10   +0.0000
+16    P_sink   1.754439e+10    1.754439e+10   +0.0000
+16    E_src   -1.787573e+10   -1.787573e+10   -0.0000
+17    P_sink   1.709173e+10    1.709173e+10   -0.0000
+17    E_src   -1.782040e+10   -1.782040e+10   +0.0000
+18    P_sink   1.728155e+10    1.728156e+10   -0.0000
+18    E_src   -1.834710e+10   -1.834710e+10   +0.0000
+19    P_sink   1.752802e+10    1.752802e+10   -0.0000
+19    E_src   -1.860808e+10   -1.860808e+10   -0.0000
+
+mean |err| P_sink: 0.0000%  E_src: 0.0000%  (over 20 steps of 1980)
+
+wrote experiments/out/float_precision_demo.txt
+===== Phase 0 complete. Outputs in experiments/out/ =====

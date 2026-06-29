@@ -1,0 +1,112 @@
+Config : /glade/derecho/scratch/wchapman/b_credit_runs/camulator_config.yml
+Node   : casper39
+GPUs   : 4
+INFO:root:Running DDP on rank 1 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 0 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 2 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 3 with world_size 4 using nccl.
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:using postblock
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:using postblock
+INFO:credit.models.camulator:using postblock
+INFO:credit.models.camulator:using postblock
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/applications/train_v2.py", line 322, in <module>
+[rank0]:     main_cli()
+[rank0]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/applications/train_v2.py", line 318, in main_cli
+[rank0]:     main(world_rank, world_size, conf, args.backend)
+[rank0]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/applications/train_v2.py", line 239, in main
+[rank0]:     model = distributed_model_wrapper(conf, m, device) if conf["trainer"]["mode"] in ["ddp", "fsdp"] else m
+[rank0]:             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/distributed.py", line 174, in distributed_model_wrapper
+[rank0]:     transformer_layers_cls = load_fsdp_or_checkpoint_policy(conf)
+[rank0]:                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/models/__init__.py", line 140, in load_fsdp_or_checkpoint_policy
+[rank0]:     raise OSError(
+[rank0]: OSError: [Errno You asked for FSDP but only crossformer, swin, and fuxi are currently supported.] See credit/models/__init__.py for examples on adding new models
+[rank3]: Traceback (most recent call last):
+[rank3]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/applications/train_v2.py", line 322, in <module>
+[rank3]:     main_cli()
+[rank3]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/applications/train_v2.py", line 318, in main_cli
+[rank3]:     main(world_rank, world_size, conf, args.backend)
+[rank3]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/applications/train_v2.py", line 239, in main
+[rank3]:     model = distributed_model_wrapper(conf, m, device) if conf["trainer"]["mode"] in ["ddp", "fsdp"] else m
+[rank3]:             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/distributed.py", line 174, in distributed_model_wrapper
+[rank3]:     transformer_layers_cls = load_fsdp_or_checkpoint_policy(conf)
+[rank3]:                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/models/__init__.py", line 140, in load_fsdp_or_checkpoint_policy
+[rank3]:     raise OSError(
+[rank3]: OSError: [Errno You asked for FSDP but only crossformer, swin, and fuxi are currently supported.] See credit/models/__init__.py for examples on adding new models
+[rank1]: Traceback (most recent call last):
+[rank1]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/applications/train_v2.py", line 322, in <module>
+[rank1]:     main_cli()
+[rank1]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/applications/train_v2.py", line 318, in main_cli
+[rank1]:     main(world_rank, world_size, conf, args.backend)
+[rank1]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/applications/train_v2.py", line 239, in main
+[rank1]:     model = distributed_model_wrapper(conf, m, device) if conf["trainer"]["mode"] in ["ddp", "fsdp"] else m
+[rank1]:             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/distributed.py", line 174, in distributed_model_wrapper
+[rank1]:     transformer_layers_cls = load_fsdp_or_checkpoint_policy(conf)
+[rank1]:                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/models/__init__.py", line 140, in load_fsdp_or_checkpoint_policy
+[rank1]:     raise OSError(
+[rank1]: OSError: [Errno You asked for FSDP but only crossformer, swin, and fuxi are currently supported.] See credit/models/__init__.py for examples on adding new models
+[rank2]: Traceback (most recent call last):
+[rank2]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/applications/train_v2.py", line 322, in <module>
+[rank2]:     main_cli()
+[rank2]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/applications/train_v2.py", line 318, in main_cli
+[rank2]:     main(world_rank, world_size, conf, args.backend)
+[rank2]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/applications/train_v2.py", line 239, in main
+[rank2]:     model = distributed_model_wrapper(conf, m, device) if conf["trainer"]["mode"] in ["ddp", "fsdp"] else m
+[rank2]:             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank2]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/distributed.py", line 174, in distributed_model_wrapper
+[rank2]:     transformer_layers_cls = load_fsdp_or_checkpoint_policy(conf)
+[rank2]:                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank2]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/models/__init__.py", line 140, in load_fsdp_or_checkpoint_policy
+[rank2]:     raise OSError(
+[rank2]: OSError: [Errno You asked for FSDP but only crossformer, swin, and fuxi are currently supported.] See credit/models/__init__.py for examples on adding new models
+[rank0]:[W326 23:31:34.660245487 ProcessGroupNCCL.cpp:1496] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+W0326 23:31:35.283000 251378 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 251468 closing signal SIGTERM
+W0326 23:31:35.284000 251378 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 251469 closing signal SIGTERM
+W0326 23:31:35.284000 251378 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 251470 closing signal SIGTERM
+E0326 23:31:35.949000 251378 site-packages/torch/distributed/elastic/multiprocessing/api.py:869] failed (exitcode: 1) local_rank: 0 (pid: 251467) of binary: /glade/u/home/schreck/.conda/envs/credit-casper/bin/python
+Traceback (most recent call last):
+  File "/glade/u/home/schreck/.conda/envs/credit-casper/bin/torchrun", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/glade/u/home/schreck/.conda/envs/credit-casper/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 355, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/glade/u/home/schreck/.conda/envs/credit-casper/lib/python3.11/site-packages/torch/distributed/run.py", line 918, in main
+    run(args)
+  File "/glade/u/home/schreck/.conda/envs/credit-casper/lib/python3.11/site-packages/torch/distributed/run.py", line 909, in run
+    elastic_launch(
+  File "/glade/u/home/schreck/.conda/envs/credit-casper/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/glade/u/home/schreck/.conda/envs/credit-casper/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 269, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+/glade/work/wchapman/Roman_Coupling/train_johns/applications/train_v2.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-03-26_23:31:35
+  host      : casper39.hpc.ucar.edu
+  rank      : 0 (local_rank: 0)
+  exitcode  : 1 (pid: 251467)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================

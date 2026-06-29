@@ -1,0 +1,86 @@
+Config : /glade/derecho/scratch/wchapman/b_credit_runs/camulator_config_extended_v2.yml
+Node   : casper41
+GPUs   : 4
+Traceback (most recent call last):
+  File "/glade/work/wchapman/Roman_Coupling/train_johns/applications/train.py", line 475, in <module>
+    main_cli()
+  File "/glade/work/wchapman/Roman_Coupling/train_johns/applications/train.py", line 442, in main_cli
+    conf = credit_main_parser(conf, parse_training=True, parse_predict=False, print_summary=False)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/parser.py", line 477, in credit_main_parser
+Traceback (most recent call last):
+  File "/glade/work/wchapman/Roman_Coupling/train_johns/applications/train.py", line 475, in <module>
+Traceback (most recent call last):
+  File "/glade/work/wchapman/Roman_Coupling/train_johns/applications/train.py", line 475, in <module>
+    main_cli()
+  File "/glade/work/wchapman/Roman_Coupling/train_johns/applications/train.py", line 442, in main_cli
+    main_cli()
+  File "/glade/work/wchapman/Roman_Coupling/train_johns/applications/train.py", line 442, in main_cli
+    conf = credit_main_parser(conf, parse_training=True, parse_predict=False, print_summary=False)
+         conf = credit_main_parser(conf, parse_training=True, parse_predict=False, print_summary=False) 
+       ^ ^ ^ ^ ^ ^ ^ ^ ^ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^Traceback (most recent call last):
+^^^^  File "/glade/work/wchapman/Roman_Coupling/train_johns/applications/train.py", line 475, in <module>
+^^^^^^^^^^^^^^^^^^^    ^^main_cli()^^
+^^^^^  File "/glade/work/wchapman/Roman_Coupling/train_johns/applications/train.py", line 442, in main_cli
+^^^^^^^^^^^^^^    ^^conf = credit_main_parser(conf, parse_training=True, parse_predict=False, print_summary=False)^^
+^^^^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^
+^^^^  File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/parser.py", line 477, in credit_main_parser
+^^^^^^^^^^^^^^^
+^^  File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/parser.py", line 477, in credit_main_parser
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/parser.py", line 477, in credit_main_parser
+    raise ("post_conf is set activate, but no post modules specified")    
+raise ("post_conf is set activate, but no post modules specified")    
+    raise ("post_conf is set activate, but no post modules specified")raise ("post_conf is set activate, but no post modules specified")TypeError
+
+: TypeErrorexceptions must derive from BaseException: 
+exceptions must derive from BaseExceptionTypeErrorTypeError
+: : exceptions must derive from BaseExceptionexceptions must derive from BaseException
+
+W0414 06:48:19.180000 158486 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 158637 closing signal SIGTERM
+E0414 06:48:19.546000 158486 site-packages/torch/distributed/elastic/multiprocessing/api.py:869] failed (exitcode: 1) local_rank: 0 (pid: 158634) of binary: /glade/work/wchapman/conda-envs/credit-casper-mar2026/bin/python
+Traceback (most recent call last):
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/bin/torchrun", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 355, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/run.py", line 918, in main
+    run(args)
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/run.py", line 909, in run
+    elastic_launch(
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 269, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+/glade/work/wchapman/Roman_Coupling/train_johns/applications/train.py FAILED
+------------------------------------------------------------
+Failures:
+[1]:
+  time      : 2026-04-14_06:48:19
+  host      : casper41.hpc.ucar.edu
+  rank      : 1 (local_rank: 1)
+  exitcode  : 1 (pid: 158635)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+[2]:
+  time      : 2026-04-14_06:48:19
+  host      : casper41.hpc.ucar.edu
+  rank      : 2 (local_rank: 2)
+  exitcode  : 1 (pid: 158636)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-04-14_06:48:19
+  host      : casper41.hpc.ucar.edu
+  rank      : 0 (local_rank: 0)
+  exitcode  : 1 (pid: 158634)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================

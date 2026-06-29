@@ -1,0 +1,128 @@
+Config : /glade/derecho/scratch/wchapman/b_credit_runs/camulator_config_casper.yml
+Node   : casper44
+GPUs   : 4
+INFO:root:Running DDP on rank 2 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 1 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 3 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 0 with world_size 4 using nccl.
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:root:Loaded MultiSourceDataset from conf['data']['source'] keys: ['CAMulator']
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:root:Loaded MultiSourceDataset from conf['data_valid']['source'] keys: ['CAMulator']
+INFO:root:Loaded a training DataLoader for the MultiSourceDataset ERA dataset.
+INFO:root:Loaded a validation DataLoader for the MultiSourceDataset ERA dataset.
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:root:Loaded MultiSourceDataset from conf['data']['source'] keys: ['CAMulator']
+INFO:root:Loaded MultiSourceDataset from conf['data']['source'] keys: ['CAMulator']
+INFO:root:Loaded MultiSourceDataset from conf['data']['source'] keys: ['CAMulator']
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:root:Loaded MultiSourceDataset from conf['data_valid']['source'] keys: ['CAMulator']
+INFO:root:Loaded a training DataLoader for the MultiSourceDataset ERA dataset.
+INFO:root:Loaded a validation DataLoader for the MultiSourceDataset ERA dataset.
+INFO:root:Loaded MultiSourceDataset from conf['data_valid']['source'] keys: ['CAMulator']
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:root:Loaded a training DataLoader for the MultiSourceDataset ERA dataset.
+INFO:root:Loaded a validation DataLoader for the MultiSourceDataset ERA dataset.
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:root:Loaded MultiSourceDataset from conf['data_valid']['source'] keys: ['CAMulator']
+INFO:root:Loaded a training DataLoader for the MultiSourceDataset ERA dataset.
+INFO:root:Loaded a validation DataLoader for the MultiSourceDataset ERA dataset.
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:using postblock
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:using postblock
+INFO:credit.models.camulator:using postblock
+INFO:credit.models.camulator:using postblock
+INFO:root:Activation checkpointing on ddp: True
+INFO:root:Checkpointing custom layers {<class 'credit.models.camulator.Attention'>, <class 'credit.models.camulator.FeedForward'>, <class 'credit.models.camulator.CrossEmbedLayer'>, <class 'credit.models.camulator.DynamicPositionBias'>}
+INFO:root:Activation checkpointing on ddp: True
+INFO:root:Checkpointing custom layers {<class 'credit.models.camulator.Attention'>, <class 'credit.models.camulator.FeedForward'>, <class 'credit.models.camulator.CrossEmbedLayer'>, <class 'credit.models.camulator.DynamicPositionBias'>}
+INFO:root:Activation checkpointing on ddp: True
+INFO:root:Checkpointing custom layers {<class 'credit.models.camulator.DynamicPositionBias'>, <class 'credit.models.camulator.Attention'>, <class 'credit.models.camulator.FeedForward'>, <class 'credit.models.camulator.CrossEmbedLayer'>}
+INFO:root:Activation checkpointing on ddp: True
+INFO:root:Checkpointing custom layers {<class 'credit.models.camulator.Attention'>, <class 'credit.models.camulator.FeedForward'>, <class 'credit.models.camulator.CrossEmbedLayer'>, <class 'credit.models.camulator.DynamicPositionBias'>}
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.trainers:ERA5 trainer for the new nested data schema with preblock-assembled batches. forecast_len=1 means 1 step.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers:ERA5 trainer for the new nested data schema with preblock-assembled batches. forecast_len=1 means 1 step.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers:ERA5 trainer for the new nested data schema with preblock-assembled batches. forecast_len=1 means 1 step.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers:ERA5 trainer for the new nested data schema with preblock-assembled batches. forecast_len=1 means 1 step.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers.base_trainer:EMA enabled (decay=0.9999)
+INFO:credit.trainers.trainerERA5v2:Loading ERA5-v2 trainer (new nested data schema, preblock-assembled batches)
+INFO:credit.trainers.base_trainer:EMA enabled (decay=0.9999)
+INFO:credit.trainers.trainerERA5v2:Loading ERA5-v2 trainer (new nested data schema, preblock-assembled batches)
+INFO:credit.trainers.preflight:DataLoader memory estimate: 20.0 GB (workers=4 × prefetch=4 × batch=20)
+INFO:credit.trainers.preflight:Preflight: fetching first training batch (timeout=300s) …
+INFO:credit.trainers.base_trainer:Beginning epoch 0
+INFO:credit.trainers.trainerERA5v2:Using grad-max-norm value: 1.0
+  0%|          | 0/603 [00:00<?, ?it/s]INFO:credit.trainers.base_trainer:EMA enabled (decay=0.9999)
+INFO:credit.trainers.trainerERA5v2:Loading ERA5-v2 trainer (new nested data schema, preblock-assembled batches)
+INFO:credit.trainers.base_trainer:EMA enabled (decay=0.9999)
+INFO:credit.trainers.trainerERA5v2:Loading ERA5-v2 trainer (new nested data schema, preblock-assembled batches)
+INFO:credit.trainers.base_trainer:Beginning epoch 0
+INFO:credit.trainers.trainerERA5v2:Using grad-max-norm value: 1.0
+  0%|          | 0/603 [00:00<?, ?it/s]INFO:credit.trainers.base_trainer:Beginning epoch 0
+INFO:credit.trainers.trainerERA5v2:Using grad-max-norm value: 1.0
+  0%|          | 0/603 [00:00<?, ?it/s]INFO:credit.trainers.preflight:Preflight: first batch ready in 24.6s.
+INFO:credit.trainers.base_trainer:Beginning epoch 0
+INFO:credit.trainers.trainerERA5v2:Using grad-max-norm value: 1.0
+  0%|          | 0/603 [00:00<?, ?it/s]INFO:credit.trainers.trainerERA5v2:Model parameters: 874.38M total, 874.38M trainable
+INFO:credit.trainers.trainerERA5v2:[rank1] NaN/inf check — x nan=False inf=False | y_pred nan=False inf=False | y_pred abs max=1.619e+01
+INFO:credit.trainers.trainerERA5v2:[rank1] Shapes — x: (20, 136, 1, 192, 288), y_pred: (20, 147, 1, 192, 288), y: (20, 147, 1, 192, 288)
+INFO:credit.trainers.trainerERA5v2:[rank1] NaN check — y: False, x: False, y_pred: False
+INFO:credit.trainers.trainerERA5v2:[rank0] NaN/inf check — x nan=False inf=False | y_pred nan=False inf=False | y_pred abs max=1.661e+01
+INFO:credit.trainers.trainerERA5v2:[rank0] Shapes — x: (20, 136, 1, 192, 288), y_pred: (20, 147, 1, 192, 288), y: (20, 147, 1, 192, 288)
+INFO:credit.trainers.trainerERA5v2:[rank0] NaN check — y: False, x: False, y_pred: False
+INFO:credit.trainers.trainerERA5v2:[rank0] loss value: 7.717504024505615
+INFO:credit.trainers.trainerERA5v2:[rank3] NaN/inf check — x nan=False inf=False | y_pred nan=False inf=False | y_pred abs max=1.992e+01
+INFO:credit.trainers.trainerERA5v2:[rank3] Shapes — x: (20, 136, 1, 192, 288), y_pred: (20, 147, 1, 192, 288), y: (20, 147, 1, 192, 288)
+INFO:credit.trainers.trainerERA5v2:[rank2] NaN/inf check — x nan=False inf=False | y_pred nan=False inf=False | y_pred abs max=1.627e+01
+INFO:credit.trainers.trainerERA5v2:[rank3] NaN check — y: False, x: False, y_pred: False
+INFO:credit.trainers.trainerERA5v2:[rank2] Shapes — x: (20, 136, 1, 192, 288), y_pred: (20, 147, 1, 192, 288), y: (20, 147, 1, 192, 288)
+INFO:credit.trainers.trainerERA5v2:[rank1] loss value: 7.672791481018066
+INFO:credit.trainers.trainerERA5v2:[rank3] loss value: 7.669835567474365
+INFO:credit.trainers.trainerERA5v2:[rank2] NaN check — y: False, x: False, y_pred: False
+INFO:credit.trainers.trainerERA5v2:[rank2] loss value: 7.750874042510986
+  0%|          | 1/603 [02:14<22:29:26, 134.50s/it]Epoch: 0 train_loss: 7.702751 train_acc: -0.002972 train_mae: 2.184038 forecast_len: 1 lr: 0.000000000000:   0%|          | 1/603 [02:14<22:29:26, 134.50s/it]Epoch: 0 train_loss: 7.702751 train_acc: -0.002972 train_mae: 2.184038 forecast_len: 1 lr: 0.000000000000:   0%|          | 2/603 [02:26<10:23:19, 62.23s/it] Epoch: 0 train_loss: 5.163703 train_acc: -0.002972 train_mae: 2.184038 forecast_len: 1 lr: 0.000000083333:   0%|          | 2/603 [02:26<10:23:19, 62.23s/it]Epoch: 0 train_loss: 5.163703 train_acc: -0.002972 train_mae: 2.184038 forecast_len: 1 lr: 0.000000083333:   0%|          | 3/603 [02:37<6:27:44, 38.77s/it] Epoch: 0 train_loss: 4.100823 train_acc: -0.002972 train_mae: 2.184038 forecast_len: 1 lr: 0.000000166667:   0%|          | 3/603 [02:37<6:27:44, 38.77s/it]Epoch: 0 train_loss: 4.100823 train_acc: -0.002972 train_mae: 2.184038 forecast_len: 1 lr: 0.000000166667:   1%|          | 4/603 [02:47<4:35:57, 27.64s/it]Epoch: 0 train_loss: 3.511906 train_acc: -0.002972 train_mae: 2.184038 forecast_len: 1 lr: 0.000000250000:   1%|          | 4/603 [02:47<4:35:57, 27.64s/it]Epoch: 0 train_loss: 3.511906 train_acc: -0.002972 train_mae: 2.184038 forecast_len: 1 lr: 0.000000250000:   1%|          | 5/603 [02:58<3:33:44, 21.45s/it]Epoch: 0 train_loss: 3.136529 train_acc: -0.002972 train_mae: 2.184038 forecast_len: 1 lr: 0.000000333333:   1%|          | 5/603 [02:58<3:33:44, 21.45s/it]Epoch: 0 train_loss: 3.136529 train_acc: -0.002972 train_mae: 2.184038 forecast_len: 1 lr: 0.000000333333:   1%|          | 6/603 [03:08<2:56:20, 17.72s/it]Epoch: 0 train_loss: 2.874767 train_acc: -0.002972 train_mae: 2.184038 forecast_len: 1 lr: 0.000000416667:   1%|          | 6/603 [03:08<2:56:20, 17.72s/it]Epoch: 0 train_loss: 2.874767 train_acc: -0.002972 train_mae: 2.184038 forecast_len: 1 lr: 0.000000416667:   1%|          | 7/603 [03:19<2:32:33, 15.36s/it]Epoch: 0 train_loss: 2.678103 train_acc: -0.002972 train_mae: 2.184038 forecast_len: 1 lr: 0.000000500000:   1%|          | 7/603 [03:19<2:32:33, 15.36s/it]Epoch: 0 train_loss: 2.678103 train_acc: -0.002972 train_mae: 2.184038 forecast_len: 1 lr: 0.000000500000:   1%|▏         | 8/603 [03:29<2:17:26, 13.86s/it]Epoch: 0 train_loss: 2.527683 train_acc: -0.002972 train_mae: 2.184038 forecast_len: 1 lr: 0.000000583333:   1%|▏         | 8/603 [03:29<2:17:26, 13.86s/it]Epoch: 0 train_loss: 2.527683 train_acc: -0.002972 train_mae: 2.184038 forecast_len: 1 lr: 0.000000583333:   1%|▏         | 9/603 [03:40<2:07:06, 12.84s/it]Epoch: 0 train_loss: 2.404126 train_acc: -0.002972 train_mae: 2.184038 forecast_len: 1 lr: 0.000000666667:   1%|▏         | 9/603 [03:40<2:07:06, 12.84s/it]Epoch: 0 train_loss: 2.404126 train_acc: -0.002972 train_mae: 2.184038 forecast_len: 1 lr: 0.000000666667:   2%|▏         | 10/603 [03:50<2:00:21, 12.18s/it]Epoch: 0 train_loss: 2.303115 train_acc: -0.002972 train_mae: 2.184038 forecast_len: 1 lr: 0.000000750000:   2%|▏         | 10/603 [03:50<2:00:21, 12.18s/it]Epoch: 0 train_loss: 2.303115 train_acc: -0.002972 train_mae: 2.184038 forecast_len: 1 lr: 0.000000750000:   2%|▏         | 11/603 [04:01<1:56:29, 11.81s/it]Epoch: 0 train_loss: 2.218485 train_acc: 0.006253 train_mae: 1.540419 forecast_len: 1 lr: 0.000000833333:   2%|▏         | 11/603 [04:01<1:56:29, 11.81s/it] Epoch: 0 train_loss: 2.218485 train_acc: 0.006253 train_mae: 1.540419 forecast_len: 1 lr: 0.000000833333:   2%|▏         | 12/603 [04:12<1:53:05, 11.48s/it]Epoch: 0 train_loss: 2.144898 train_acc: 0.006253 train_mae: 1.540419 forecast_len: 1 lr: 0.000000916667:   2%|▏         | 12/603 [04:12<1:53:05, 11.48s/it]Epoch: 0 train_loss: 2.144898 train_acc: 0.006253 train_mae: 1.540419 forecast_len: 1 lr: 0.000000916667:   2%|▏         | 13/603 [04:23<1:50:37, 11.25s/it]Epoch: 0 train_loss: 2.080871 train_acc: 0.006253 train_mae: 1.540419 forecast_len: 1 lr: 0.000001000000:   2%|▏         | 13/603 [04:23<1:50:37, 11.25s/it]Epoch: 0 train_loss: 2.080871 train_acc: 0.006253 train_mae: 1.540419 forecast_len: 1 lr: 0.000001000000:   2%|▏         | 14/603 [04:34<1:49:00, 11.10s/it]Epoch: 0 train_loss: 2.023694 train_acc: 0.006253 train_mae: 1.540419 forecast_len: 1 lr: 0.000001083333:   2%|▏         | 14/603 [04:34<1:49:00, 11.10s/it]Epoch: 0 train_loss: 2.023694 train_acc: 0.006253 train_mae: 1.540419 forecast_len: 1 lr: 0.000001083333:   2%|▏         | 15/603 [04:45<1:48:58, 11.12s/it]Epoch: 0 train_loss: 1.973957 train_acc: 0.006253 train_mae: 1.540419 forecast_len: 1 lr: 0.000001166667:   2%|▏         | 15/603 [04:45<1:48:58, 11.12s/it]Epoch: 0 train_loss: 1.973957 train_acc: 0.006253 train_mae: 1.540419 forecast_len: 1 lr: 0.000001166667:   3%|▎         | 16/603 [04:56<1:48:55, 11.13s/it]Epoch: 0 train_loss: 1.927582 train_acc: 0.006253 train_mae: 1.540419 forecast_len: 1 lr: 0.000001250000:   3%|▎         | 16/603 [04:56<1:48:55, 11.13s/it]Epoch: 0 train_loss: 1.927582 train_acc: 0.006253 train_mae: 1.540419 forecast_len: 1 lr: 0.000001250000:   3%|▎         | 17/603 [05:07<1:49:09, 11.18s/it]Epoch: 0 train_loss: 1.885511 train_acc: 0.006253 train_mae: 1.540419 forecast_len: 1 lr: 0.000001333333:   3%|▎         | 17/603 [05:07<1:49:09, 11.18s/it]Epoch: 0 train_loss: 1.885511 train_acc: 0.006253 train_mae: 1.540419 forecast_len: 1 lr: 0.000001333333:   3%|▎         | 18/603 [05:18<1:47:53, 11.07s/it]Epoch: 0 train_loss: 1.846752 train_acc: 0.006253 train_mae: 1.540419 forecast_len: 1 lr: 0.000001416667:   3%|▎         | 18/603 [05:18<1:47:53, 11.07s/it]Epoch: 0 train_loss: 1.846752 train_acc: 0.006253 train_mae: 1.540419 forecast_len: 1 lr: 0.000001416667:   3%|▎         | 19/603 [05:29<1:48:38, 11.16s/it]Epoch: 0 train_loss: 1.812089 train_acc: 0.006253 train_mae: 1.540419 forecast_len: 1 lr: 0.000001500000:   3%|▎         | 19/603 [05:29<1:48:38, 11.16s/it]Epoch: 0 train_loss: 1.812089 train_acc: 0.006253 train_mae: 1.540419 forecast_len: 1 lr: 0.000001500000:   3%|▎         | 20/603 [05:41<1:48:52, 11.20s/it]Epoch: 0 train_loss: 1.780052 train_acc: 0.006253 train_mae: 1.540419 forecast_len: 1 lr: 0.000001583333:   3%|▎         | 20/603 [05:41<1:48:52, 11.20s/it]Epoch: 0 train_loss: 1.780052 train_acc: 0.006253 train_mae: 1.540419 forecast_len: 1 lr: 0.000001583333:   3%|▎         | 21/603 [05:52<1:48:35, 11.20s/it]Epoch: 0 train_loss: 1.749811 train_acc: 0.035415 train_mae: 1.295437 forecast_len: 1 lr: 0.000001666667:   3%|▎         | 21/603 [05:52<1:48:35, 11.20s/it]Epoch: 0 train_loss: 1.749811 train_acc: 0.035415 train_mae: 1.295437 forecast_len: 1 lr: 0.000001666667:   4%|▎         | 22/603 [06:04<1:50:01, 11.36s/it]Epoch: 0 train_loss: 1.720961 train_acc: 0.035415 train_mae: 1.295437 forecast_len: 1 lr: 0.000001750000:   4%|▎         | 22/603 [06:04<1:50:01, 11.36s/it]Epoch: 0 train_loss: 1.720961 train_acc: 0.035415 train_mae: 1.295437 forecast_len: 1 lr: 0.000001750000:   4%|▍         | 23/603 [06:15<1:51:01, 11.48s/it]Epoch: 0 train_loss: 1.693785 train_acc: 0.035415 train_mae: 1.295437 forecast_len: 1 lr: 0.000001833333:   4%|▍         | 23/603 [06:15<1:51:01, 11.48s/it]Epoch: 0 train_loss: 1.693785 train_acc: 0.035415 train_mae: 1.295437 forecast_len: 1 lr: 0.000001833333:   4%|▍         | 24/603 [06:26<1:49:31, 11.35s/it]Epoch: 0 train_loss: 1.667872 train_acc: 0.035415 train_mae: 1.295437 forecast_len: 1 lr: 0.000001916667:   4%|▍         | 24/603 [06:26<1:49:31, 11.35s/it]Epoch: 0 train_loss: 1.667872 train_acc: 0.035415 train_mae: 1.295437 forecast_len: 1 lr: 0.000001916667:   4%|▍         | 25/603 [06:38<1:49:21, 11.35s/it]Epoch: 0 train_loss: 1.643091 train_acc: 0.035415 train_mae: 1.295437 forecast_len: 1 lr: 0.000002000000:   4%|▍         | 25/603 [06:38<1:49:21, 11.35s/it]Epoch: 0 train_loss: 1.643091 train_acc: 0.035415 train_mae: 1.295437 forecast_len: 1 lr: 0.000002000000:   4%|▍         | 26/603 [06:50<1:50:27, 11.49s/it]Epoch: 0 train_loss: 1.620043 train_acc: 0.035415 train_mae: 1.295437 forecast_len: 1 lr: 0.000002083333:   4%|▍         | 26/603 [06:50<1:50:27, 11.49s/it]Epoch: 0 train_loss: 1.620043 train_acc: 0.035415 train_mae: 1.295437 forecast_len: 1 lr: 0.000002083333:   4%|▍         | 27/603 [07:01<1:49:28, 11.40s/it]Epoch: 0 train_loss: 1.598285 train_acc: 0.035415 train_mae: 1.295437 forecast_len: 1 lr: 0.000002166667:   4%|▍         | 27/603 [07:01<1:49:28, 11.40s/it]Epoch: 0 train_loss: 1.598285 train_acc: 0.035415 train_mae: 1.295437 forecast_len: 1 lr: 0.000002166667:   5%|▍         | 28/603 [07:12<1:48:28, 11.32s/it]Epoch: 0 train_loss: 1.577478 train_acc: 0.035415 train_mae: 1.295437 forecast_len: 1 lr: 0.000002250000:   5%|▍         | 28/603 [07:12<1:48:28, 11.32s/it]Epoch: 0 train_loss: 1.577478 train_acc: 0.035415 train_mae: 1.295437 forecast_len: 1 lr: 0.000002250000:   5%|▍         | 29/603 [07:23<1:48:04, 11.30s/it]Epoch: 0 train_loss: 1.557160 train_acc: 0.035415 train_mae: 1.295437 forecast_len: 1 lr: 0.000002333333:   5%|▍         | 29/603 [07:23<1:48:04, 11.30s/it]Epoch: 0 train_loss: 1.557160 train_acc: 0.035415 train_mae: 1.295437 forecast_len: 1 lr: 0.000002333333:   5%|▍         | 30/603 [07:35<1:50:09, 11.54s/it]Epoch: 0 train_loss: 1.537991 train_acc: 0.035415 train_mae: 1.295437 forecast_len: 1 lr: 0.000002416667:   5%|▍         | 30/603 [07:35<1:50:09, 11.54s/it]Epoch: 0 train_loss: 1.537991 train_acc: 0.035415 train_mae: 1.295437 forecast_len: 1 lr: 0.000002416667:   5%|▌         | 31/603 [07:46<1:48:27, 11.38s/it]Epoch: 0 train_loss: 1.519940 train_acc: 0.080340 train_mae: 1.155465 forecast_len: 1 lr: 0.000002500000:   5%|▌         | 31/603 [07:46<1:48:27, 11.38s/it]Epoch: 0 train_loss: 1.519940 train_acc: 0.080340 train_mae: 1.155465 forecast_len: 1 lr: 0.000002500000:   5%|▌         | 32/603 [07:57<1:47:13, 11.27s/it]Epoch: 0 train_loss: 1.501858 train_acc: 0.080340 train_mae: 1.155465 forecast_len: 1 lr: 0.000002583333:   5%|▌         | 32/603 [07:57<1:47:13, 11.27s/it]Epoch: 0 train_loss: 1.501858 train_acc: 0.080340 train_mae: 1.155465 forecast_len: 1 lr: 0.000002583333:   5%|▌         | 33/603 [08:09<1:47:27, 11.31s/it]Epoch: 0 train_loss: 1.484578 train_acc: 0.080340 train_mae: 1.155465 forecast_len: 1 lr: 0.000002666667:   5%|▌         | 33/603 [08:09<1:47:27, 11.31s/it]Epoch: 0 train_loss: 1.484578 train_acc: 0.080340 train_mae: 1.155465 forecast_len: 1 lr: 0.000002666667:   6%|▌         | 34/603 [08:20<1:47:28, 11.33s/it]Epoch: 0 train_loss: 1.467878 train_acc: 0.080340 train_mae: 1.155465 forecast_len: 1 lr: 0.000002750000:   6%|▌         | 34/603 [08:20<1:47:28, 11.33s/it]W0329 10:12:35.360000 26721 site-packages/torch/distributed/elastic/agent/server/api.py:719] Received 15 death signal, shutting down workers
+W0329 10:12:35.363000 26721 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 26760 closing signal SIGTERM
+W0329 10:12:35.364000 26721 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 26761 closing signal SIGTERM
+W0329 10:12:35.366000 26721 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 26762 closing signal SIGTERM
+W0329 10:12:35.367000 26721 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 26763 closing signal SIGTERM

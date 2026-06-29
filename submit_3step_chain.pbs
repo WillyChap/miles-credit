@@ -1,0 +1,15 @@
+#!/bin/bash -l
+#PBS -N submit_3step_chain
+#PBS -l select=1:ncpus=1:mem=4GB
+#PBS -l walltime=00:10:00
+#PBS -A P93300042
+#PBS -q casper
+#PBS -j oe
+#PBS -W depend=afterok:3154919
+
+module load conda/latest
+conda activate /glade/work/wchapman/conda-envs/credit-casper-mar2026
+
+credit submit --cluster casper \
+  --config /glade/derecho/scratch/wchapman/b_credit_runs/camulator_config_extended_v2.yml \
+  --gpus 4 --chain

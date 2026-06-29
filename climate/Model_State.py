@@ -544,23 +544,42 @@ class CAMulatorStepper:
         """
         post_conf = self.conf["model"]["post_conf"]
 
-        # Check which conservation fixers are enabled
-        self.flag_mass = POSTBLOCK_AVAILABLE and post_conf["activate"] and post_conf["global_mass_fixer"]["activate"]
-        self.flag_water = POSTBLOCK_AVAILABLE and post_conf["activate"] and post_conf["global_water_fixer"]["activate"]
-        self.flag_energy = (
-            POSTBLOCK_AVAILABLE and post_conf["activate"] and post_conf["global_energy_fixer"]["activate"]
+        # Check which conservation fixers are enabled.
+        # Only activate OUTSIDE the model if activate_outside_model=True.
+        # When activate_outside_model=False (default), the fixer already runs
+        # inside model.forward() via PostBlock — running it again here would
+        # double-apply it and corrupt the output (e.g. flip PRECT sign).
+        def _outside(key):
+            return (
+                POSTBLOCK_AVAILABLE
+                and post_conf["activate"]
+                and post_conf[key]["activate"]
+                and post_conf[key].get("activate_outside_model", False)
+            )
+
+        self.flag_mass = _outside("global_mass_fixer")
+        self.flag_water = _outside("global_water_fixer")
+        self.flag_energy = _outside("global_energy_fixer")
+        self.flag_energy_updown = _outside("global_energy_fixer_updown")
+        self.flag_tracer = (
+            post_conf.get("activate", False)
+            and post_conf.get("tracer_fixer", {}).get("activate", False)
         )
 
         # Initialize conservation fixers
         if self.flag_mass:
             self.opt_mass = GlobalMassFixer(post_conf)
-            logger.info("Global mass fixer initialized")
+            logger.info("Global mass fixer initialized (outside model)")
         if self.flag_water:
             self.opt_water = GlobalWaterFixer(post_conf)
-            logger.info("Global water fixer initialized")
+            logger.info("Global water fixer initialized (outside model)")
         if self.flag_energy:
             self.opt_energy = GlobalEnergyFixer(post_conf)
-            logger.info("Global energy fixer initialized")
+            logger.info("Global energy fixer initialized (outside model)")
+        if self.flag_energy_updown:
+            logger.info("Global energy fixer (updown) initialized (outside model)")
+        if self.flag_tracer:
+            logger.info("Tracer fixer initialized")
 
         # Wind filtering flag
         self.enable_wind_filtering = WINDPP_AVAILABLE
@@ -817,7 +836,8 @@ def initialize_camulator(config_path: str, model_name: str = None, device: str =
     print(f"Model device: {device}")
     print(f"State shape: {initial_state.shape}")
     print(f"Static forcing: {len(sf_vars)} variables")
-    print(f"Conservation fixers: Mass={stepper.flag_mass}, Water={stepper.flag_water}, Energy={stepper.flag_energy}")
+    print(f"Conservation fixers: Mass={stepper.flag_mass}, Water={stepper.flag_water}, Energy={stepper.flag_energy}, EnergyUpDown={stepper.flag_energy_updown}")
+    print(f"Tracer fixer: {stepper.flag_tracer}")
     print(f"Wind filtering: {stepper.enable_wind_filtering}")
     print("=" * 70)
 

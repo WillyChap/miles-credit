@@ -1,0 +1,86 @@
+===== E3 run | CONFIG=/glade/work/wchapman/Roman_Coupling/train_johns/experiments/configs/generated/e3_v2_w0.1.yml =====
+INFO:root:Running DDP on rank 1 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 3 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 2 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 0 with world_size 4 using nccl.
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:root:Loaded MultiSourceDataset from conf['data']['source'] keys: ['CAMulator']
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:root:Loaded MultiSourceDataset from conf['data_valid']['source'] keys: ['CAMulator']
+INFO:root:Loaded a training DataLoader for the MultiSourceDataset ERA dataset.
+INFO:root:Loaded a validation DataLoader for the MultiSourceDataset ERA dataset.
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:root:Loaded MultiSourceDataset from conf['data']['source'] keys: ['CAMulator']
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:root:Loaded MultiSourceDataset from conf['data_valid']['source'] keys: ['CAMulator']
+INFO:root:Loaded a training DataLoader for the MultiSourceDataset ERA dataset.
+INFO:root:Loaded a validation DataLoader for the MultiSourceDataset ERA dataset.
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:root:Loaded MultiSourceDataset from conf['data']['source'] keys: ['CAMulator']
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:root:Loaded MultiSourceDataset from conf['data_valid']['source'] keys: ['CAMulator']
+INFO:root:Loaded a training DataLoader for the MultiSourceDataset ERA dataset.
+INFO:root:Loaded a validation DataLoader for the MultiSourceDataset ERA dataset.
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:root:Loaded MultiSourceDataset from conf['data']['source'] keys: ['CAMulator']
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:root:Loaded MultiSourceDataset from conf['data_valid']['source'] keys: ['CAMulator']
+INFO:root:Loaded a training DataLoader for the MultiSourceDataset ERA dataset.
+INFO:root:Loaded a validation DataLoader for the MultiSourceDataset ERA dataset.
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:using postblock
+INFO:credit.postblock._postblock:TracerFixer registered
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:using postblock
+INFO:credit.postblock._postblock:TracerFixer registered
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:using postblock
+INFO:credit.postblock._postblock:TracerFixer registered
+INFO:credit.models.camulator:using postblock
+INFO:credit.postblock._postblock:TracerFixer registered
+INFO:credit.postblock._postblock:GlobalMassFixer registered
+INFO:credit.postblock._postblock:GlobalEnergyFixerUpDown registered
+INFO:credit.postblock._postblock:GlobalMassFixer registered
+INFO:credit.postblock._postblock:GlobalMassFixer registered
+INFO:credit.postblock._postblock:GlobalEnergyFixerUpDown registered
+INFO:credit.postblock._postblock:GlobalMassFixer registered
+INFO:credit.postblock._postblock:GlobalEnergyFixerUpDown registered
+INFO:credit.postblock._postblock:GlobalEnergyFixerUpDown registered
+W0629 10:42:44.659000 4793 site-packages/torch/distributed/elastic/agent/server/api.py:719] Received 15 death signal, shutting down workers
+W0629 10:42:44.660000 4793 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 4795 closing signal SIGTERM
+W0629 10:42:44.660000 4793 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 4796 closing signal SIGTERM
+W0629 10:42:44.660000 4793 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 4797 closing signal SIGTERM
+W0629 10:42:44.661000 4793 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 4798 closing signal SIGTERM
+Traceback (most recent call last):
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/bin/torchrun", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 355, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/run.py", line 918, in main
+    run(args)
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/run.py", line 909, in run
+    elastic_launch(
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 260, in launch_agent
+    result = agent.run()
+             ^^^^^^^^^^^
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/elastic/metrics/api.py", line 137, in wrapper
+    result = f(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/elastic/agent/server/api.py", line 711, in run
+    result = self._invoke_run(role)
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/elastic/agent/server/api.py", line 870, in _invoke_run
+    time.sleep(monitor_interval)
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/api.py", line 84, in _terminate_process_handler
+    raise SignalException(f"Process {os.getpid()} got signal: {sigval}", sigval=sigval)
+torch.distributed.elastic.multiprocessing.api.SignalException: Process 4793 got signal: 15

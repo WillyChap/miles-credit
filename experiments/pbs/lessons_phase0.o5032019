@@ -1,0 +1,5 @@
+===== E1: multi-year ground-truth water budget (1980-1984) =====
+/glade/work/wchapman/Roman_Coupling/train_johns/compute_water_budget_truth.py:76: FutureWarning: The return type of `Dataset.dims` will be changed to return a set of dimension names in future, in order to be more consistent with `DataArray.dims`. To access a mapping from dimension names to lengths, please use `Dataset.sizes`.
+  ntimes = ds.dims["time"]
+/glade/work/wchapman/Roman_Coupling/train_johns/compute_water_budget_truth.py:76: FutureWarning: The return type of `Dataset.dims` will be changed to return a set of dimension names in future, in order to be more consistent with `DataArray.dims`. To access a mapping from dimension names to lengths, please use `Dataset.sizes`.
+  ntimes = ds.dims["time"]

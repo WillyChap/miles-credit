@@ -69,6 +69,7 @@ logger = logging.getLogger(__name__)
 # Add entries here to register new data sources.
 _SOURCE_REGISTRY: dict[str, type] = {
     "ERA5": ERA5Dataset,
+    "CAMulator": ERA5Dataset,  # CAMulator zarr uses same interface as ERA5Dataset
     "MRMS": MRMSDataset,
 }
 
@@ -135,6 +136,8 @@ class MultiSourceDataset(Dataset):
 
                 {"input": {...}, "target": {...}, "metadata": {...}}
         """
+        if isinstance(args, int):
+            args = (self.datetimes[args].value, 0)
         return {name: ds[args] for name, ds in self.datasets.items()}
 
     # ------------------------------------------------------------------

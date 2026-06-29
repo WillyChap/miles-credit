@@ -1,0 +1,202 @@
+Config : /glade/derecho/scratch/wchapman/b_credit_runs/camulator_config_extended_v2.yml
+Node   : casper43
+GPUs   : 4
+INFO:root:Running DDP on rank 1 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 0 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 3 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 2 with world_size 4 using nccl.
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:root:Loaded a training ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:root:Loaded a training ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:root:Loaded a training ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:root:Loaded a training ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:root:Loaded a validation ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:root:Loaded a training DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:root:Loaded a validation DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:root:Loaded a validation ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:root:Loaded a validation ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:root:Loaded a training DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:root:Loaded a validation DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:root:Loaded a training DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:root:Loaded a validation DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:root:Loaded a validation ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:root:Loaded a training DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:root:Loaded a validation DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:using postblock
+INFO:credit.postblock._postblock:TracerFixer registered
+INFO:credit.models.camulator:using postblock
+INFO:credit.postblock._postblock:TracerFixer registered
+INFO:credit.models.camulator:using postblock
+INFO:credit.postblock._postblock:TracerFixer registered
+INFO:credit.models.camulator:using postblock
+INFO:credit.postblock._postblock:TracerFixer registered
+INFO:root:Activation checkpointing on ddp: True
+INFO:root:Checkpointing custom layers {<class 'credit.models.camulator.Attention'>, <class 'credit.models.camulator.FeedForward'>, <class 'credit.models.camulator.CrossEmbedLayer'>, <class 'credit.models.camulator.DynamicPositionBias'>}
+INFO:root:Activation checkpointing on ddp: True
+INFO:root:Checkpointing custom layers {<class 'credit.models.camulator.Attention'>, <class 'credit.models.camulator.CrossEmbedLayer'>, <class 'credit.models.camulator.FeedForward'>, <class 'credit.models.camulator.DynamicPositionBias'>}
+INFO:root:Activation checkpointing on ddp: True
+INFO:root:Checkpointing custom layers {<class 'credit.models.camulator.FeedForward'>, <class 'credit.models.camulator.DynamicPositionBias'>, <class 'credit.models.camulator.CrossEmbedLayer'>, <class 'credit.models.camulator.Attention'>}
+INFO:root:Activation checkpointing on ddp: True
+INFO:root:Checkpointing custom layers {<class 'credit.models.camulator.DynamicPositionBias'>, <class 'credit.models.camulator.CrossEmbedLayer'>, <class 'credit.models.camulator.Attention'>, <class 'credit.models.camulator.FeedForward'>}
+INFO:root:Fine-tune mode: froze all, unfroze 4 tensors matching ['up_block4']. Trainable: 2,904,720 / 874,382,784 (0.3%)
+INFO:root:Fine-tune mode: froze all, unfroze 4 tensors matching ['up_block4']. Trainable: 2,904,720 / 874,382,784 (0.3%)
+INFO:root:Fine-tune mode: froze all, unfroze 4 tensors matching ['up_block4']. Trainable: 2,904,720 / 874,382,784 (0.3%)
+INFO:root:Fine-tune mode: froze all, unfroze 4 tensors matching ['up_block4']. Trainable: 2,904,720 / 874,382,784 (0.3%)
+INFO:root:Loading DDP model state only from /glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended_v2/
+INFO:root:Loading DDP model state only from /glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended_v2/
+INFO:root:Loading DDP model state only from /glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended_v2/
+INFO:root:Loading DDP model state only from /glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended_v2/
+INFO:root:<All keys matched successfully>
+INFO:root:<All keys matched successfully>
+INFO:root:<All keys matched successfully>
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:root:<All keys matched successfully>
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.trainers:Loading a single or multi-step trainer for the ERA5 dataset that uses gradient accumulation on forecast lengths > 1.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers.trainerERA5:Loading a multi-step trainer class
+INFO:credit.trainers.trainerERA5:Activate GlobalMassFixer outside of model
+INFO:credit.trainers:Loading a single or multi-step trainer for the ERA5 dataset that uses gradient accumulation on forecast lengths > 1.
+INFO:credit.trainers:Loading a single or multi-step trainer for the ERA5 dataset that uses gradient accumulation on forecast lengths > 1.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers.trainerERA5:Loading a multi-step trainer class
+INFO:credit.trainers.trainerERA5:Loading a multi-step trainer class
+INFO:credit.trainers.trainerERA5:Activate GlobalMassFixer outside of model
+INFO:credit.trainers.trainerERA5:Activate GlobalMassFixer outside of model
+INFO:credit.trainers:Loading a single or multi-step trainer for the ERA5 dataset that uses gradient accumulation on forecast lengths > 1.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers.trainerERA5:Loading a multi-step trainer class
+INFO:credit.trainers.trainerERA5:Activate GlobalMassFixer outside of model
+INFO:credit.trainers.trainerERA5:Activate GlobalWaterFixer outside of model
+INFO:credit.trainers.trainerERA5:Activate GlobalWaterFixer outside of model
+INFO:credit.trainers.trainerERA5:Activate GlobalWaterFixer outside of model
+INFO:credit.trainers.trainerERA5:Activate GlobalWaterFixer outside of model
+INFO:credit.trainers.base_trainer:Beginning epoch 0
+INFO:credit.trainers.preflight:DataLoader memory estimate: 0.3 GB (workers=4 × prefetch=2 × batch=8)
+INFO:credit.trainers.preflight:Preflight: fetching first training batch (timeout=300s) …
+INFO:credit.trainers.base_trainer:Beginning epoch 0
+INFO:credit.trainers.base_trainer:Beginning epoch 0
+INFO:credit.trainers.trainerERA5:Using grad-max-norm value: 1.0
+  0%|          | 0/150 [00:00<?, ?it/s]INFO:credit.trainers.trainerERA5:Using grad-max-norm value: 1.0
+INFO:credit.trainers.trainerERA5:Using grad-max-norm value: 1.0
+  0%|          | 0/150 [00:00<?, ?it/s]  0%|          | 0/150 [00:00<?, ?it/s]WARNING:root:You must first set the epoch number using set_epoch method.
+WARNING:root:You must first set the epoch number using set_epoch method.
+WARNING:root:You must first set the epoch number using set_epoch method.
+WARNING:root:You must first set the epoch number using set_epoch method.
+INFO:credit.trainers.preflight:Preflight: first batch ready in 23.3s.
+INFO:credit.trainers.base_trainer:Beginning epoch 0
+INFO:credit.trainers.trainerERA5:Using grad-max-norm value: 1.0
+[FREEZE] Epoch 0: 4 TRAINABLE tensors (2,904,720 values) | 1260 frozen tensors (871,478,064 values)
+[FREEZE]   Trainable: ['module.up_block4.0.bias', 'module.up_block4.0.weight_orig', 'module.up_block4.2.bias', 'module.up_block4.2.weight_orig']
+[FREEZE]   Frozen (first 5): ['module.layers.0.0._checkpoint_wrapped_module.convs.0.bias', 'module.layers.0.0._checkpoint_wrapped_module.convs.0.weight_orig', 'module.layers.0.0._checkpoint_wrapped_module.convs.1.bias', 'module.layers.0.0._checkpoint_wrapped_module.convs.1.weight_orig', 'module.layers.0.0._checkpoint_wrapped_module.convs.2.bias']
+  0%|          | 0/150 [00:00<?, ?it/s]INFO:credit.postblock._postblock:TracerFixer step 1 | clipped_lo=505596 (3.1748%)  clipped_hi=106646 (0.6697%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:TracerFixer step 1 | clipped_lo=495302 (3.1102%)  clipped_hi=108349 (0.6804%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:TracerFixer step 1 | clipped_lo=497008 (3.1209%)  clipped_hi=101897 (0.6398%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:TracerFixer step 1 | clipped_lo=489565 (3.0741%)  clipped_hi=99588 (0.6253%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:MassFixer step 1 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999983  min=0.999851  max=1.000110  drift_pct=-0.0017%
+INFO:credit.postblock._postblock:MassFixer step 1 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999983  min=0.999811  max=1.000240  drift_pct=-0.0017%
+INFO:credit.postblock._postblock:MassFixer step 1 | dry_mass_t0=5.1000e+18  sp_ratio mean=1.000001  min=0.999883  max=1.000242  drift_pct=0.0001%
+INFO:credit.postblock._postblock:MassFixer step 1 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999980  min=0.999822  max=1.000057  drift_pct=-0.0020%
+INFO:credit.postblock._postblock:WaterFixer step 1 | dTWC/dt=-7.9144e+08  E_src=-1.7093e+10  P_sink=1.6130e+10  residual=1.7537e+09  P_ratio mean=1.108628  min=1.053458  max=1.129076  drift_pct=10.8628%
+INFO:credit.postblock._postblock:WaterFixer step 1 | dTWC/dt=-5.3272e+08  E_src=-1.7481e+10  P_sink=1.6419e+10  residual=1.5941e+09  P_ratio mean=1.097265  min=1.069781  max=1.156833  drift_pct=9.7265%
+INFO:credit.postblock._postblock:WaterFixer step 1 | dTWC/dt=-7.9190e+08  E_src=-1.7212e+10  P_sink=1.6217e+10  residual=1.7875e+09  P_ratio mean=1.110505  min=1.072264  max=1.166957  drift_pct=11.0505%
+INFO:credit.postblock._postblock:WaterFixer step 1 | dTWC/dt=-6.5977e+08  E_src=-1.7053e+10  P_sink=1.5992e+10  residual=1.7207e+09  P_ratio mean=1.107176  min=1.062577  max=1.159664  drift_pct=10.7176%
+  1%|          | 1/150 [00:30<1:15:56, 30.58s/it]Epoch: 0 train_loss: 0.527197 train_acc: 0.938171 train_mae: 0.182823 forecast_len: 3.000000 lr: 0.000050000000:   1%|          | 1/150 [00:30<1:15:56, 30.58s/it]Epoch: 0 train_loss: 0.527197 train_acc: 0.938171 train_mae: 0.182823 forecast_len: 3.000000 lr: 0.000050000000:   1%|▏         | 2/150 [01:01<1:15:36, 30.65s/it]Epoch: 0 train_loss: 0.515471 train_acc: 0.939265 train_mae: 0.181274 forecast_len: 3.000000 lr: 0.000050000000:   1%|▏         | 2/150 [01:01<1:15:36, 30.65s/it]Epoch: 0 train_loss: 0.515471 train_acc: 0.939265 train_mae: 0.181274 forecast_len: 3.000000 lr: 0.000050000000:   2%|▏         | 3/150 [01:36<1:20:21, 32.80s/it]Epoch: 0 train_loss: 0.507804 train_acc: 0.940337 train_mae: 0.181249 forecast_len: 3.000000 lr: 0.000050000000:   2%|▏         | 3/150 [01:36<1:20:21, 32.80s/it]Epoch: 0 train_loss: 0.507804 train_acc: 0.940337 train_mae: 0.181249 forecast_len: 3.000000 lr: 0.000050000000:   3%|▎         | 4/150 [02:07<1:17:33, 31.87s/it]Epoch: 0 train_loss: 0.508368 train_acc: 0.940544 train_mae: 0.181228 forecast_len: 3.000000 lr: 0.000050000000:   3%|▎         | 4/150 [02:07<1:17:33, 31.87s/it]Epoch: 0 train_loss: 0.508368 train_acc: 0.940544 train_mae: 0.181228 forecast_len: 3.000000 lr: 0.000050000000:   3%|▎         | 5/150 [02:40<1:18:47, 32.60s/it]Epoch: 0 train_loss: 0.508817 train_acc: 0.940909 train_mae: 0.181173 forecast_len: 3.000000 lr: 0.000050000000:   3%|▎         | 5/150 [02:40<1:18:47, 32.60s/it]INFO:credit.postblock._postblock:TracerFixer step 51 | clipped_lo=435711 (2.7360%)  clipped_hi=54181 (0.3402%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:TracerFixer step 51 | clipped_lo=435622 (2.7354%)  clipped_hi=57260 (0.3596%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:MassFixer step 51 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999971  min=0.999822  max=1.000080  drift_pct=-0.0029%
+INFO:credit.postblock._postblock:TracerFixer step 51 | clipped_lo=450111 (2.8264%)  clipped_hi=59463 (0.3734%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:MassFixer step 51 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999978  min=0.999768  max=1.000226  drift_pct=-0.0022%
+INFO:credit.postblock._postblock:TracerFixer step 51 | clipped_lo=458290 (2.8778%)  clipped_hi=54354 (0.3413%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:WaterFixer step 51 | dTWC/dt=1.3066e+09  E_src=-1.6570e+10  P_sink=1.6840e+10  residual=-1.5769e+09  P_ratio mean=0.906179  min=0.868848  max=0.942000  drift_pct=-9.3821%
+INFO:credit.postblock._postblock:MassFixer step 51 | dry_mass_t0=5.1000e+18  sp_ratio mean=1.000070  min=0.999909  max=1.000265  drift_pct=0.0070%
+INFO:credit.postblock._postblock:MassFixer step 51 | dry_mass_t0=5.1000e+18  sp_ratio mean=1.000025  min=0.999845  max=1.000194  drift_pct=0.0025%
+INFO:credit.postblock._postblock:WaterFixer step 51 | dTWC/dt=1.3720e+09  E_src=-1.7159e+10  P_sink=1.7358e+10  residual=-1.5715e+09  P_ratio mean=0.908921  min=0.878290  max=0.942910  drift_pct=-9.1079%
+INFO:credit.postblock._postblock:WaterFixer step 51 | dTWC/dt=1.2789e+09  E_src=-1.6989e+10  P_sink=1.7439e+10  residual=-1.7287e+09  P_ratio mean=0.900942  min=0.875208  max=0.966360  drift_pct=-9.9058%
+INFO:credit.postblock._postblock:WaterFixer step 51 | dTWC/dt=1.4399e+09  E_src=-1.7194e+10  P_sink=1.7463e+10  residual=-1.7088e+09  P_ratio mean=0.902394  min=0.854649  max=0.935260  drift_pct=-9.7606%
+Epoch: 0 train_loss: 0.508817 train_acc: 0.940909 train_mae: 0.181173 forecast_len: 3.000000 lr: 0.000050000000:   4%|▍         | 6/150 [03:14<1:18:45, 32.81s/it]Epoch: 0 train_loss: 0.507233 train_acc: 0.941503 train_mae: 0.180632 forecast_len: 3.000000 lr: 0.000050000000:   4%|▍         | 6/150 [03:14<1:18:45, 32.81s/it]Epoch: 0 train_loss: 0.507233 train_acc: 0.941503 train_mae: 0.180632 forecast_len: 3.000000 lr: 0.000050000000:   5%|▍         | 7/150 [03:48<1:19:16, 33.26s/it]Epoch: 0 train_loss: 0.506299 train_acc: 0.941886 train_mae: 0.180008 forecast_len: 3.000000 lr: 0.000050000000:   5%|▍         | 7/150 [03:48<1:19:16, 33.26s/it]Epoch: 0 train_loss: 0.506299 train_acc: 0.941886 train_mae: 0.180008 forecast_len: 3.000000 lr: 0.000050000000:   5%|▌         | 8/150 [04:18<1:16:11, 32.19s/it]Epoch: 0 train_loss: 0.504252 train_acc: 0.942452 train_mae: 0.179471 forecast_len: 3.000000 lr: 0.000050000000:   5%|▌         | 8/150 [04:18<1:16:11, 32.19s/it]Epoch: 0 train_loss: 0.504252 train_acc: 0.942452 train_mae: 0.179471 forecast_len: 3.000000 lr: 0.000050000000:   6%|▌         | 9/150 [04:53<1:18:02, 33.21s/it]Epoch: 0 train_loss: 0.502702 train_acc: 0.942785 train_mae: 0.178880 forecast_len: 3.000000 lr: 0.000050000000:   6%|▌         | 9/150 [04:53<1:18:02, 33.21s/it]Epoch: 0 train_loss: 0.502702 train_acc: 0.942785 train_mae: 0.178880 forecast_len: 3.000000 lr: 0.000050000000:   7%|▋         | 10/150 [05:25<1:16:10, 32.64s/it]Epoch: 0 train_loss: 0.503331 train_acc: 0.942893 train_mae: 0.178811 forecast_len: 3.000000 lr: 0.000050000000:   7%|▋         | 10/150 [05:25<1:16:10, 32.64s/it]Epoch: 0 train_loss: 0.503331 train_acc: 0.942893 train_mae: 0.178811 forecast_len: 3.000000 lr: 0.000050000000:   7%|▋         | 11/150 [05:59<1:16:54, 33.20s/it]Epoch: 0 train_loss: 0.502131 train_acc: 0.943027 train_mae: 0.178560 forecast_len: 3.000000 lr: 0.000050000000:   7%|▋         | 11/150 [05:59<1:16:54, 33.20s/it]INFO:credit.postblock._postblock:TracerFixer step 101 | clipped_lo=480611 (3.0179%)  clipped_hi=103200 (0.6480%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:TracerFixer step 101 | clipped_lo=495192 (3.1095%)  clipped_hi=98662 (0.6195%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:MassFixer step 101 | dry_mass_t0=5.1000e+18  sp_ratio mean=1.000043  min=0.999801  max=1.000148  drift_pct=0.0043%
+INFO:credit.postblock._postblock:MassFixer step 101 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999990  min=0.999940  max=1.000040  drift_pct=-0.0010%
+INFO:credit.postblock._postblock:WaterFixer step 101 | dTWC/dt=-4.8380e+08  E_src=-1.7719e+10  P_sink=1.6970e+10  residual=1.2331e+09  P_ratio mean=1.072476  min=0.982337  max=1.145221  drift_pct=7.2476%
+INFO:credit.postblock._postblock:TracerFixer step 101 | clipped_lo=491238 (3.0846%)  clipped_hi=104560 (0.6566%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:TracerFixer step 101 | clipped_lo=506049 (3.1777%)  clipped_hi=99428 (0.6243%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:WaterFixer step 101 | dTWC/dt=-5.1999e+08  E_src=-1.7218e+10  P_sink=1.6495e+10  residual=1.2423e+09  P_ratio mean=1.075618  min=1.017767  max=1.161661  drift_pct=7.5618%
+INFO:credit.postblock._postblock:MassFixer step 101 | dry_mass_t0=5.1000e+18  sp_ratio mean=1.000011  min=0.999821  max=1.000172  drift_pct=0.0011%
+INFO:credit.postblock._postblock:MassFixer step 101 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999969  min=0.999835  max=1.000167  drift_pct=-0.0031%
+INFO:credit.postblock._postblock:WaterFixer step 101 | dTWC/dt=-8.3427e+08  E_src=-1.7937e+10  P_sink=1.7278e+10  residual=1.4936e+09  P_ratio mean=1.086787  min=1.030189  max=1.116436  drift_pct=8.6787%
+INFO:credit.postblock._postblock:WaterFixer step 101 | dTWC/dt=-6.9541e+08  E_src=-1.6916e+10  P_sink=1.6367e+10  residual=1.2445e+09  P_ratio mean=1.076593  min=1.028440  max=1.164307  drift_pct=7.6593%
+Epoch: 0 train_loss: 0.502131 train_acc: 0.943027 train_mae: 0.178560 forecast_len: 3.000000 lr: 0.000050000000:   8%|▊         | 12/150 [06:31<1:15:20, 32.75s/it]Epoch: 0 train_loss: 0.501722 train_acc: 0.943086 train_mae: 0.178463 forecast_len: 3.000000 lr: 0.000050000000:   8%|▊         | 12/150 [06:31<1:15:20, 32.75s/it]Epoch: 0 train_loss: 0.501722 train_acc: 0.943086 train_mae: 0.178463 forecast_len: 3.000000 lr: 0.000050000000:   9%|▊         | 13/150 [07:01<1:12:43, 31.85s/it]Epoch: 0 train_loss: 0.501242 train_acc: 0.943217 train_mae: 0.178399 forecast_len: 3.000000 lr: 0.000050000000:   9%|▊         | 13/150 [07:01<1:12:43, 31.85s/it]W0413 16:31:59.136000 230303 site-packages/torch/distributed/elastic/agent/server/api.py:719] Received 15 death signal, shutting down workers
+W0413 16:31:59.138000 230303 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 230321 closing signal SIGTERM
+W0413 16:31:59.142000 230303 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 230322 closing signal SIGTERM
+W0413 16:31:59.146000 230303 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 230323 closing signal SIGTERM
+W0413 16:31:59.148000 230303 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 230324 closing signal SIGTERM
+Traceback (most recent call last):
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/bin/torchrun", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 355, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/run.py", line 918, in main
+    run(args)
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/run.py", line 909, in run
+    elastic_launch(
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 260, in launch_agent
+    result = agent.run()
+             ^^^^^^^^^^^
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/elastic/metrics/api.py", line 137, in wrapper
+    result = f(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/elastic/agent/server/api.py", line 711, in run
+    result = self._invoke_run(role)
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/elastic/agent/server/api.py", line 870, in _invoke_run
+    time.sleep(monitor_interval)
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/api.py", line 84, in _terminate_process_handler
+    raise SignalException(f"Process {os.getpid()} got signal: {sigval}", sigval=sigval)
+torch.distributed.elastic.multiprocessing.api.SignalException: Process 230303 got signal: 15

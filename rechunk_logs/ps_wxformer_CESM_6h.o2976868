@@ -1,0 +1,159 @@
+Config : /glade/derecho/scratch/wchapman/b_credit_runs/camulator_config_casper.yml
+Node   : casper40
+GPUs   : 4
+INFO:root:Running DDP on rank 1 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 0 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 3 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 2 with world_size 4 using nccl.
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:root:Loaded MultiSourceDataset from conf['data']['source'] keys: ['CAMulator']
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:root:Loaded MultiSourceDataset from conf['data_valid']['source'] keys: ['CAMulator']
+INFO:root:Loaded a training DataLoader for the MultiSourceDataset ERA dataset.
+INFO:root:Loaded a validation DataLoader for the MultiSourceDataset ERA dataset.
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:root:Loaded MultiSourceDataset from conf['data']['source'] keys: ['CAMulator']
+INFO:root:Loaded MultiSourceDataset from conf['data']['source'] keys: ['CAMulator']
+INFO:root:Loaded MultiSourceDataset from conf['data']['source'] keys: ['CAMulator']
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:root:Loaded MultiSourceDataset from conf['data_valid']['source'] keys: ['CAMulator']
+INFO:root:Loaded a training DataLoader for the MultiSourceDataset ERA dataset.
+INFO:root:Loaded a validation DataLoader for the MultiSourceDataset ERA dataset.
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:root:Loaded MultiSourceDataset from conf['data_valid']['source'] keys: ['CAMulator']
+INFO:root:Loaded a training DataLoader for the MultiSourceDataset ERA dataset.
+INFO:root:Loaded a validation DataLoader for the MultiSourceDataset ERA dataset.
+INFO:root:Loaded MultiSourceDataset from conf['data_valid']['source'] keys: ['CAMulator']
+INFO:root:Loaded a training DataLoader for the MultiSourceDataset ERA dataset.
+INFO:root:Loaded a validation DataLoader for the MultiSourceDataset ERA dataset.
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:using postblock
+INFO:root:Activation checkpointing on ddp: True
+INFO:root:Checkpointing custom layers {<class 'credit.models.camulator.FeedForward'>, <class 'credit.models.camulator.DynamicPositionBias'>, <class 'credit.models.camulator.Attention'>, <class 'credit.models.camulator.CrossEmbedLayer'>}
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:using postblock
+INFO:credit.models.camulator:using postblock
+INFO:credit.models.camulator:using postblock
+INFO:root:Activation checkpointing on ddp: True
+INFO:root:Checkpointing custom layers {<class 'credit.models.camulator.Attention'>, <class 'credit.models.camulator.CrossEmbedLayer'>, <class 'credit.models.camulator.FeedForward'>, <class 'credit.models.camulator.DynamicPositionBias'>}
+INFO:root:Activation checkpointing on ddp: True
+INFO:root:Checkpointing custom layers {<class 'credit.models.camulator.FeedForward'>, <class 'credit.models.camulator.CrossEmbedLayer'>, <class 'credit.models.camulator.DynamicPositionBias'>, <class 'credit.models.camulator.Attention'>}
+INFO:root:Activation checkpointing on ddp: True
+INFO:root:Checkpointing custom layers {<class 'credit.models.camulator.Attention'>, <class 'credit.models.camulator.FeedForward'>, <class 'credit.models.camulator.DynamicPositionBias'>, <class 'credit.models.camulator.CrossEmbedLayer'>}
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.trainers:ERA5 trainer for the new nested data schema with preblock-assembled batches. forecast_len=1 means 1 step.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers:ERA5 trainer for the new nested data schema with preblock-assembled batches. forecast_len=1 means 1 step.
+INFO:credit.trainers:ERA5 trainer for the new nested data schema with preblock-assembled batches. forecast_len=1 means 1 step.
+INFO:credit.trainers:ERA5 trainer for the new nested data schema with preblock-assembled batches. forecast_len=1 means 1 step.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers.base_trainer:EMA enabled (decay=0.9999)
+INFO:credit.trainers.trainerERA5v2:Loading ERA5-v2 trainer (new nested data schema, preblock-assembled batches)
+INFO:credit.trainers.base_trainer:EMA enabled (decay=0.9999)
+INFO:credit.trainers.trainerERA5v2:Loading ERA5-v2 trainer (new nested data schema, preblock-assembled batches)
+INFO:credit.trainers.base_trainer:EMA enabled (decay=0.9999)
+INFO:credit.trainers.trainerERA5v2:Loading ERA5-v2 trainer (new nested data schema, preblock-assembled batches)
+INFO:credit.trainers.base_trainer:EMA enabled (decay=0.9999)
+INFO:credit.trainers.trainerERA5v2:Loading ERA5-v2 trainer (new nested data schema, preblock-assembled batches)
+INFO:credit.trainers.preflight:DataLoader memory estimate: 5.4 GB (workers=4 × prefetch=8 × batch=20)
+INFO:credit.trainers.preflight:Preflight: fetching first training batch (timeout=300s) …
+INFO:credit.trainers.base_trainer:Beginning epoch 0
+INFO:credit.trainers.trainerERA5v2:Using grad-max-norm value: 1.0
+  0%|          | 0/603 [00:00<?, ?it/s]INFO:credit.trainers.base_trainer:Beginning epoch 0
+INFO:credit.trainers.trainerERA5v2:Using grad-max-norm value: 1.0
+  0%|          | 0/603 [00:00<?, ?it/s]INFO:credit.trainers.base_trainer:Beginning epoch 0
+INFO:credit.trainers.trainerERA5v2:Using grad-max-norm value: 1.0
+  0%|          | 0/603 [00:00<?, ?it/s]INFO:credit.trainers.preflight:Preflight: first batch ready in 29.7s.
+INFO:credit.trainers.base_trainer:Beginning epoch 0
+INFO:credit.trainers.trainerERA5v2:Using grad-max-norm value: 1.0
+  0%|          | 0/603 [00:00<?, ?it/s]INFO:credit.trainers.trainerERA5v2:[rank0] NaN/inf check — x nan=False inf=False | y_pred nan=False inf=False | y_pred abs max=1.543e+01
+INFO:credit.trainers.trainerERA5v2:[rank0] Shapes — x: (20, 136, 1, 192, 288), y_pred: (20, 147, 1, 192, 288), y: (20, 147, 1, 192, 288)
+INFO:credit.trainers.trainerERA5v2:[rank0] NaN check — y: False, x: False, y_pred: False
+INFO:credit.trainers.trainerERA5v2:[rank0] loss value: 6.088515758514404
+INFO:credit.trainers.trainerERA5v2:[rank3] NaN/inf check — x nan=False inf=False | y_pred nan=False inf=False | y_pred abs max=1.875e+01
+INFO:credit.trainers.trainerERA5v2:[rank1] NaN/inf check — x nan=False inf=False | y_pred nan=False inf=False | y_pred abs max=1.747e+01
+INFO:credit.trainers.trainerERA5v2:[rank1] Shapes — x: (20, 136, 1, 192, 288), y_pred: (20, 147, 1, 192, 288), y: (20, 147, 1, 192, 288)
+INFO:credit.trainers.trainerERA5v2:[rank3] Shapes — x: (20, 136, 1, 192, 288), y_pred: (20, 147, 1, 192, 288), y: (20, 147, 1, 192, 288)
+INFO:credit.trainers.trainerERA5v2:[rank1] NaN check — y: False, x: False, y_pred: False
+INFO:credit.trainers.trainerERA5v2:[rank3] NaN check — y: False, x: False, y_pred: False
+INFO:credit.trainers.trainerERA5v2:[rank1] loss value: 6.0748748779296875
+INFO:credit.trainers.trainerERA5v2:[rank3] loss value: 6.0464043617248535
+INFO:credit.trainers.trainerERA5v2:[rank2] NaN/inf check — x nan=False inf=False | y_pred nan=False inf=False | y_pred abs max=1.551e+01
+INFO:credit.trainers.trainerERA5v2:[rank2] Shapes — x: (20, 136, 1, 192, 288), y_pred: (20, 147, 1, 192, 288), y: (20, 147, 1, 192, 288)
+INFO:credit.trainers.trainerERA5v2:[rank2] NaN check — y: False, x: False, y_pred: False
+INFO:credit.trainers.trainerERA5v2:[rank2] loss value: 6.089542388916016
+  0%|          | 1/603 [05:04<50:52:23, 304.23s/it]Epoch: 0 train_loss: 6.074834 train_acc: -0.004430 train_mae: 1.935588 forecast_len: 1 lr: 0.000100000000:   0%|          | 1/603 [05:04<50:52:23, 304.23s/it]Epoch: 0 train_loss: 6.074834 train_acc: -0.004430 train_mae: 1.935588 forecast_len: 1 lr: 0.000100000000:   0%|          | 2/603 [05:30<23:27:58, 140.56s/it]Epoch: 0 train_loss: 4.829258 train_acc: -0.004430 train_mae: 1.935588 forecast_len: 1 lr: 0.000000008333:   0%|          | 2/603 [05:30<23:27:58, 140.56s/it]Epoch: 0 train_loss: 4.829258 train_acc: -0.004430 train_mae: 1.935588 forecast_len: 1 lr: 0.000000008333:   0%|          | 3/603 [05:57<14:46:40, 88.67s/it] Epoch: 0 train_loss: 4.231468 train_acc: -0.004430 train_mae: 1.935588 forecast_len: 1 lr: 0.000000016667:   0%|          | 3/603 [05:57<14:46:40, 88.67s/it]Epoch: 0 train_loss: 4.231468 train_acc: -0.004430 train_mae: 1.935588 forecast_len: 1 lr: 0.000000016667:   1%|          | 4/603 [06:29<11:01:43, 66.28s/it]Epoch: 0 train_loss: 3.883013 train_acc: -0.004430 train_mae: 1.935588 forecast_len: 1 lr: 0.000000025000:   1%|          | 4/603 [06:29<11:01:43, 66.28s/it]Epoch: 0 train_loss: 3.883013 train_acc: -0.004430 train_mae: 1.935588 forecast_len: 1 lr: 0.000000025000:   1%|          | 5/603 [06:59<8:50:39, 53.24s/it] Epoch: 0 train_loss: 3.657690 train_acc: -0.004430 train_mae: 1.935588 forecast_len: 1 lr: 0.000000033333:   1%|          | 5/603 [06:59<8:50:39, 53.24s/it]Epoch: 0 train_loss: 3.657690 train_acc: -0.004430 train_mae: 1.935588 forecast_len: 1 lr: 0.000000033333:   1%|          | 6/603 [07:35<7:52:12, 47.46s/it]Epoch: 0 train_loss: 3.494810 train_acc: -0.004430 train_mae: 1.935588 forecast_len: 1 lr: 0.000000041667:   1%|          | 6/603 [07:35<7:52:12, 47.46s/it]Epoch: 0 train_loss: 3.494810 train_acc: -0.004430 train_mae: 1.935588 forecast_len: 1 lr: 0.000000041667:   1%|          | 7/603 [08:11<7:14:01, 43.69s/it]Epoch: 0 train_loss: 3.364870 train_acc: -0.004430 train_mae: 1.935588 forecast_len: 1 lr: 0.000000050000:   1%|          | 7/603 [08:11<7:14:01, 43.69s/it]Epoch: 0 train_loss: 3.364870 train_acc: -0.004430 train_mae: 1.935588 forecast_len: 1 lr: 0.000000050000:   1%|▏         | 8/603 [08:41<6:30:04, 39.33s/it]Epoch: 0 train_loss: 3.272046 train_acc: -0.004430 train_mae: 1.935588 forecast_len: 1 lr: 0.000000058333:   1%|▏         | 8/603 [08:41<6:30:04, 39.33s/it]Epoch: 0 train_loss: 3.272046 train_acc: -0.004430 train_mae: 1.935588 forecast_len: 1 lr: 0.000000058333:   1%|▏         | 9/603 [09:56<8:19:55, 50.50s/it]Epoch: 0 train_loss: 3.188966 train_acc: -0.004430 train_mae: 1.935588 forecast_len: 1 lr: 0.000000066667:   1%|▏         | 9/603 [09:56<8:19:55, 50.50s/it]Epoch: 0 train_loss: 3.188966 train_acc: -0.004430 train_mae: 1.935588 forecast_len: 1 lr: 0.000000066667:   2%|▏         | 10/603 [12:09<12:30:26, 75.93s/it]Epoch: 0 train_loss: 3.120443 train_acc: -0.004430 train_mae: 1.935588 forecast_len: 1 lr: 0.000000075000:   2%|▏         | 10/603 [12:09<12:30:26, 75.93s/it]W0328 23:02:34.781000 202506 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 202513 closing signal SIGTERM
+W0328 23:02:34.818000 202506 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 202514 closing signal SIGTERM
+W0328 23:02:34.820000 202506 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 202515 closing signal SIGTERM
+W0328 23:03:04.823000 202506 site-packages/torch/distributed/elastic/multiprocessing/api.py:916] Unable to shutdown process 202514 via 15, forcefully exiting via 9
+E0328 23:03:25.837000 202506 site-packages/torch/distributed/elastic/multiprocessing/api.py:869] failed (exitcode: -9) local_rank: 0 (pid: 202512) of binary: /glade/work/wchapman/conda-envs/credit-casper-mar2026/bin/python
+Traceback (most recent call last):
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/bin/torchrun", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 355, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/run.py", line 918, in main
+    run(args)
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/run.py", line 909, in run
+    elastic_launch(
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 269, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+/glade/work/wchapman/Roman_Coupling/train_johns/applications/train.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-03-28_23:02:34
+  host      : casper40.hpc.ucar.edu
+  rank      : 0 (local_rank: 0)
+  exitcode  : -9 (pid: 202512)
+  error_file: <N/A>
+  traceback : Signal 9 (SIGKILL) received by PID 202512
+============================================================

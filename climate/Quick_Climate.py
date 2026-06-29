@@ -90,7 +90,19 @@ def parse_datetime_from_config(conf: dict) -> datetime:
 # ============================================================================
 
 
-def run_climate_integration(pool: mp.Pool, context: dict, save_append: str = None, init_noise: float = None):
+def _flush_monthly(pool, accum, month_dt, init_str, lead_time_periods, metadata, conf, lats, lons):
+    """Average accumulated predictions and save one NetCDF per month."""
+    if not accum:
+        return
+    stacked = torch.stack(accum, dim=0).mean(dim=0)  # [1, C, 1, H, W] mean over month
+    upper_air, single_level = make_xarray(stacked, month_dt, lats, lons, conf)
+    file_tag = int(month_dt.strftime('%Y%m'))  # e.g. 200101, 200102 — human-readable
+    pool.apply_async(save_netcdf_increment, (upper_air, single_level, init_str, file_tag, metadata, conf))
+    print(f"  Saved monthly mean for {month_dt.strftime('%Y-%m')}")
+
+
+def run_climate_integration(pool: mp.Pool, context: dict, save_append: str = None, init_noise: float = None,
+                            monthly_mean: bool = False, track_moisture: bool = False):
     """
     Run the CAMulator climate integration loop.
 
@@ -146,11 +158,36 @@ def run_climate_integration(pool: mp.Pool, context: dict, save_append: str = Non
     # Get forcing data subset
     dynamic_ds = forcing_ds_norm[df_vars]
 
-    # IMPORTANT: Use the config's datetime object directly for xarray lookup
-    # It might be cftime.DatetimeNoLeap, which xarray expects
+    # Convert start_datetime to whatever type the time index uses (cftime or datetime)
     start_datetime_raw = conf["predict"]["start_datetime"]
-    loc = dynamic_ds.indexes["time"].get_loc(start_datetime_raw)
-    start_ix = loc.start if isinstance(loc, slice) else loc
+    time_index = dynamic_ds.indexes["time"]
+
+    if isinstance(start_datetime_raw, str):
+        from datetime import datetime as _dt
+        dt = _dt.strptime(start_datetime_raw, "%Y-%m-%d %H:%M:%S")
+    else:
+        dt = start_datetime_raw
+
+    # Find index by direct year/month/day/hour comparison — avoids any
+    # cftime has_year_zero / calendar-type construction mismatch.
+    import numpy as _np
+    t_arr = _np.array(time_index)
+    months = _np.array([t.month for t in t_arr])
+    days   = _np.array([t.day   for t in t_arr])
+    hours  = _np.array([t.hour  for t in t_arr])
+
+    # Try exact year+month+day+hour first; fall back to month+day+hour for cyclic files
+    years  = _np.array([t.year  for t in t_arr])
+    mask_exact = (years == dt.year) & (months == dt.month) & (days == dt.day) & (hours == dt.hour)
+    mask_cyclic = (months == dt.month) & (days == dt.day) & (hours == dt.hour)
+
+    hits = _np.where(mask_exact)[0]
+    if len(hits) == 0:
+        hits = _np.where(mask_cyclic)[0]
+        if len(hits) > 0:
+            print(f"  Cyclic forcing: matched {start_datetime_raw!r} by month/day/hour at index {hits[0]}")
+    assert len(hits) > 0, f"start_datetime {start_datetime_raw!r} not found in forcing time index"
+    start_ix = int(hits[0])
     print(f"Starting integration at time index: {start_ix}")
 
     # Now convert to Python datetime for output formatting (if it's a string or cftime)
@@ -162,14 +199,31 @@ def run_climate_integration(pool: mp.Pool, context: dict, save_append: str = Non
     # ========================================================================
 
     print("Starting time-stepping loop...")
+    print(f"Output mode: {'monthly means' if monthly_mean else 'every 6-hourly step'}")
     forecast_hour = 1
     timestep_counter = 0
+    from datetime import timedelta
+    sim_dt = init_dt  # simulation clock — advances independently of cyclic forcing
 
-    for block_start in range(start_ix, start_ix + num_ts, chunk_size):
-        block_end = min(block_start + chunk_size, start_ix + num_ts)
+    # Monthly accumulation state
+    monthly_accum = []
+    current_month = None
+    month_start_dt = None
 
-        # Load chunk of dynamic forcing data
-        ds_slice = dynamic_ds.isel(time=slice(block_start, block_end)).load()
+    # Moisture tracking state (Qtot channels 96-127, q_inds from post_conf)
+    q_lo, q_hi = 96, 128  # 32 levels of Qtot
+    moisture_log = []  # list of (step, datetime_str, qtot_mean)
+
+    n_forcing = len(dynamic_ds.time)  # size of cyclic forcing file (e.g. 1460 for 1-yr)
+
+    for block_start in range(0, num_ts, chunk_size):
+        block_end = min(block_start + chunk_size, num_ts)
+
+        # Cyclic wrap: map simulation steps to forcing indices
+        forcing_indices = [(start_ix + block_start + i) % n_forcing for i in range(block_end - block_start)]
+
+        # Load chunk of dynamic forcing data (with cyclic wrap)
+        ds_slice = dynamic_ds.isel(time=forcing_indices).load()
         ds_slice_times = ds_slice["time"].values
 
         # Stack forcing variables into tensor [time, vars, lat, lon]
@@ -182,23 +236,15 @@ def run_climate_integration(pool: mp.Pool, context: dict, save_append: str = Non
 
         # Step through each time in the chunk
         for t in range(gpu_forcing_chunk.shape[0]):
-            time_obj = ds_slice_times[t]
-
-            # Convert to Python datetime for output formatting
-            # Handle numpy scalar wrapper
-            if hasattr(time_obj, "item"):
-                time_obj = time_obj.item()
-
-            if isinstance(time_obj, datetime):
-                utc_datetime = time_obj
-            else:
-                # cftime object - convert to Python datetime
-                utc_datetime = datetime(
-                    time_obj.year, time_obj.month, time_obj.day, time_obj.hour, time_obj.minute, time_obj.second
-                )
+            # Use simulation clock (not forcing file time) so cyclic forcing
+            # doesn't reset the year counter after 1 year
+            utc_datetime = sim_dt
 
             if (timestep_counter + 1) % 20 == 0:
-                print(f"Model step: {timestep_counter + 1:05}, time: {utc_datetime}")
+                msg = f"Model step: {timestep_counter + 1:05}, time: {utc_datetime}"
+                if track_moisture and moisture_log:
+                    msg += f"  |  Qtot_total={moisture_log[-1][2]:.3e}"
+                print(msg)
 
             dynamic_forcing_t = gpu_forcing_chunk[t].unsqueeze(0)
 
@@ -223,22 +269,45 @@ def run_climate_integration(pool: mp.Pool, context: dict, save_append: str = Non
             # Apply post-processing
             prediction = stepper._apply_postprocessing(prediction, model_input)
 
+            # Track global mean Qtot (normalized units — good for drift detection)
+            if track_moisture:
+                qtot_total = prediction[0, q_lo:q_hi, 0, :, :].sum().item()
+                moisture_log.append((timestep_counter + 1, str(utc_datetime), qtot_total))
+
             timestep_counter += 1
 
             # ================================================================
             # OUTPUT GENERATION (runs in parallel via multiprocessing)
+            # save_netcdf_increment handles inverse_transform internally via
+            # climate_rescale_output: True in the config
             # ================================================================
 
-            # Convert prediction to xarray (fast, on CPU)
-            upper_air, single_level = make_xarray(
-                prediction.cpu(), utc_datetime, latlons.latitude.values, latlons.longitude.values, conf
-            )
-
-            # Async save to NetCDF (runs in background pool)
-            pool.apply_async(
-                save_netcdf_increment,
-                (upper_air, single_level, init_str, lead_time_periods * forecast_hour, metadata, conf),
-            )
+            if monthly_mean:
+                # Accumulate predictions; flush to disk when the month rolls over
+                pred_cpu = prediction.cpu()
+                if current_month is None:
+                    current_month = utc_datetime.month
+                    month_start_dt = utc_datetime
+                elif utc_datetime.month != current_month:
+                    _flush_monthly(
+                        pool, monthly_accum, month_start_dt, init_str,
+                        lead_time_periods, metadata, conf,
+                        latlons.latitude.values, latlons.longitude.values,
+                    )
+                    monthly_accum = []
+                    current_month = utc_datetime.month
+                    month_start_dt = utc_datetime
+                monthly_accum.append(pred_cpu)
+            else:
+                # Convert prediction to xarray (fast, on CPU)
+                upper_air, single_level = make_xarray(
+                    prediction.cpu(), utc_datetime, latlons.latitude.values, latlons.longitude.values, conf
+                )
+                # Async save to NetCDF (runs in background pool)
+                pool.apply_async(
+                    save_netcdf_increment,
+                    (upper_air, single_level, init_str, lead_time_periods * forecast_hour, metadata, conf),
+                )
 
             # ================================================================
             # SHIFT STATE FORWARD FOR NEXT TIMESTEP
@@ -246,6 +315,27 @@ def run_climate_integration(pool: mp.Pool, context: dict, save_append: str = Non
 
             state = stepper.state_manager.shift_state_forward(state, prediction)
             forecast_hour += 1
+            sim_dt += timedelta(hours=6)
+
+    # Flush any remaining accumulated steps (final partial/full month)
+    if monthly_mean and monthly_accum:
+        _flush_monthly(
+            pool, monthly_accum, month_start_dt, init_str,
+            lead_time_periods, metadata, conf,
+            latlons.latitude.values, latlons.longitude.values,
+        )
+
+    # Save moisture tracking CSV
+    if track_moisture and moisture_log:
+        import csv
+        save_dir = conf["predict"].get("save_forecast", ".")
+        Path(save_dir).mkdir(parents=True, exist_ok=True)
+        csv_path = str(Path(save_dir) / "moisture_tracking.csv")
+        with open(csv_path, "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(["step", "datetime", "qtot_global_total_norm"])
+            writer.writerows(moisture_log)
+        print(f"Moisture tracking saved to: {csv_path}")
 
     print("Time-stepping complete. Waiting for I/O to finish...")
     time.sleep(30)  # Allow async writes to complete
@@ -270,8 +360,6 @@ Example usage:
         --config ./be21_coupled-v2025.2.0_small.yml \\
         --model_name checkpoint.pt00091.pt \\
         --save_append run_future_00091 \\
-        --device cuda \\
-        --init_noise 0.05
         """,
     )
 
@@ -283,6 +371,14 @@ Example usage:
     parser.add_argument("--device", type=str, default="cuda", help="Device to run on (cuda or cpu)")
     parser.add_argument(
         "--init_noise", type=float, default=None, help="Add Gaussian noise to initial conditions (for ensembles)"
+    )
+    parser.add_argument(
+        "--monthly_mean", action="store_true", default=False,
+        help="Save monthly means instead of every 6-hourly step (much smaller output)"
+    )
+    parser.add_argument(
+        "--track_moisture", action="store_true", default=False,
+        help="Track global mean column Qtot each step and save to moisture_tracking.csv"
     )
 
     # Deprecated arguments (kept for backwards compatibility but unused)
@@ -315,7 +411,8 @@ Example usage:
     num_cpus = 8
     with mp.Pool(num_cpus) as pool:
         flag_energy = run_climate_integration(
-            pool=pool, context=context, save_append=args.save_append, init_noise=args.init_noise
+            pool=pool, context=context, save_append=args.save_append, init_noise=args.init_noise,
+            monthly_mean=args.monthly_mean, track_moisture=args.track_moisture,
         )
 
     end_time = time.time()

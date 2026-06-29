@@ -38,7 +38,11 @@ def setup(rank, world_size, mode, backend="nccl"):
     """
 
     logging.info(f"Running {mode.upper()} on rank {rank} with world_size {world_size} using {backend}.")
-    dist.init_process_group(backend, rank=rank, world_size=world_size)
+    import datetime
+    dist.init_process_group(
+        backend, rank=rank, world_size=world_size,
+        timeout=datetime.timedelta(minutes=10),  # raise error instead of hanging forever
+    )
 
 
 def get_rank_info(trainer_mode):

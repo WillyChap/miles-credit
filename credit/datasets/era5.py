@@ -119,11 +119,11 @@ class ERA5Dataset(Dataset):
     """
 
     def __init__(self, config: dict, return_target: bool = False) -> None:
-        source_cfg = config["source"]["ERA5"]
+        source_cfg = next(iter(config["source"].values()))
 
         self.source_name: str = "era5"
-        self.level_coord: str = source_cfg["level_coord"]
-        self.levels: list[int] = source_cfg["levels"]
+        self.level_coord: str = source_cfg.get("level_coord", "level")
+        self.levels: list = source_cfg.get("levels", [])
         self.return_target: bool = return_target
         self.static_metadata: dict = {
             "levels": self.levels,
@@ -233,7 +233,8 @@ class ERA5Dataset(Dataset):
 
         files = sorted(glob(d.get("path", "")))
         time_fmt: str = d.get("filename_time_format", "%Y")
-        self.file_dict[field_type] = _map_files(files, time_fmt) if files else None
+        match_index: int = d.get("filename_time_index", 0)
+        self.file_dict[field_type] = _map_files(files, time_fmt, match_index=match_index) if files else None
         self.var_dict[field_type] = {
             "vars_3D": d.get("vars_3D") or [],
             "vars_2D": d.get("vars_2D") or [],
@@ -246,11 +247,15 @@ class ERA5Dataset(Dataset):
             DatetimeIndex from ``start_datetime`` to ``end_datetime`` minus
             the forecast horizon, at the configured timestep frequency.
         """
-        return pd.date_range(
+        idx = pd.date_range(
             self.start_datetime,
             self.end_datetime - self.num_forecast_steps * self.dt,
             freq=self.dt,
         )
+        target_idx = idx + self.num_forecast_steps * self.dt
+        feb29 = (idx.month == 2) & (idx.day == 29)
+        target_feb29 = (target_idx.month == 2) & (target_idx.day == 29)
+        return idx[~(feb29 | target_feb29)]
 
     def _extract_field(
         self,
@@ -281,7 +286,9 @@ class ERA5Dataset(Dataset):
         vars_3D: list[str] = vd["vars_3D"]
         vars_2D: list[str] = vd["vars_2D"]
 
-        with xr.open_dataset(_find_file(file_intervals, t)) as ds:
+        fpath = _find_file(file_intervals, t)
+        opener = xr.open_zarr if fpath.endswith(".zarr") else xr.open_dataset
+        with opener(fpath, chunks=None) as ds:
             # Select the time step; static fields have no time dim
             if "time" in ds.dims:
                 if isinstance(ds.time.values[0], cftime.datetime):
@@ -295,7 +302,8 @@ class ERA5Dataset(Dataset):
 
             # 3D variables: (n_levels, lat, lon) → (n_levels, 1, lat, lon)
             for vname in vars_3D:
-                arr = ds_t[vname].sel({self.level_coord: self.levels}).values
+                da = ds_t[vname].sel({self.level_coord: self.levels}) if self.levels else ds_t[vname]
+                arr = da.values
                 tensor = torch.tensor(arr, dtype=torch.float32).unsqueeze(1)
                 sample[f"{self.source_name}/{field_type}/3d/{vname}"] = tensor
 
@@ -531,11 +539,15 @@ class ARCOERA5Dataset(Dataset):
             DatetimeIndex from ``start_datetime`` to ``end_datetime`` minus
             the forecast horizon, at the configured timestep frequency.
         """
-        return pd.date_range(
+        idx = pd.date_range(
             self.start_datetime,
             self.end_datetime - self.num_forecast_steps * self.dt,
             freq=self.dt,
         )
+        target_idx = idx + self.num_forecast_steps * self.dt
+        feb29 = (idx.month == 2) & (idx.day == 29)
+        target_feb29 = (target_idx.month == 2) & (target_idx.day == 29)
+        return idx[~(feb29 | target_feb29)]
 
     def _extract_field(
         self,

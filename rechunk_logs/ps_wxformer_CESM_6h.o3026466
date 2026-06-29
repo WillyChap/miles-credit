@@ -1,0 +1,122 @@
+Config : /glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_small/config_reload.yml
+Node   : casper38
+GPUs   : 4
+INFO:root:Running DDP on rank 2 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 0 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 1 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 3 with world_size 4 using nccl.
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:root:Loaded MultiSourceDataset from conf['data']['source'] keys: ['CAMulator']
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:root:Loaded MultiSourceDataset from conf['data_valid']['source'] keys: ['CAMulator']
+INFO:root:Loaded a training DataLoader for the MultiSourceDataset ERA dataset.
+INFO:root:Loaded a validation DataLoader for the MultiSourceDataset ERA dataset.
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:root:Loaded MultiSourceDataset from conf['data']['source'] keys: ['CAMulator']
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:root:Loaded MultiSourceDataset from conf['data_valid']['source'] keys: ['CAMulator']
+INFO:root:Loaded a training DataLoader for the MultiSourceDataset ERA dataset.
+INFO:root:Loaded a validation DataLoader for the MultiSourceDataset ERA dataset.
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:root:Loaded MultiSourceDataset from conf['data']['source'] keys: ['CAMulator']
+INFO:root:Loaded MultiSourceDataset from conf['data']['source'] keys: ['CAMulator']
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:root:Loaded MultiSourceDataset from conf['data_valid']['source'] keys: ['CAMulator']
+INFO:root:Loaded a training DataLoader for the MultiSourceDataset ERA dataset.
+INFO:root:Loaded a validation DataLoader for the MultiSourceDataset ERA dataset.
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:root:Loaded MultiSourceDataset from conf['data_valid']['source'] keys: ['CAMulator']
+INFO:root:Loaded a training DataLoader for the MultiSourceDataset ERA dataset.
+INFO:root:Loaded a validation DataLoader for the MultiSourceDataset ERA dataset.
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:using postblock
+INFO:credit.postblock._postblock:TracerFixer registered
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:using postblock
+INFO:credit.postblock._postblock:TracerFixer registered
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:using postblock
+INFO:credit.postblock._postblock:TracerFixer registered
+INFO:credit.models.camulator:using postblock
+INFO:credit.postblock._postblock:TracerFixer registered
+INFO:credit.postblock._postblock:GlobalMassFixer registered
+INFO:credit.postblock._postblock:GlobalEnergyFixerUpDown registered
+INFO:credit.postblock._postblock:GlobalMassFixer registered
+INFO:credit.postblock._postblock:GlobalMassFixer registered
+INFO:credit.postblock._postblock:GlobalMassFixer registered
+INFO:credit.postblock._postblock:GlobalEnergyFixerUpDown registered
+INFO:credit.postblock._postblock:GlobalEnergyFixerUpDown registered
+INFO:credit.postblock._postblock:GlobalEnergyFixerUpDown registered
+INFO:root:Loading DDP model, optimizer, grad scaler, and learning rate scheduler states from /glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_small/
+INFO:root:<All keys matched successfully>
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Spectral loss applied to vars: ['PRECT'] (inds: [130])
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Spectral loss applied to vars: ['PRECT'] (inds: [130])
+INFO:credit.trainers:ERA5 trainer for the new nested data schema with preblock-assembled batches. forecast_len=1 means 1 step.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:root:Loading DDP model, optimizer, grad scaler, and learning rate scheduler states from /glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_small/
+INFO:root:<All keys matched successfully>
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Spectral loss applied to vars: ['PRECT'] (inds: [130])
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Spectral loss applied to vars: ['PRECT'] (inds: [130])
+INFO:credit.trainers:ERA5 trainer for the new nested data schema with preblock-assembled batches. forecast_len=1 means 1 step.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:root:Loading DDP model, optimizer, grad scaler, and learning rate scheduler states from /glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_small/
+INFO:root:Loading DDP model, optimizer, grad scaler, and learning rate scheduler states from /glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_small/
+INFO:root:<All keys matched successfully>
+INFO:root:<All keys matched successfully>
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Spectral loss applied to vars: ['PRECT'] (inds: [130])
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Spectral loss applied to vars: ['PRECT'] (inds: [130])
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Spectral loss applied to vars: ['PRECT'] (inds: [130])
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Spectral loss applied to vars: ['PRECT'] (inds: [130])
+INFO:credit.trainers:ERA5 trainer for the new nested data schema with preblock-assembled batches. forecast_len=1 means 1 step.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers:ERA5 trainer for the new nested data schema with preblock-assembled batches. forecast_len=1 means 1 step.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers.base_trainer:Resumed EMA from /glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_small/checkpoint_ema.pt (step 12642)
+INFO:credit.trainers.trainerERA5v2:Loading ERA5-v2 trainer (new nested data schema, preblock-assembled batches)
+INFO:credit.trainers.trainerERA5v2:Activate GlobalWaterFixer outside of model
+INFO:credit.trainers.preflight:DataLoader memory estimate: 10.0 GB (workers=4 × prefetch=2 × batch=20)
+INFO:credit.trainers.preflight:Preflight: fetching first training batch (timeout=300s) …
+INFO:credit.trainers.base_trainer:Resumed EMA from /glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_small/checkpoint_ema.pt (step 12642)
+INFO:credit.trainers.trainerERA5v2:Loading ERA5-v2 trainer (new nested data schema, preblock-assembled batches)
+INFO:credit.trainers.trainerERA5v2:Activate GlobalWaterFixer outside of model
+INFO:credit.trainers.base_trainer:Resumed EMA from /glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_small/checkpoint_ema.pt (step 12642)
+INFO:credit.trainers.trainerERA5v2:Loading ERA5-v2 trainer (new nested data schema, preblock-assembled batches)
+INFO:credit.trainers.base_trainer:Resumed EMA from /glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_small/checkpoint_ema.pt (step 12642)
+INFO:credit.trainers.trainerERA5v2:Loading ERA5-v2 trainer (new nested data schema, preblock-assembled batches)
+INFO:credit.trainers.trainerERA5v2:Activate GlobalWaterFixer outside of model
+INFO:credit.trainers.trainerERA5v2:Activate GlobalWaterFixer outside of model
+INFO:credit.trainers.preflight:Preflight: first batch ready in 15.0s.

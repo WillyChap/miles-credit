@@ -1,0 +1,123 @@
+Config : /glade/derecho/scratch/wchapman/b_credit_runs/camulator_config_casper.yml
+Node   : casper40
+GPUs   : 4
+INFO:root:Running DDP on rank 1 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 3 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 2 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 0 with world_size 4 using nccl.
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:root:Loaded MultiSourceDataset from conf['data']['source'] keys: ['CAMulator']
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:root:Loaded MultiSourceDataset from conf['data_valid']['source'] keys: ['CAMulator']
+INFO:root:Loaded a training DataLoader for the MultiSourceDataset ERA dataset.
+INFO:root:Loaded a validation DataLoader for the MultiSourceDataset ERA dataset.
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:root:Loaded MultiSourceDataset from conf['data']['source'] keys: ['CAMulator']
+INFO:root:Loaded MultiSourceDataset from conf['data']['source'] keys: ['CAMulator']
+INFO:root:Loaded MultiSourceDataset from conf['data']['source'] keys: ['CAMulator']
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:root:Loaded MultiSourceDataset from conf['data_valid']['source'] keys: ['CAMulator']
+INFO:root:Loaded a training DataLoader for the MultiSourceDataset ERA dataset.
+INFO:root:Loaded a validation DataLoader for the MultiSourceDataset ERA dataset.
+INFO:root:Loaded MultiSourceDataset from conf['data_valid']['source'] keys: ['CAMulator']
+INFO:root:Loaded a training DataLoader for the MultiSourceDataset ERA dataset.
+INFO:root:Loaded a validation DataLoader for the MultiSourceDataset ERA dataset.
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:root:Loaded MultiSourceDataset from conf['data_valid']['source'] keys: ['CAMulator']
+INFO:root:Loaded a training DataLoader for the MultiSourceDataset ERA dataset.
+INFO:root:Loaded a validation DataLoader for the MultiSourceDataset ERA dataset.
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:using postblock
+INFO:root:Activation checkpointing on ddp: True
+INFO:root:Checkpointing custom layers {<class 'credit.models.camulator.CrossEmbedLayer'>, <class 'credit.models.camulator.DynamicPositionBias'>, <class 'credit.models.camulator.Attention'>, <class 'credit.models.camulator.FeedForward'>}
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:using postblock
+INFO:credit.models.camulator:using postblock
+INFO:credit.models.camulator:using postblock
+INFO:root:Activation checkpointing on ddp: True
+INFO:root:Checkpointing custom layers {<class 'credit.models.camulator.DynamicPositionBias'>, <class 'credit.models.camulator.Attention'>, <class 'credit.models.camulator.FeedForward'>, <class 'credit.models.camulator.CrossEmbedLayer'>}
+INFO:root:Activation checkpointing on ddp: True
+INFO:root:Checkpointing custom layers {<class 'credit.models.camulator.FeedForward'>, <class 'credit.models.camulator.CrossEmbedLayer'>, <class 'credit.models.camulator.DynamicPositionBias'>, <class 'credit.models.camulator.Attention'>}
+INFO:root:Activation checkpointing on ddp: True
+INFO:root:Checkpointing custom layers {<class 'credit.models.camulator.FeedForward'>, <class 'credit.models.camulator.CrossEmbedLayer'>, <class 'credit.models.camulator.DynamicPositionBias'>, <class 'credit.models.camulator.Attention'>}
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.trainers:ERA5 trainer for the new nested data schema with preblock-assembled batches. forecast_len=1 means 1 step.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers:ERA5 trainer for the new nested data schema with preblock-assembled batches. forecast_len=1 means 1 step.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers:ERA5 trainer for the new nested data schema with preblock-assembled batches. forecast_len=1 means 1 step.
+INFO:credit.trainers:ERA5 trainer for the new nested data schema with preblock-assembled batches. forecast_len=1 means 1 step.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers.base_trainer:EMA enabled (decay=0.9999)
+INFO:credit.trainers.trainerERA5v2:Loading ERA5-v2 trainer (new nested data schema, preblock-assembled batches)
+INFO:credit.trainers.base_trainer:EMA enabled (decay=0.9999)
+INFO:credit.trainers.trainerERA5v2:Loading ERA5-v2 trainer (new nested data schema, preblock-assembled batches)
+INFO:credit.trainers.base_trainer:EMA enabled (decay=0.9999)
+INFO:credit.trainers.trainerERA5v2:Loading ERA5-v2 trainer (new nested data schema, preblock-assembled batches)
+INFO:credit.trainers.base_trainer:EMA enabled (decay=0.9999)
+INFO:credit.trainers.trainerERA5v2:Loading ERA5-v2 trainer (new nested data schema, preblock-assembled batches)
+INFO:credit.trainers.base_trainer:Beginning epoch 0
+INFO:credit.trainers.trainerERA5v2:Using grad-max-norm value: 1.0
+INFO:credit.trainers.preflight:DataLoader memory estimate: 5.4 GB (workers=4 × prefetch=8 × batch=20)
+INFO:credit.trainers.preflight:Preflight: fetching first training batch (timeout=300s) …
+  0%|          | 0/603 [00:00<?, ?it/s]INFO:credit.trainers.base_trainer:Beginning epoch 0
+INFO:credit.trainers.trainerERA5v2:Using grad-max-norm value: 1.0
+  0%|          | 0/603 [00:00<?, ?it/s]INFO:credit.trainers.base_trainer:Beginning epoch 0
+INFO:credit.trainers.trainerERA5v2:Using grad-max-norm value: 1.0
+  0%|          | 0/603 [00:00<?, ?it/s]INFO:credit.trainers.preflight:Preflight: first batch ready in 25.3s.
+INFO:credit.trainers.base_trainer:Beginning epoch 0
+INFO:credit.trainers.trainerERA5v2:Using grad-max-norm value: 1.0
+  0%|          | 0/603 [00:00<?, ?it/s]INFO:credit.trainers.trainerERA5v2:[rank0] NaN/inf check — x nan=False inf=False | y_pred nan=False inf=False | y_pred abs max=1.533e+01
+INFO:credit.trainers.trainerERA5v2:[rank0] Shapes — x: (20, 136, 1, 192, 288), y_pred: (20, 147, 1, 192, 288), y: (20, 147, 1, 192, 288)
+INFO:credit.trainers.trainerERA5v2:[rank0] NaN check — y: False, x: False, y_pred: False
+INFO:credit.trainers.trainerERA5v2:[rank0] loss value: 6.014971733093262
+INFO:credit.trainers.trainerERA5v2:[rank2] NaN/inf check — x nan=False inf=False | y_pred nan=False inf=False | y_pred abs max=1.574e+01
+INFO:credit.trainers.trainerERA5v2:[rank2] Shapes — x: (20, 136, 1, 192, 288), y_pred: (20, 147, 1, 192, 288), y: (20, 147, 1, 192, 288)
+INFO:credit.trainers.trainerERA5v2:[rank2] NaN check — y: False, x: False, y_pred: False
+INFO:credit.trainers.trainerERA5v2:[rank2] loss value: 6.0747785568237305
+INFO:credit.trainers.trainerERA5v2:[rank3] NaN/inf check — x nan=False inf=False | y_pred nan=False inf=False | y_pred abs max=1.878e+01
+INFO:credit.trainers.trainerERA5v2:[rank3] Shapes — x: (20, 136, 1, 192, 288), y_pred: (20, 147, 1, 192, 288), y: (20, 147, 1, 192, 288)
+INFO:credit.trainers.trainerERA5v2:[rank3] NaN check — y: False, x: False, y_pred: False
+INFO:credit.trainers.trainerERA5v2:[rank3] loss value: 5.984610080718994
+INFO:credit.trainers.trainerERA5v2:[rank1] NaN/inf check — x nan=False inf=False | y_pred nan=False inf=False | y_pred abs max=1.804e+01
+INFO:credit.trainers.trainerERA5v2:[rank1] Shapes — x: (20, 136, 1, 192, 288), y_pred: (20, 147, 1, 192, 288), y: (20, 147, 1, 192, 288)
+INFO:credit.trainers.trainerERA5v2:[rank1] NaN check — y: False, x: False, y_pred: False
+INFO:credit.trainers.trainerERA5v2:[rank1] loss value: 6.062318325042725
+  0%|          | 1/603 [04:19<43:26:03, 259.74s/it]Epoch: 0 train_loss: 6.034170 train_acc: -0.000978 train_mae: 1.925513 forecast_len: 1 lr: 0.000100000000:   0%|          | 1/603 [04:19<43:26:03, 259.74s/it]Epoch: 0 train_loss: 6.034170 train_acc: -0.000978 train_mae: 1.925513 forecast_len: 1 lr: 0.000100000000:   0%|          | 2/603 [05:08<22:37:26, 135.52s/it]Epoch: 0 train_loss: 4.966458 train_acc: -0.000978 train_mae: 1.925513 forecast_len: 1 lr: 0.000000008333:   0%|          | 2/603 [05:08<22:37:26, 135.52s/it]Epoch: 0 train_loss: 4.966458 train_acc: -0.000978 train_mae: 1.925513 forecast_len: 1 lr: 0.000000008333:   0%|          | 3/603 [06:11<17:03:15, 102.33s/it]Epoch: 0 train_loss: 4.436867 train_acc: -0.000978 train_mae: 1.925513 forecast_len: 1 lr: 0.000000016667:   0%|          | 3/603 [06:11<17:03:15, 102.33s/it]Epoch: 0 train_loss: 4.436867 train_acc: -0.000978 train_mae: 1.925513 forecast_len: 1 lr: 0.000000016667:   1%|          | 4/603 [06:53<13:04:48, 78.61s/it] Epoch: 0 train_loss: 4.122071 train_acc: -0.000978 train_mae: 1.925513 forecast_len: 1 lr: 0.000000025000:   1%|          | 4/603 [06:53<13:04:48, 78.61s/it]Epoch: 0 train_loss: 4.122071 train_acc: -0.000978 train_mae: 1.925513 forecast_len: 1 lr: 0.000000025000:   1%|          | 5/603 [08:57<15:46:54, 95.01s/it]Epoch: 0 train_loss: 3.918751 train_acc: -0.000978 train_mae: 1.925513 forecast_len: 1 lr: 0.000000033333:   1%|          | 5/603 [08:57<15:46:54, 95.01s/it]

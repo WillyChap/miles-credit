@@ -5,9 +5,19 @@ __pycache__/
 
 
 #images
-.png
-.gif
-.npy
+*.png
+*.gif
+*.npy
+
+# LaTeX build artifacts
+papers/lessons_learned_latex/*.aux
+papers/lessons_learned_latex/*.fls
+papers/lessons_learned_latex/*.fdb_latexmk
+papers/lessons_learned_latex/*.log
+papers/lessons_learned_latex/*.out
+papers/lessons_learned_latex/*.bbl
+papers/lessons_learned_latex/*.blg
+papers/lessons_learned_latex/*.synctex.gz
 
 # C extensions
 *.so
@@ -174,3 +184,17 @@ test_energy_fixer_updown.py
 # AMS LaTeX package (extracted) and archive — not tracked; paper dir has cls/bst
 /papers/AMS LaTeX Package V6.1/
 /papers/*.zip
+
+# copyrighted journal PDFs — never track/push
+/papers/*.pdf
+# accidental empty files
+/python
+/qstat
+/torchrun
+
+# PyTorch / TensorBoard profiler trace dumps (large debug artifacts)
+/profile_results/
+/tb_pad0/
+/tb_pad48/
+/trace_pad0.json
+/trace_pad48.json

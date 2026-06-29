@@ -1,0 +1,1 @@
+python Quick_Climate.py --config /glade/derecho/scratch/wchapman/b_credit_runs/camulator_config_extended.yml --model_name checkpoint.pt00024.pt --save_append epoch24_1yr --monthly_mean 

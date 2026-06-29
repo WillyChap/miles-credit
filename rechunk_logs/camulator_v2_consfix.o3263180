@@ -1,0 +1,127 @@
+Config : /glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended_v2/config_reload.yml
+Node   : casper41
+GPUs   : 4
+INFO:root:Running DDP on rank 0 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 1 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 2 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 3 with world_size 4 using nccl.
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:root:Loaded a training ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:root:Loaded a validation ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:root:Loaded a training DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:root:Loaded a validation DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:root:Loaded a training ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:root:Loaded a training ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:root:Loaded a training ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:root:Loaded a validation ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:root:Loaded a training DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:root:Loaded a validation DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:root:Loaded a validation ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:root:Loaded a training DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:root:Loaded a validation DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:root:Loaded a validation ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:root:Loaded a training DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:root:Loaded a validation DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:using postblock
+INFO:credit.postblock._postblock:TracerFixer registered
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:using postblock
+INFO:credit.postblock._postblock:TracerFixer registered
+INFO:credit.models.camulator:using postblock
+INFO:credit.postblock._postblock:TracerFixer registered
+INFO:credit.models.camulator:using postblock
+INFO:credit.postblock._postblock:TracerFixer registered
+INFO:root:Activation checkpointing on ddp: True
+INFO:root:Checkpointing custom layers {<class 'credit.models.camulator.Attention'>, <class 'credit.models.camulator.FeedForward'>, <class 'credit.models.camulator.CrossEmbedLayer'>, <class 'credit.models.camulator.DynamicPositionBias'>}
+INFO:root:Activation checkpointing on ddp: True
+INFO:root:Checkpointing custom layers {<class 'credit.models.camulator.DynamicPositionBias'>, <class 'credit.models.camulator.Attention'>, <class 'credit.models.camulator.CrossEmbedLayer'>, <class 'credit.models.camulator.FeedForward'>}
+INFO:root:Activation checkpointing on ddp: True
+INFO:root:Checkpointing custom layers {<class 'credit.models.camulator.FeedForward'>, <class 'credit.models.camulator.CrossEmbedLayer'>, <class 'credit.models.camulator.DynamicPositionBias'>, <class 'credit.models.camulator.Attention'>}
+INFO:root:Activation checkpointing on ddp: True
+INFO:root:Checkpointing custom layers {<class 'credit.models.camulator.CrossEmbedLayer'>, <class 'credit.models.camulator.DynamicPositionBias'>, <class 'credit.models.camulator.Attention'>, <class 'credit.models.camulator.FeedForward'>}
+INFO:root:Fine-tune mode: froze all, unfroze 40 tensors matching ['up_block4', 'up_block3', 'up_block2', 'up_block1']. Trainable: 162,766,736 / 874,382,784 (18.6%)
+INFO:root:Fine-tune mode: froze all, unfroze 40 tensors matching ['up_block4', 'up_block3', 'up_block2', 'up_block1']. Trainable: 162,766,736 / 874,382,784 (18.6%)
+INFO:root:Fine-tune mode: froze all, unfroze 40 tensors matching ['up_block4', 'up_block3', 'up_block2', 'up_block1']. Trainable: 162,766,736 / 874,382,784 (18.6%)
+INFO:root:Fine-tune mode: froze all, unfroze 40 tensors matching ['up_block4', 'up_block3', 'up_block2', 'up_block1']. Trainable: 162,766,736 / 874,382,784 (18.6%)
+INFO:root:Loading DDP model, optimizer, grad scaler, and learning rate scheduler states from /glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended_v2/
+INFO:root:<All keys matched successfully>
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:root:Loading DDP model, optimizer, grad scaler, and learning rate scheduler states from /glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended_v2/
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:root:Loading DDP model, optimizer, grad scaler, and learning rate scheduler states from /glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended_v2/
+INFO:root:Loading DDP model, optimizer, grad scaler, and learning rate scheduler states from /glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended_v2/
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.trainers:Loading a single or multi-step trainer for the ERA5 dataset that uses gradient accumulation on forecast lengths > 1.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers.trainerERA5:Loading a multi-step trainer class
+INFO:credit.trainers.trainerERA5:Activate GlobalMassFixer outside of model
+INFO:root:<All keys matched successfully>
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:root:<All keys matched successfully>
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:root:<All keys matched successfully>
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.trainers.trainerERA5:Activate GlobalWaterFixer outside of model
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.trainers:Loading a single or multi-step trainer for the ERA5 dataset that uses gradient accumulation on forecast lengths > 1.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers.trainerERA5:Loading a multi-step trainer class
+INFO:credit.trainers.trainerERA5:Activate GlobalMassFixer outside of model
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.trainers:Loading a single or multi-step trainer for the ERA5 dataset that uses gradient accumulation on forecast lengths > 1.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers.trainerERA5:Loading a multi-step trainer class
+INFO:credit.trainers.trainerERA5:Activate GlobalMassFixer outside of model
+INFO:credit.trainers:Loading a single or multi-step trainer for the ERA5 dataset that uses gradient accumulation on forecast lengths > 1.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers.trainerERA5:Loading a multi-step trainer class
+INFO:credit.trainers.trainerERA5:Activate GlobalMassFixer outside of model
+INFO:credit.trainers.trainerERA5:WaterFixer: MSE loss on pre-correction prediction + conservation penalty weight=0.1000
+INFO:credit.trainers.trainerERA5:Activate GlobalEnergyFixerUpDown outside of model
+INFO:credit.trainers.trainerERA5:Activate GlobalWaterFixer outside of model
+INFO:credit.trainers.trainerERA5:Activate GlobalWaterFixer outside of model
+INFO:credit.trainers.trainerERA5:Activate GlobalWaterFixer outside of model
+INFO:credit.trainers.trainerERA5:WaterFixer: MSE loss on pre-correction prediction + conservation penalty weight=0.1000
+INFO:credit.trainers.trainerERA5:Activate GlobalEnergyFixerUpDown outside of model
+INFO:credit.trainers.trainerERA5:WaterFixer: MSE loss on pre-correction prediction + conservation penalty weight=0.1000
+INFO:credit.trainers.trainerERA5:Activate GlobalEnergyFixerUpDown outside of model
+INFO:credit.trainers.trainerERA5:WaterFixer: MSE loss on pre-correction prediction + conservation penalty weight=0.1000
+INFO:credit.trainers.trainerERA5:Activate GlobalEnergyFixerUpDown outside of model
+INFO:credit.trainers.preflight:DataLoader memory estimate: 0.2 GB (workers=1 × prefetch=4 × batch=12)
+INFO:credit.trainers.preflight:Preflight: fetching first training batch (timeout=300s) …
+WARNING:root:You must first set the epoch number using set_epoch method.
+INFO:credit.trainers.preflight:Preflight: first batch ready in 10.1s.

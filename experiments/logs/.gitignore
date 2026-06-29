@@ -1,3 +1,1 @@
-# PBS job logs (run artifacts)
-*.o[0-9]*
-*.e[0-9]*
+# Job-output logs are tracked in the static snapshot (figures/experiments build on them).

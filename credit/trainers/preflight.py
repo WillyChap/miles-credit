@@ -56,11 +56,17 @@ def estimate_dataloader_memory_gb(conf: dict) -> float:
         prog = v.get("prognostic") or {}
         diag = v.get("diagnostic") or {}
 
-        n_levels = len(src.get("levels", []))
+        # 3D levels: prefer model.levels, fall back to source-level "levels" list
+        n_levels = model_conf.get("levels", len(src.get("levels", [])))
         n_vars_3d = len(prog.get("vars_3D", []))
         n_vars_2d = len(prog.get("vars_2D", []))
         n_diag_2d = len(diag.get("vars_2D", []))
-        total_ch = n_vars_3d * n_levels + n_vars_2d + n_diag_2d
+        # input_only (forcing+static) and output_only (diagnostic) channels
+        input_only = model_conf.get("input_only_channels", 0)
+        output_only = model_conf.get("output_only_channels", 0)
+        total_in_ch = n_vars_3d * n_levels + n_vars_2d + input_only
+        total_out_ch = n_vars_3d * n_levels + n_vars_2d + output_only
+        total_ch = total_in_ch + total_out_ch
 
         if total_ch == 0:
             return 0.0
@@ -68,8 +74,7 @@ def estimate_dataloader_memory_gb(conf: dict) -> float:
         H = model_conf.get("image_height", 721)
         W = model_conf.get("image_width", 1440)
 
-        bytes_per_sample = H * W * total_ch * 4  # float32
-        bytes_per_sample *= 2  # input + target
+        bytes_per_sample = H * W * total_ch * 4  # float32, already counts input+target
 
         workers = trainer_conf.get("thread_workers", 4)
         prefetch = trainer_conf.get("prefetch_factor", 4)

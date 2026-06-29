@@ -135,10 +135,26 @@ def load_fsdp_or_checkpoint_policy(conf):
             WindowMultiHeadAttention,
         }
 
+    # CAMulator
+    elif "camulator" in conf["model"]["type"]:
+        from credit.models.camulator import (
+            Attention,
+            DynamicPositionBias,
+            FeedForward,
+            CrossEmbedLayer,
+        )
+
+        transformer_layers_cls = {
+            Attention,
+            DynamicPositionBias,
+            FeedForward,
+            CrossEmbedLayer,
+        }
+
     # other models not supported
     else:
         raise OSError(
-            "You asked for FSDP but only crossformer, swin, and fuxi are currently supported.",
+            "You asked for FSDP but only crossformer, swin, fuxi, and camulator are currently supported.",
             "See credit/models/__init__.py for examples on adding new models",
         )
 

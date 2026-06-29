@@ -1,0 +1,167 @@
+Config : /glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_small/config_reload.yml
+Node   : casper37
+GPUs   : 4
+INFO:root:Running DDP on rank 0 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 1 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 3 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 2 with world_size 4 using nccl.
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:root:Loaded MultiSourceDataset from conf['data']['source'] keys: ['CAMulator']
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:root:Loaded MultiSourceDataset from conf['data_valid']['source'] keys: ['CAMulator']
+INFO:root:Loaded a training DataLoader for the MultiSourceDataset ERA dataset.
+INFO:root:Loaded a validation DataLoader for the MultiSourceDataset ERA dataset.
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:root:Loaded MultiSourceDataset from conf['data']['source'] keys: ['CAMulator']
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:root:Loaded MultiSourceDataset from conf['data_valid']['source'] keys: ['CAMulator']
+INFO:root:Loaded a training DataLoader for the MultiSourceDataset ERA dataset.
+INFO:root:Loaded a validation DataLoader for the MultiSourceDataset ERA dataset.
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:root:Loaded MultiSourceDataset from conf['data']['source'] keys: ['CAMulator']
+INFO:root:Loaded MultiSourceDataset from conf['data']['source'] keys: ['CAMulator']
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:root:Loaded MultiSourceDataset from conf['data_valid']['source'] keys: ['CAMulator']
+INFO:root:Loaded a training DataLoader for the MultiSourceDataset ERA dataset.
+INFO:root:Loaded a validation DataLoader for the MultiSourceDataset ERA dataset.
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.datasets.multi_source:MultiSourceDataset: registered source 'camulator'
+INFO:root:Loaded MultiSourceDataset from conf['data_valid']['source'] keys: ['CAMulator']
+INFO:root:Loaded a training DataLoader for the MultiSourceDataset ERA dataset.
+INFO:root:Loaded a validation DataLoader for the MultiSourceDataset ERA dataset.
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:using postblock
+INFO:credit.postblock._postblock:TracerFixer registered
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:using postblock
+INFO:credit.postblock._postblock:TracerFixer registered
+INFO:credit.models.camulator:using postblock
+INFO:credit.postblock._postblock:TracerFixer registered
+INFO:credit.models.camulator:using postblock
+INFO:credit.postblock._postblock:TracerFixer registered
+INFO:credit.postblock._postblock:GlobalMassFixer registered
+INFO:credit.postblock._postblock:GlobalEnergyFixerUpDown registered
+INFO:credit.postblock._postblock:GlobalMassFixer registered
+INFO:credit.postblock._postblock:GlobalMassFixer registered
+INFO:credit.postblock._postblock:GlobalMassFixer registered
+INFO:credit.postblock._postblock:GlobalEnergyFixerUpDown registered
+INFO:credit.postblock._postblock:GlobalEnergyFixerUpDown registered
+INFO:credit.postblock._postblock:GlobalEnergyFixerUpDown registered
+INFO:root:Loading DDP model, optimizer, grad scaler, and learning rate scheduler states from /glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_small/
+INFO:root:Loading DDP model, optimizer, grad scaler, and learning rate scheduler states from /glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_small/
+INFO:root:Loading DDP model, optimizer, grad scaler, and learning rate scheduler states from /glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_small/
+INFO:root:Loading DDP model, optimizer, grad scaler, and learning rate scheduler states from /glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_small/
+INFO:root:<All keys matched successfully>
+INFO:root:<All keys matched successfully>
+INFO:root:<All keys matched successfully>
+INFO:root:<All keys matched successfully>
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Spectral loss applied to vars: ['PRECT'] (inds: [130])
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Spectral loss applied to vars: ['PRECT'] (inds: [130])
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses.weighted_loss:Spectral loss applied to vars: ['PRECT'] (inds: [130])
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Spectral loss applied to vars: ['PRECT'] (inds: [130])
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Spectral loss applied to vars: ['PRECT'] (inds: [130])
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Spectral loss applied to vars: ['PRECT'] (inds: [130])
+INFO:credit.losses.weighted_loss:Spectral loss applied to vars: ['PRECT'] (inds: [130])
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Spectral loss applied to vars: ['PRECT'] (inds: [130])
+INFO:credit.trainers:ERA5 trainer for the new nested data schema with preblock-assembled batches. forecast_len=1 means 1 step.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers:ERA5 trainer for the new nested data schema with preblock-assembled batches. forecast_len=1 means 1 step.
+INFO:credit.trainers:ERA5 trainer for the new nested data schema with preblock-assembled batches. forecast_len=1 means 1 step.
+INFO:credit.trainers:ERA5 trainer for the new nested data schema with preblock-assembled batches. forecast_len=1 means 1 step.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers.base_trainer:EMA enabled (decay=0.9999)
+INFO:credit.trainers.trainerERA5v2:Loading ERA5-v2 trainer (new nested data schema, preblock-assembled batches)
+INFO:credit.trainers.base_trainer:EMA enabled (decay=0.9999)
+INFO:credit.trainers.trainerERA5v2:Loading ERA5-v2 trainer (new nested data schema, preblock-assembled batches)
+INFO:credit.trainers.base_trainer:EMA enabled (decay=0.9999)
+INFO:credit.trainers.trainerERA5v2:Loading ERA5-v2 trainer (new nested data schema, preblock-assembled batches)
+INFO:credit.trainers.trainerERA5v2:Activate GlobalWaterFixer outside of model
+INFO:credit.trainers.trainerERA5v2:Activate GlobalWaterFixer outside of model
+INFO:credit.trainers.trainerERA5v2:Activate GlobalWaterFixer outside of model
+INFO:credit.trainers.base_trainer:EMA enabled (decay=0.9999)
+INFO:credit.trainers.trainerERA5v2:Loading ERA5-v2 trainer (new nested data schema, preblock-assembled batches)
+INFO:credit.trainers.preflight:DataLoader memory estimate: 10.0 GB (workers=4 × prefetch=2 × batch=20)
+INFO:credit.trainers.base_trainer:Beginning epoch 53
+INFO:credit.trainers.trainerERA5v2:Using grad-max-norm value: 1.0
+INFO:credit.trainers.preflight:Preflight: fetching first training batch (timeout=300s) …
+INFO:credit.trainers.base_trainer:Beginning epoch 53
+INFO:credit.trainers.trainerERA5v2:Using grad-max-norm value: 1.0
+  0%|          | 0/602 [00:00<?, ?it/s]  0%|          | 0/602 [00:00<?, ?it/s]INFO:credit.trainers.trainerERA5v2:Activate GlobalWaterFixer outside of model
+INFO:credit.trainers.base_trainer:Beginning epoch 53
+INFO:credit.trainers.trainerERA5v2:Using grad-max-norm value: 1.0
+  0%|          | 0/602 [00:00<?, ?it/s]INFO:credit.trainers.preflight:Preflight: first batch ready in 10.1s.
+INFO:credit.trainers.base_trainer:Beginning epoch 53
+INFO:credit.trainers.trainerERA5v2:Using grad-max-norm value: 1.0
+  0%|          | 0/602 [00:00<?, ?it/s]INFO:credit.postblock._postblock:TracerFixer step 1 | clipped_lo=1383839 (3.4758%)  clipped_hi=574069 (1.4419%)  total_elements=39813120  n_channels=36
+INFO:credit.postblock._postblock:MassFixer step 1 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999828  min=0.999765  max=0.999941  drift_pct=-0.0172%
+INFO:credit.postblock._postblock:TracerFixer step 1 | clipped_lo=1426223 (3.5823%)  clipped_hi=569754 (1.4311%)  total_elements=39813120  n_channels=36
+INFO:credit.postblock._postblock:TracerFixer step 1 | clipped_lo=1344995 (3.3783%)  clipped_hi=565393 (1.4201%)  total_elements=39813120  n_channels=36
+INFO:credit.postblock._postblock:MassFixer step 1 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999833  min=0.999764  max=0.999910  drift_pct=-0.0167%
+INFO:credit.postblock._postblock:MassFixer step 1 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999830  min=0.999763  max=0.999900  drift_pct=-0.0170%
+INFO:credit.postblock._postblock:EnergyFixer step 1 | TE_t0=1.3392e+24  TE_t1_before=1.3391e+24  TE_t1_target=1.3391e+24  drift=-8.9978e+19 (-0.0067%)  ratio mean=1.000010  min=0.999917  max=1.000075
+INFO:credit.postblock._postblock:TracerFixer step 1 | clipped_lo=1397362 (3.5098%)  clipped_hi=564394 (1.4176%)  total_elements=39813120  n_channels=36
+INFO:credit.postblock._postblock:EnergyFixer step 1 | TE_t0=1.3392e+24  TE_t1_before=1.3391e+24  TE_t1_target=1.3391e+24  drift=-8.2607e+19 (-0.0062%)  ratio mean=1.000014  min=0.999966  max=1.000082
+INFO:credit.trainers.trainerERA5v2:[rank3] NaN/inf check — x nan=False inf=False | y_pred nan=False inf=False | y_pred abs max=1.389e+02
+INFO:credit.postblock._postblock:EnergyFixer step 1 | TE_t0=1.3395e+24  TE_t1_before=1.3395e+24  TE_t1_target=1.3395e+24  drift=-1.3143e+19 (-0.0010%)  ratio mean=1.000039  min=0.999940  max=1.000121
+INFO:credit.postblock._postblock:MassFixer step 1 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999829  min=0.999759  max=0.999908  drift_pct=-0.0171%
+INFO:credit.trainers.trainerERA5v2:[rank1] NaN/inf check — x nan=False inf=False | y_pred nan=False inf=False | y_pred abs max=8.638e+01
+INFO:credit.postblock._postblock:WaterFixer step 1 | dTWC/dt=-7.2870e+09  E_src=-1.7051e+10  P_sink=2.4868e+10  residual=-5.3000e+08  P_ratio mean=0.978727  min=0.961812  max=0.991035  drift_pct=-2.1273%
+INFO:credit.postblock._postblock:EnergyFixer step 1 | TE_t0=1.3392e+24  TE_t1_before=1.3391e+24  TE_t1_target=1.3392e+24  drift=-5.4540e+19 (-0.0041%)  ratio mean=1.000035  min=0.999935  max=1.000167
+INFO:credit.trainers.trainerERA5v2:[rank2] NaN/inf check — x nan=False inf=False | y_pred nan=False inf=False | y_pred abs max=5.891e+01
+INFO:credit.postblock._postblock:WaterFixer step 1 | dTWC/dt=-7.3396e+09  E_src=-1.7299e+10  P_sink=2.5196e+10  residual=-5.5736e+08  P_ratio mean=0.977832  min=0.965528  max=0.996210  drift_pct=-2.2168%
+INFO:credit.postblock._postblock:WaterFixer step 1 | dTWC/dt=-6.8564e+09  E_src=-1.7827e+10  P_sink=2.5163e+10  residual=-4.8001e+08  P_ratio mean=0.980925  min=0.968990  max=0.989828  drift_pct=-1.9075%
+INFO:credit.trainers.trainerERA5v2:[rank3] Shapes — x: (20, 136, 1, 192, 288), y_pred: (20, 147, 1, 192, 288), y: (20, 147, 1, 192, 288)
+INFO:credit.trainers.trainerERA5v2:[rank0] NaN/inf check — x nan=False inf=False | y_pred nan=False inf=False | y_pred abs max=1.364e+02
+INFO:credit.trainers.trainerERA5v2:[rank1] Shapes — x: (20, 136, 1, 192, 288), y_pred: (20, 147, 1, 192, 288), y: (20, 147, 1, 192, 288)
+INFO:credit.trainers.trainerERA5v2:[rank2] Shapes — x: (20, 136, 1, 192, 288), y_pred: (20, 147, 1, 192, 288), y: (20, 147, 1, 192, 288)
+INFO:credit.postblock._postblock:WaterFixer step 1 | dTWC/dt=-7.2428e+09  E_src=-1.7577e+10  P_sink=2.5276e+10  residual=-4.5634e+08  P_ratio mean=0.981971  min=0.964273  max=0.999944  drift_pct=-1.8029%
+INFO:credit.trainers.trainerERA5v2:[rank0] Shapes — x: (20, 136, 1, 192, 288), y_pred: (20, 147, 1, 192, 288), y: (20, 147, 1, 192, 288)
+INFO:credit.trainers.trainerERA5v2:[rank0] NaN check — y: False, x: False, y_pred: False
+INFO:credit.trainers.trainerERA5v2:[rank0] loss value: 0.03270239382982254
+INFO:credit.trainers.trainerERA5v2:[rank3] NaN check — y: False, x: False, y_pred: False
+INFO:credit.trainers.trainerERA5v2:[rank1] NaN check — y: False, x: False, y_pred: False
+INFO:credit.trainers.trainerERA5v2:[rank2] NaN check — y: False, x: False, y_pred: False
+INFO:credit.trainers.trainerERA5v2:[rank3] loss value: 0.033008936792612076
+INFO:credit.trainers.trainerERA5v2:[rank1] loss value: 0.03434951230883598
+INFO:credit.trainers.trainerERA5v2:[rank2] loss value: 0.032262902706861496
+  0%|          | 1/602 [00:43<7:20:05, 43.94s/it]Epoch: 53 train_loss: 1.350612 train_acc: 0.404505 train_mae: 0.680504 forecast_len: 2 water_drift: 6.39% lr: 0.000050000000:   0%|          | 1/602 [00:43<7:20:05, 43.94s/it]Epoch: 53 train_loss: 1.350612 train_acc: 0.404505 train_mae: 0.680504 forecast_len: 2 water_drift: 6.39% lr: 0.000050000000:   0%|          | 2/602 [00:51<3:47:11, 22.72s/it]Epoch: 53 train_loss: 1.325189 train_acc: 0.404505 train_mae: 0.680504 forecast_len: 2 water_drift: 6.58% lr: 0.000050000000:   0%|          | 2/602 [00:51<3:47:11, 22.72s/it]Epoch: 53 train_loss: 1.325189 train_acc: 0.404505 train_mae: 0.680504 forecast_len: 2 water_drift: 6.58% lr: 0.000050000000:   0%|          | 3/602 [00:59<2:38:58, 15.92s/it]Epoch: 53 train_loss: 1.336916 train_acc: 0.404505 train_mae: 0.680504 forecast_len: 2 water_drift: 6.82% lr: 0.000050000000:   0%|          | 3/602 [00:59<2:38:58, 15.92s/it]Epoch: 53 train_loss: 1.336916 train_acc: 0.404505 train_mae: 0.680504 forecast_len: 2 water_drift: 6.82% lr: 0.000050000000:   1%|          | 4/602 [01:07<2:06:51, 12.73s/it]Epoch: 53 train_loss: 2.301479 train_acc: 0.404505 train_mae: 0.680504 forecast_len: 2 water_drift: 26.60% lr: 0.000050000000:   1%|          | 4/602 [01:07<2:06:51, 12.73s/it]Epoch: 53 train_loss: 2.301479 train_acc: 0.404505 train_mae: 0.680504 forecast_len: 2 water_drift: 26.60% lr: 0.000050000000:   1%|          | 5/602 [01:15<1:49:37, 11.02s/it]Epoch: 53 train_loss: 2.843333 train_acc: 0.404505 train_mae: 0.680504 forecast_len: 2 water_drift: 38.09% lr: 0.000050000000:   1%|          | 5/602 [01:15<1:49:37, 11.02s/it]Epoch: 53 train_loss: 2.843333 train_acc: 0.404505 train_mae: 0.680504 forecast_len: 2 water_drift: 38.09% lr: 0.000050000000:   1%|          | 6/602 [01:23<1:37:59,  9.86s/it]Epoch: 53 train_loss: 3.175833 train_acc: 0.404505 train_mae: 0.680504 forecast_len: 2 water_drift: 45.62% lr: 0.000050000000:   1%|          | 6/602 [01:23<1:37:59,  9.86s/it]Epoch: 53 train_loss: 3.175833 train_acc: 0.404505 train_mae: 0.680504 forecast_len: 2 water_drift: 45.62% lr: 0.000050000000:   1%|          | 7/602 [01:30<1:30:25,  9.12s/it]Epoch: 53 train_loss: 2.936289 train_acc: 0.404505 train_mae: 0.680504 forecast_len: 2 water_drift: 42.24% lr: 0.000050000000:   1%|          | 7/602 [01:30<1:30:25,  9.12s/it]Epoch: 53 train_loss: 2.936289 train_acc: 0.404505 train_mae: 0.680504 forecast_len: 2 water_drift: 42.24% lr: 0.000050000000:   1%|▏         | 8/602 [01:38<1:25:16,  8.61s/it]Epoch: 53 train_loss: 3.790677 train_acc: 0.404505 train_mae: 0.680504 forecast_len: 2 water_drift: 54.71% lr: 0.000050000000:   1%|▏         | 8/602 [01:38<1:25:16,  8.61s/it]Epoch: 53 train_loss: 3.790677 train_acc: 0.404505 train_mae: 0.680504 forecast_len: 2 water_drift: 54.71% lr: 0.000050000000:   1%|▏         | 9/602 [01:45<1:20:30,  8.15s/it]Epoch: 53 train_loss: 4.250691 train_acc: 0.404505 train_mae: 0.680504 forecast_len: 2 water_drift: 60.78% lr: 0.000050000000:   1%|▏         | 9/602 [01:45<1:20:30,  8.15s/it]Epoch: 53 train_loss: 4.250691 train_acc: 0.404505 train_mae: 0.680504 forecast_len: 2 water_drift: 60.78% lr: 0.000050000000:   2%|▏         | 10/602 [01:52<1:17:15,  7.83s/it]Epoch: 53 train_loss: 4.120053 train_acc: 0.404505 train_mae: 0.680504 forecast_len: 2 water_drift: 58.82% lr: 0.000050000000:   2%|▏         | 10/602 [01:52<1:17:15,  7.83s/it]Epoch: 53 train_loss: 4.120053 train_acc: 0.404505 train_mae: 0.680504 forecast_len: 2 water_drift: 58.82% lr: 0.000050000000:   2%|▏         | 11/602 [01:59<1:15:55,  7.71s/it]Epoch: 53 train_loss: 4.701511 train_acc: 0.425662 train_mae: 0.667885 forecast_len: 2 water_drift: 75.71% lr: 0.000050000000:   2%|▏         | 11/602 [01:59<1:15:55,  7.71s/it]Epoch: 53 train_loss: 4.701511 train_acc: 0.425662 train_mae: 0.667885 forecast_len: 2 water_drift: 75.71% lr: 0.000050000000:   2%|▏         | 12/602 [02:06<1:13:48,  7.51s/it]Epoch: 53 train_loss: 4.681196 train_acc: 0.425662 train_mae: 0.667885 forecast_len: 2 water_drift: 88.00% lr: 0.000050000000:   2%|▏         | 12/602 [02:06<1:13:48,  7.51s/it]Epoch: 53 train_loss: 4.681196 train_acc: 0.425662 train_mae: 0.667885 forecast_len: 2 water_drift: 88.00% lr: 0.000050000000:   2%|▏         | 13/602 [02:14<1:12:34,  7.39s/it]Epoch: 53 train_loss: 4.678831 train_acc: 0.425662 train_mae: 0.667885 forecast_len: 2 water_drift: 91.92% lr: 0.000050000000:   2%|▏         | 13/602 [02:14<1:12:34,  7.39s/it]Epoch: 53 train_loss: 4.678831 train_acc: 0.425662 train_mae: 0.667885 forecast_len: 2 water_drift: 91.92% lr: 0.000050000000:   2%|▏         | 14/602 [02:21<1:12:24,  7.39s/it]Epoch: 53 train_loss: 4.609970 train_acc: 0.425662 train_mae: 0.667885 forecast_len: 2 water_drift: 94.81% lr: 0.000050000000:   2%|▏         | 14/602 [02:21<1:12:24,  7.39s/it]W0404 12:21:51.080000 148882 site-packages/torch/distributed/elastic/agent/server/api.py:719] Received 15 death signal, shutting down workers
+W0404 12:21:51.082000 148882 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 148886 closing signal SIGTERM
+W0404 12:21:51.084000 148882 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 148887 closing signal SIGTERM
+W0404 12:21:51.085000 148882 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 148888 closing signal SIGTERM
+W0404 12:21:51.086000 148882 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 148889 closing signal SIGTERM

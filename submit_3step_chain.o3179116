@@ -1,0 +1,6 @@
+usage: credit submit [-h] -c CONFIG --cluster {casper,derecho} [--gpus N]
+                     [--nodes N] [--cpus N] [--mem MEM] [--walltime HH:MM:SS]
+                     [--account ACCOUNT] [--queue QUEUE] [--gpu-type GPU_TYPE]
+                     [--torchrun PATH] [--conda-env PATH] [--dry-run]
+                     [--reload] [--chain N]
+credit submit: error: argument --chain: expected one argument

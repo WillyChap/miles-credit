@@ -1,0 +1,327 @@
+Config : /glade/derecho/scratch/wchapman/b_credit_runs/camulator_config_extended.yml
+Node   : casper44
+GPUs   : 4
+INFO:root:Running DDP on rank 1 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 2 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 3 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 0 with world_size 4 using nccl.
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:root:Loaded a training ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:root:Loaded a training ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:root:Loaded a training ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:root:Loaded a training ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:root:Loaded a validation ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:root:Loaded a training DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:root:Loaded a validation ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:root:Loaded a validation DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:root:Loaded a training DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:root:Loaded a validation DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:root:Loaded a validation ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:root:Loaded a training DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:root:Loaded a validation DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:root:Loaded a validation ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:root:Loaded a training DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:root:Loaded a validation DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:using postblock
+INFO:credit.postblock._postblock:TracerFixer registered
+INFO:credit.models.camulator:using postblock
+INFO:credit.postblock._postblock:TracerFixer registered
+INFO:credit.models.camulator:using postblock
+INFO:credit.postblock._postblock:TracerFixer registered
+INFO:credit.models.camulator:using postblock
+INFO:credit.postblock._postblock:TracerFixer registered
+INFO:credit.postblock._postblock:GlobalMassFixer registered
+INFO:credit.postblock._postblock:GlobalMassFixer registered
+INFO:credit.postblock._postblock:GlobalMassFixer registered
+INFO:credit.postblock._postblock:GlobalMassFixer registered
+INFO:credit.postblock._postblock:GlobalEnergyFixerUpDown registered
+INFO:credit.postblock._postblock:GlobalEnergyFixerUpDown registered
+INFO:credit.postblock._postblock:GlobalEnergyFixerUpDown registered
+INFO:credit.postblock._postblock:GlobalEnergyFixerUpDown registered
+INFO:root:Activation checkpointing on ddp: True
+INFO:root:Checkpointing custom layers {<class 'credit.models.camulator.Attention'>, <class 'credit.models.camulator.FeedForward'>, <class 'credit.models.camulator.CrossEmbedLayer'>, <class 'credit.models.camulator.DynamicPositionBias'>}
+INFO:root:Activation checkpointing on ddp: True
+INFO:root:Checkpointing custom layers {<class 'credit.models.camulator.DynamicPositionBias'>, <class 'credit.models.camulator.Attention'>, <class 'credit.models.camulator.FeedForward'>, <class 'credit.models.camulator.CrossEmbedLayer'>}
+INFO:root:Activation checkpointing on ddp: True
+INFO:root:Checkpointing custom layers {<class 'credit.models.camulator.DynamicPositionBias'>, <class 'credit.models.camulator.CrossEmbedLayer'>, <class 'credit.models.camulator.Attention'>, <class 'credit.models.camulator.FeedForward'>}
+INFO:root:Activation checkpointing on ddp: True
+INFO:root:Checkpointing custom layers {<class 'credit.models.camulator.DynamicPositionBias'>, <class 'credit.models.camulator.Attention'>, <class 'credit.models.camulator.FeedForward'>, <class 'credit.models.camulator.CrossEmbedLayer'>}
+INFO:root:Fine-tune mode: froze all, unfroze 4 tensors matching ['up_block4']. Trainable: 2,904,720 / 874,382,784 (0.3%)
+INFO:root:Fine-tune mode: froze all, unfroze 4 tensors matching ['up_block4']. Trainable: 2,904,720 / 874,382,784 (0.3%)
+INFO:root:Fine-tune mode: froze all, unfroze 4 tensors matching ['up_block4']. Trainable: 2,904,720 / 874,382,784 (0.3%)
+INFO:root:Fine-tune mode: froze all, unfroze 4 tensors matching ['up_block4']. Trainable: 2,904,720 / 874,382,784 (0.3%)
+INFO:root:Loading DDP model state only from /glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended/
+INFO:root:Loading DDP model state only from /glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended/
+INFO:root:Loading DDP model state only from /glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended/
+INFO:root:Loading DDP model state only from /glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended/
+INFO:root:<All keys matched successfully>
+INFO:root:<All keys matched successfully>
+INFO:root:<All keys matched successfully>
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:root:<All keys matched successfully>
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.trainers:Loading a single or multi-step trainer for the ERA5 dataset that uses gradient accumulation on forecast lengths > 1.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers.trainerERA5:Loading a multi-step trainer class
+INFO:credit.trainers.trainerERA5:Activate GlobalWaterFixer outside of model
+INFO:credit.trainers:Loading a single or multi-step trainer for the ERA5 dataset that uses gradient accumulation on forecast lengths > 1.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers.trainerERA5:Loading a multi-step trainer class
+INFO:credit.trainers.trainerERA5:Activate GlobalWaterFixer outside of model
+INFO:credit.trainers:Loading a single or multi-step trainer for the ERA5 dataset that uses gradient accumulation on forecast lengths > 1.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers.trainerERA5:Loading a multi-step trainer class
+INFO:credit.trainers.trainerERA5:Activate GlobalWaterFixer outside of model
+INFO:credit.trainers:Loading a single or multi-step trainer for the ERA5 dataset that uses gradient accumulation on forecast lengths > 1.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers.trainerERA5:Loading a multi-step trainer class
+INFO:credit.trainers.trainerERA5:Activate GlobalWaterFixer outside of model
+INFO:credit.trainers.base_trainer:Beginning epoch 15
+INFO:credit.trainers.preflight:DataLoader memory estimate: 0.3 GB (workers=4 × prefetch=2 × batch=8)
+INFO:credit.trainers.preflight:Preflight: fetching first training batch (timeout=300s) …
+INFO:credit.trainers.base_trainer:Beginning epoch 15
+INFO:credit.trainers.trainerERA5:Using grad-max-norm value: 1.0
+  0%|          | 0/400 [00:00<?, ?it/s]INFO:credit.trainers.base_trainer:Beginning epoch 15
+INFO:credit.trainers.trainerERA5:Using grad-max-norm value: 1.0
+  0%|          | 0/400 [00:00<?, ?it/s]INFO:credit.trainers.trainerERA5:Using grad-max-norm value: 1.0
+  0%|          | 0/400 [00:00<?, ?it/s]WARNING:root:You must first set the epoch number using set_epoch method.
+WARNING:root:You must first set the epoch number using set_epoch method.
+WARNING:root:You must first set the epoch number using set_epoch method.
+WARNING:root:You must first set the epoch number using set_epoch method.
+INFO:credit.trainers.preflight:Preflight: first batch ready in 26.0s.
+INFO:credit.trainers.base_trainer:Beginning epoch 15
+INFO:credit.trainers.trainerERA5:Using grad-max-norm value: 1.0
+  0%|          | 0/400 [00:00<?, ?it/s]INFO:credit.postblock._postblock:TracerFixer step 1 | clipped_lo=530759 (3.3328%)  clipped_hi=110912 (0.6965%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:TracerFixer step 1 | clipped_lo=530614 (3.3319%)  clipped_hi=103665 (0.6509%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:TracerFixer step 1 | clipped_lo=539528 (3.3879%)  clipped_hi=105244 (0.6609%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:TracerFixer step 1 | clipped_lo=536460 (3.3686%)  clipped_hi=109008 (0.6845%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:MassFixer step 1 | dry_mass_t0=5.1000e+18  sp_ratio mean=1.000025  min=0.999792  max=1.000261  drift_pct=0.0025%
+INFO:credit.postblock._postblock:MassFixer step 1 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999921  min=0.999656  max=1.000124  drift_pct=-0.0079%
+INFO:credit.postblock._postblock:MassFixer step 1 | dry_mass_t0=5.1000e+18  sp_ratio mean=1.000002  min=0.999813  max=1.000326  drift_pct=0.0002%
+INFO:credit.postblock._postblock:MassFixer step 1 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999908  min=0.999673  max=1.000156  drift_pct=-0.0092%
+INFO:credit.postblock._postblock:EnergyFixer step 1 | TE_t0=1.3411e+24  TE_t1_before=1.3412e+24  TE_t1_target=1.3411e+24  drift=5.7700e+19 (0.0043%)  ratio mean=0.999922  min=0.999822  max=1.000025
+INFO:credit.postblock._postblock:EnergyFixer step 1 | TE_t0=1.3394e+24  TE_t1_before=1.3395e+24  TE_t1_target=1.3394e+24  drift=8.8018e+19 (0.0066%)  ratio mean=0.999984  min=0.999922  max=1.000069
+INFO:credit.postblock._postblock:EnergyFixer step 1 | TE_t0=1.3392e+24  TE_t1_before=1.3393e+24  TE_t1_target=1.3393e+24  drift=4.4676e+19 (0.0033%)  ratio mean=0.999972  min=0.999862  max=1.000125
+INFO:credit.postblock._postblock:EnergyFixer step 1 | TE_t0=1.3371e+24  TE_t1_before=1.3372e+24  TE_t1_target=1.3371e+24  drift=7.4183e+19 (0.0055%)  ratio mean=0.999979  min=0.999762  max=1.000105
+INFO:credit.postblock._postblock:WaterFixer step 1 | dTWC/dt=-8.3795e+07  E_src=-1.7498e+10  P_sink=1.4685e+10  residual=2.8971e+09  P_ratio mean=1.196639  min=1.149851  max=1.307154  drift_pct=19.6639%
+INFO:credit.postblock._postblock:WaterFixer step 1 | dTWC/dt=1.4162e+08  E_src=-1.7672e+10  P_sink=1.4752e+10  residual=2.7785e+09  P_ratio mean=1.188467  min=1.114148  max=1.270616  drift_pct=18.8467%
+INFO:credit.postblock._postblock:WaterFixer step 1 | dTWC/dt=3.0415e+08  E_src=-1.7942e+10  P_sink=1.4955e+10  residual=2.6829e+09  P_ratio mean=1.180614  min=1.117228  max=1.200515  drift_pct=18.0614%
+INFO:credit.postblock._postblock:WaterFixer step 1 | dTWC/dt=-1.4221e+08  E_src=-1.7080e+10  P_sink=1.4815e+10  residual=2.4070e+09  P_ratio mean=1.162901  min=1.082144  max=1.212146  drift_pct=16.2901%
+  0%|          | 1/400 [00:46<5:10:19, 46.66s/it]Epoch: 15 train_loss: 0.526239 train_acc: 0.937790 train_mae: 0.185827 forecast_len: 3.000000 lr: 0.000050000000:   0%|          | 1/400 [00:46<5:10:19, 46.66s/it]Epoch: 15 train_loss: 0.526239 train_acc: 0.937790 train_mae: 0.185827 forecast_len: 3.000000 lr: 0.000050000000:   0%|          | 2/400 [01:15<3:59:08, 36.05s/it]Epoch: 15 train_loss: 0.516980 train_acc: 0.939731 train_mae: 0.184900 forecast_len: 3.000000 lr: 0.000050000000:   0%|          | 2/400 [01:15<3:59:08, 36.05s/it]Epoch: 15 train_loss: 0.516980 train_acc: 0.939731 train_mae: 0.184900 forecast_len: 3.000000 lr: 0.000050000000:   1%|          | 3/400 [01:46<3:44:45, 33.97s/it]Epoch: 15 train_loss: 0.511819 train_acc: 0.940891 train_mae: 0.183181 forecast_len: 3.000000 lr: 0.000050000000:   1%|          | 3/400 [01:46<3:44:45, 33.97s/it]Epoch: 15 train_loss: 0.511819 train_acc: 0.940891 train_mae: 0.183181 forecast_len: 3.000000 lr: 0.000050000000:   1%|          | 4/400 [02:18<3:38:29, 33.10s/it]Epoch: 15 train_loss: 0.508830 train_acc: 0.941446 train_mae: 0.182366 forecast_len: 3.000000 lr: 0.000050000000:   1%|          | 4/400 [02:18<3:38:29, 33.10s/it]Epoch: 15 train_loss: 0.508830 train_acc: 0.941446 train_mae: 0.182366 forecast_len: 3.000000 lr: 0.000050000000:   1%|▏         | 5/400 [02:50<3:35:54, 32.80s/it]Epoch: 15 train_loss: 0.508943 train_acc: 0.941271 train_mae: 0.182451 forecast_len: 3.000000 lr: 0.000050000000:   1%|▏         | 5/400 [02:50<3:35:54, 32.80s/it]INFO:credit.postblock._postblock:TracerFixer step 51 | clipped_lo=469863 (2.9504%)  clipped_hi=66222 (0.4158%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:MassFixer step 51 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999931  min=0.999724  max=1.000132  drift_pct=-0.0069%
+INFO:credit.postblock._postblock:EnergyFixer step 51 | TE_t0=1.3383e+24  TE_t1_before=1.3383e+24  TE_t1_target=1.3383e+24  drift=4.0262e+19 (0.0030%)  ratio mean=0.999969  min=0.999855  max=1.000058
+INFO:credit.postblock._postblock:TracerFixer step 51 | clipped_lo=460819 (2.8936%)  clipped_hi=64436 (0.4046%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:MassFixer step 51 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999920  min=0.999792  max=1.000040  drift_pct=-0.0080%
+INFO:credit.postblock._postblock:TracerFixer step 51 | clipped_lo=467277 (2.9342%)  clipped_hi=74404 (0.4672%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:WaterFixer step 51 | dTWC/dt=1.4954e+09  E_src=-1.7500e+10  P_sink=1.5678e+10  residual=3.2603e+08  P_ratio mean=1.021405  min=0.998593  max=1.065771  drift_pct=2.1405%
+INFO:credit.postblock._postblock:MassFixer step 51 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999917  min=0.999832  max=1.000052  drift_pct=-0.0083%
+INFO:credit.postblock._postblock:TracerFixer step 51 | clipped_lo=474565 (2.9800%)  clipped_hi=71433 (0.4486%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:MassFixer step 51 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999937  min=0.999786  max=1.000191  drift_pct=-0.0063%
+INFO:credit.postblock._postblock:EnergyFixer step 51 | TE_t0=1.3369e+24  TE_t1_before=1.3368e+24  TE_t1_target=1.3368e+24  drift=-5.3251e+19 (-0.0040%)  ratio mean=0.999987  min=0.999834  max=1.000119
+INFO:credit.postblock._postblock:EnergyFixer step 51 | TE_t0=1.3378e+24  TE_t1_before=1.3378e+24  TE_t1_target=1.3378e+24  drift=1.8807e+19 (0.0014%)  ratio mean=0.999986  min=0.999779  max=1.000163
+INFO:credit.postblock._postblock:WaterFixer step 51 | dTWC/dt=3.4663e+08  E_src=-1.6586e+10  P_sink=1.5717e+10  residual=5.2315e+08  P_ratio mean=1.033402  min=1.013753  max=1.076010  drift_pct=3.3402%
+INFO:credit.postblock._postblock:EnergyFixer step 51 | TE_t0=1.3396e+24  TE_t1_before=1.3396e+24  TE_t1_target=1.3396e+24  drift=-2.6823e+19 (-0.0020%)  ratio mean=0.999988  min=0.999898  max=1.000092
+INFO:credit.postblock._postblock:WaterFixer step 51 | dTWC/dt=1.2303e+09  E_src=-1.7233e+10  P_sink=1.5689e+10  residual=3.1384e+08  P_ratio mean=1.019685  min=0.938585  max=1.083443  drift_pct=1.9685%
+INFO:credit.postblock._postblock:WaterFixer step 51 | dTWC/dt=8.9813e+08  E_src=-1.6896e+10  P_sink=1.5508e+10  residual=4.8929e+08  P_ratio mean=1.031717  min=0.985136  max=1.103444  drift_pct=3.1717%
+Epoch: 15 train_loss: 0.508943 train_acc: 0.941271 train_mae: 0.182451 forecast_len: 3.000000 lr: 0.000050000000:   2%|▏         | 6/400 [03:25<3:39:34, 33.44s/it]Epoch: 15 train_loss: 0.506354 train_acc: 0.941514 train_mae: 0.181964 forecast_len: 3.000000 lr: 0.000050000000:   2%|▏         | 6/400 [03:25<3:39:34, 33.44s/it]Epoch: 15 train_loss: 0.506354 train_acc: 0.941514 train_mae: 0.181964 forecast_len: 3.000000 lr: 0.000050000000:   2%|▏         | 7/400 [03:56<3:34:09, 32.70s/it]Epoch: 15 train_loss: 0.505367 train_acc: 0.941646 train_mae: 0.181296 forecast_len: 3.000000 lr: 0.000050000000:   2%|▏         | 7/400 [03:56<3:34:09, 32.70s/it]Epoch: 15 train_loss: 0.505367 train_acc: 0.941646 train_mae: 0.181296 forecast_len: 3.000000 lr: 0.000050000000:   2%|▏         | 8/400 [04:28<3:32:52, 32.58s/it]Epoch: 15 train_loss: 0.504390 train_acc: 0.941845 train_mae: 0.180382 forecast_len: 3.000000 lr: 0.000050000000:   2%|▏         | 8/400 [04:29<3:32:52, 32.58s/it]Epoch: 15 train_loss: 0.504390 train_acc: 0.941845 train_mae: 0.180382 forecast_len: 3.000000 lr: 0.000050000000:   2%|▏         | 9/400 [04:59<3:27:22, 31.82s/it]Epoch: 15 train_loss: 0.500971 train_acc: 0.941989 train_mae: 0.179669 forecast_len: 3.000000 lr: 0.000050000000:   2%|▏         | 9/400 [04:59<3:27:22, 31.82s/it]Epoch: 15 train_loss: 0.500971 train_acc: 0.941989 train_mae: 0.179669 forecast_len: 3.000000 lr: 0.000050000000:   2%|▎         | 10/400 [05:29<3:24:25, 31.45s/it]Epoch: 15 train_loss: 0.500529 train_acc: 0.942383 train_mae: 0.179178 forecast_len: 3.000000 lr: 0.000050000000:   2%|▎         | 10/400 [05:29<3:24:25, 31.45s/it]Epoch: 15 train_loss: 0.500529 train_acc: 0.942383 train_mae: 0.179178 forecast_len: 3.000000 lr: 0.000050000000:   3%|▎         | 11/400 [06:03<3:29:05, 32.25s/it]Epoch: 15 train_loss: 0.498156 train_acc: 0.942605 train_mae: 0.178495 forecast_len: 3.000000 lr: 0.000050000000:   3%|▎         | 11/400 [06:03<3:29:05, 32.25s/it]INFO:credit.postblock._postblock:TracerFixer step 101 | clipped_lo=534403 (3.3557%)  clipped_hi=88940 (0.5585%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:TracerFixer step 101 | clipped_lo=533340 (3.3490%)  clipped_hi=87905 (0.5520%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:MassFixer step 101 | dry_mass_t0=5.1000e+18  sp_ratio mean=1.000005  min=0.999801  max=1.000141  drift_pct=0.0005%
+INFO:credit.postblock._postblock:MassFixer step 101 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999924  min=0.999592  max=1.000141  drift_pct=-0.0076%
+INFO:credit.postblock._postblock:TracerFixer step 101 | clipped_lo=540403 (3.3934%)  clipped_hi=89185 (0.5600%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:TracerFixer step 101 | clipped_lo=530823 (3.3332%)  clipped_hi=93000 (0.5840%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:MassFixer step 101 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999997  min=0.999764  max=1.000263  drift_pct=-0.0003%
+INFO:credit.postblock._postblock:MassFixer step 101 | dry_mass_t0=5.1000e+18  sp_ratio mean=1.000006  min=0.999763  max=1.000121  drift_pct=0.0006%
+INFO:credit.postblock._postblock:EnergyFixer step 101 | TE_t0=1.3378e+24  TE_t1_before=1.3377e+24  TE_t1_target=1.3378e+24  drift=-5.9195e+19 (-0.0044%)  ratio mean=1.000030  min=0.999931  max=1.000174
+INFO:credit.postblock._postblock:EnergyFixer step 101 | TE_t0=1.3425e+24  TE_t1_before=1.3425e+24  TE_t1_target=1.3426e+24  drift=-1.2646e+19 (-0.0009%)  ratio mean=1.000033  min=0.999950  max=1.000106
+INFO:credit.postblock._postblock:EnergyFixer step 101 | TE_t0=1.3370e+24  TE_t1_before=1.3370e+24  TE_t1_target=1.3370e+24  drift=5.9123e+19 (0.0044%)  ratio mean=0.999966  min=0.999867  max=1.000080
+INFO:credit.postblock._postblock:WaterFixer step 101 | dTWC/dt=6.1427e+07  E_src=-1.7811e+10  P_sink=1.5370e+10  residual=2.3794e+09  P_ratio mean=1.154257  min=1.103743  max=1.199562  drift_pct=15.4257%
+INFO:credit.postblock._postblock:EnergyFixer step 101 | TE_t0=1.3392e+24  TE_t1_before=1.3391e+24  TE_t1_target=1.3392e+24  drift=-5.9736e+19 (-0.0045%)  ratio mean=1.000022  min=0.999926  max=1.000105
+INFO:credit.postblock._postblock:WaterFixer step 101 | dTWC/dt=-5.1905e+06  E_src=-1.7073e+10  P_sink=1.4804e+10  residual=2.2746e+09  P_ratio mean=1.153815  min=1.081962  max=1.232689  drift_pct=15.3815%
+INFO:credit.postblock._postblock:WaterFixer step 101 | dTWC/dt=2.0760e+08  E_src=-1.6864e+10  P_sink=1.4252e+10  residual=2.4045e+09  P_ratio mean=1.168376  min=1.119215  max=1.211858  drift_pct=16.8376%
+INFO:credit.postblock._postblock:WaterFixer step 101 | dTWC/dt=-2.7634e+08  E_src=-1.7083e+10  P_sink=1.5119e+10  residual=2.2395e+09  P_ratio mean=1.148409  min=1.090078  max=1.190250  drift_pct=14.8409%
+Epoch: 15 train_loss: 0.498156 train_acc: 0.942605 train_mae: 0.178495 forecast_len: 3.000000 lr: 0.000050000000:   3%|▎         | 12/400 [06:34<3:25:32, 31.79s/it]Epoch: 15 train_loss: 0.499294 train_acc: 0.942617 train_mae: 0.178330 forecast_len: 3.000000 lr: 0.000050000000:   3%|▎         | 12/400 [06:34<3:25:32, 31.79s/it]Epoch: 15 train_loss: 0.499294 train_acc: 0.942617 train_mae: 0.178330 forecast_len: 3.000000 lr: 0.000050000000:   3%|▎         | 13/400 [07:04<3:20:54, 31.15s/it]Epoch: 15 train_loss: 0.497563 train_acc: 0.942743 train_mae: 0.178066 forecast_len: 3.000000 lr: 0.000050000000:   3%|▎         | 13/400 [07:04<3:20:54, 31.15s/it]Epoch: 15 train_loss: 0.497563 train_acc: 0.942743 train_mae: 0.178066 forecast_len: 3.000000 lr: 0.000050000000:   4%|▎         | 14/400 [07:34<3:18:21, 30.83s/it]Epoch: 15 train_loss: 0.497157 train_acc: 0.942971 train_mae: 0.177745 forecast_len: 3.000000 lr: 0.000050000000:   4%|▎         | 14/400 [07:34<3:18:21, 30.83s/it]Epoch: 15 train_loss: 0.497157 train_acc: 0.942971 train_mae: 0.177745 forecast_len: 3.000000 lr: 0.000050000000:   4%|▍         | 15/400 [08:04<3:15:54, 30.53s/it]Epoch: 15 train_loss: 0.496713 train_acc: 0.943002 train_mae: 0.177584 forecast_len: 3.000000 lr: 0.000050000000:   4%|▍         | 15/400 [08:04<3:15:54, 30.53s/it]Epoch: 15 train_loss: 0.496713 train_acc: 0.943002 train_mae: 0.177584 forecast_len: 3.000000 lr: 0.000050000000:   4%|▍         | 16/400 [08:33<3:13:25, 30.22s/it]Epoch: 15 train_loss: 0.497153 train_acc: 0.943173 train_mae: 0.177271 forecast_len: 3.000000 lr: 0.000050000000:   4%|▍         | 16/400 [08:33<3:13:25, 30.22s/it]INFO:credit.postblock._postblock:TracerFixer step 151 | clipped_lo=432171 (2.7137%)  clipped_hi=61180 (0.3842%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:TracerFixer step 151 | clipped_lo=459537 (2.8856%)  clipped_hi=59933 (0.3763%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:MassFixer step 151 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999933  min=0.999805  max=1.000082  drift_pct=-0.0067%
+INFO:credit.postblock._postblock:MassFixer step 151 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999968  min=0.999738  max=1.000182  drift_pct=-0.0032%
+INFO:credit.postblock._postblock:TracerFixer step 151 | clipped_lo=457883 (2.8752%)  clipped_hi=48401 (0.3039%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:MassFixer step 151 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999872  min=0.999731  max=1.000003  drift_pct=-0.0128%
+INFO:credit.postblock._postblock:EnergyFixer step 151 | TE_t0=1.3381e+24  TE_t1_before=1.3379e+24  TE_t1_target=1.3380e+24  drift=-1.7514e+20 (-0.0131%)  ratio mean=1.000062  min=0.999911  max=1.000183
+INFO:credit.postblock._postblock:EnergyFixer step 151 | TE_t0=1.3396e+24  TE_t1_before=1.3395e+24  TE_t1_target=1.3397e+24  drift=-1.3329e+20 (-0.0099%)  ratio mean=1.000136  min=0.999962  max=1.000270
+INFO:credit.postblock._postblock:TracerFixer step 151 | clipped_lo=434961 (2.7313%)  clipped_hi=50481 (0.3170%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:WaterFixer step 151 | dTWC/dt=1.2674e+08  E_src=-1.6439e+10  P_sink=1.6019e+10  residual=2.9342e+08  P_ratio mean=1.018059  min=0.942627  max=1.070808  drift_pct=1.8059%
+INFO:credit.postblock._postblock:WaterFixer step 151 | dTWC/dt=1.0547e+09  E_src=-1.7779e+10  P_sink=1.6003e+10  residual=7.2073e+08  P_ratio mean=1.044935  min=0.998047  max=1.134378  drift_pct=4.4935%
+INFO:credit.postblock._postblock:MassFixer step 151 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999850  min=0.999645  max=1.000027  drift_pct=-0.0150%
+INFO:credit.postblock._postblock:EnergyFixer step 151 | TE_t0=1.3378e+24  TE_t1_before=1.3377e+24  TE_t1_target=1.3378e+24  drift=-1.0922e+20 (-0.0082%)  ratio mean=1.000080  min=0.999925  max=1.000293
+INFO:credit.postblock._postblock:WaterFixer step 151 | dTWC/dt=6.6274e+08  E_src=-1.7162e+10  P_sink=1.5867e+10  residual=6.3205e+08  P_ratio mean=1.041183  min=0.942495  max=1.126122  drift_pct=4.1183%
+INFO:credit.postblock._postblock:EnergyFixer step 151 | TE_t0=1.3365e+24  TE_t1_before=1.3364e+24  TE_t1_target=1.3364e+24  drift=-8.9586e+19 (-0.0067%)  ratio mean=1.000061  min=0.999991  max=1.000204
+INFO:credit.postblock._postblock:WaterFixer step 151 | dTWC/dt=8.8595e+08  E_src=-1.7046e+10  P_sink=1.5764e+10  residual=3.9547e+08  P_ratio mean=1.026583  min=0.964061  max=1.121851  drift_pct=2.6583%
+Epoch: 15 train_loss: 0.497153 train_acc: 0.943173 train_mae: 0.177271 forecast_len: 3.000000 lr: 0.000050000000:   4%|▍         | 17/400 [09:04<3:14:45, 30.51s/it]Epoch: 15 train_loss: 0.497397 train_acc: 0.943211 train_mae: 0.177093 forecast_len: 3.000000 lr: 0.000050000000:   4%|▍         | 17/400 [09:04<3:14:45, 30.51s/it]Epoch: 15 train_loss: 0.497397 train_acc: 0.943211 train_mae: 0.177093 forecast_len: 3.000000 lr: 0.000050000000:   4%|▍         | 18/400 [09:37<3:18:26, 31.17s/it]Epoch: 15 train_loss: 0.496313 train_acc: 0.943386 train_mae: 0.176779 forecast_len: 3.000000 lr: 0.000050000000:   4%|▍         | 18/400 [09:37<3:18:26, 31.17s/it]Epoch: 15 train_loss: 0.496313 train_acc: 0.943386 train_mae: 0.176779 forecast_len: 3.000000 lr: 0.000050000000:   5%|▍         | 19/400 [10:06<3:14:08, 30.57s/it]Epoch: 15 train_loss: 0.495927 train_acc: 0.943524 train_mae: 0.176520 forecast_len: 3.000000 lr: 0.000050000000:   5%|▍         | 19/400 [10:06<3:14:08, 30.57s/it]Epoch: 15 train_loss: 0.495927 train_acc: 0.943524 train_mae: 0.176520 forecast_len: 3.000000 lr: 0.000050000000:   5%|▌         | 20/400 [10:41<3:21:20, 31.79s/it]Epoch: 15 train_loss: 0.496210 train_acc: 0.943651 train_mae: 0.176381 forecast_len: 3.000000 lr: 0.000050000000:   5%|▌         | 20/400 [10:41<3:21:20, 31.79s/it]Epoch: 15 train_loss: 0.496210 train_acc: 0.943651 train_mae: 0.176381 forecast_len: 3.000000 lr: 0.000050000000:   5%|▌         | 21/400 [11:13<3:21:59, 31.98s/it]Epoch: 15 train_loss: 0.494958 train_acc: 0.943804 train_mae: 0.176109 forecast_len: 3.000000 lr: 0.000050000000:   5%|▌         | 21/400 [11:13<3:21:59, 31.98s/it]Epoch: 15 train_loss: 0.494958 train_acc: 0.943804 train_mae: 0.176109 forecast_len: 3.000000 lr: 0.000050000000:   6%|▌         | 22/400 [11:49<3:28:07, 33.04s/it]Epoch: 15 train_loss: 0.493917 train_acc: 0.943970 train_mae: 0.175841 forecast_len: 3.000000 lr: 0.000050000000:   6%|▌         | 22/400 [11:49<3:28:07, 33.04s/it]INFO:credit.postblock._postblock:TracerFixer step 201 | clipped_lo=526951 (3.3089%)  clipped_hi=81005 (0.5087%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:MassFixer step 201 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999933  min=0.999865  max=0.999968  drift_pct=-0.0067%
+INFO:credit.postblock._postblock:EnergyFixer step 201 | TE_t0=1.3377e+24  TE_t1_before=1.3377e+24  TE_t1_target=1.3378e+24  drift=-7.0166e+19 (-0.0052%)  ratio mean=1.000061  min=0.999976  max=1.000168
+INFO:credit.postblock._postblock:WaterFixer step 201 | dTWC/dt=-7.0407e+07  E_src=-1.7463e+10  P_sink=1.5082e+10  residual=2.4515e+09  P_ratio mean=1.163024  min=1.097741  max=1.214207  drift_pct=16.3024%
+INFO:credit.postblock._postblock:TracerFixer step 201 | clipped_lo=537554 (3.3755%)  clipped_hi=82993 (0.5211%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:TracerFixer step 201 | clipped_lo=528399 (3.3180%)  clipped_hi=88857 (0.5580%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:MassFixer step 201 | dry_mass_t0=5.1000e+18  sp_ratio mean=1.000023  min=0.999812  max=1.000233  drift_pct=0.0023%
+INFO:credit.postblock._postblock:MassFixer step 201 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999993  min=0.999759  max=1.000252  drift_pct=-0.0007%
+INFO:credit.postblock._postblock:EnergyFixer step 201 | TE_t0=1.3397e+24  TE_t1_before=1.3396e+24  TE_t1_target=1.3396e+24  drift=-5.0062e+19 (-0.0037%)  ratio mean=1.000015  min=0.999886  max=1.000112
+INFO:credit.postblock._postblock:TracerFixer step 201 | clipped_lo=528895 (3.3211%)  clipped_hi=87665 (0.5505%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:EnergyFixer step 201 | TE_t0=1.3374e+24  TE_t1_before=1.3374e+24  TE_t1_target=1.3374e+24  drift=-5.0170e+19 (-0.0038%)  ratio mean=1.000043  min=0.999856  max=1.000180
+INFO:credit.postblock._postblock:MassFixer step 201 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999960  min=0.999831  max=1.000059  drift_pct=-0.0040%
+INFO:credit.postblock._postblock:WaterFixer step 201 | dTWC/dt=4.8365e+07  E_src=-1.7152e+10  P_sink=1.4997e+10  residual=2.1062e+09  P_ratio mean=1.141152  min=1.124190  max=1.180551  drift_pct=14.1152%
+INFO:credit.postblock._postblock:WaterFixer step 201 | dTWC/dt=-3.8788e+07  E_src=-1.7507e+10  P_sink=1.5088e+10  residual=2.4578e+09  P_ratio mean=1.163325  min=1.079897  max=1.218290  drift_pct=16.3325%
+INFO:credit.postblock._postblock:EnergyFixer step 201 | TE_t0=1.3383e+24  TE_t1_before=1.3382e+24  TE_t1_target=1.3383e+24  drift=-3.4606e+19 (-0.0026%)  ratio mean=1.000031  min=0.999851  max=1.000170
+INFO:credit.postblock._postblock:WaterFixer step 201 | dTWC/dt=1.8830e+08  E_src=-1.7478e+10  P_sink=1.4874e+10  residual=2.4161e+09  P_ratio mean=1.162942  min=1.117651  max=1.224006  drift_pct=16.2942%
+Epoch: 15 train_loss: 0.493917 train_acc: 0.943970 train_mae: 0.175841 forecast_len: 3.000000 lr: 0.000050000000:   6%|▌         | 23/400 [12:19<3:22:49, 32.28s/it]Epoch: 15 train_loss: 0.493138 train_acc: 0.944094 train_mae: 0.175617 forecast_len: 3.000000 lr: 0.000050000000:   6%|▌         | 23/400 [12:19<3:22:49, 32.28s/it]Epoch: 15 train_loss: 0.493138 train_acc: 0.944094 train_mae: 0.175617 forecast_len: 3.000000 lr: 0.000050000000:   6%|▌         | 24/400 [12:51<3:21:34, 32.17s/it]Epoch: 15 train_loss: 0.492072 train_acc: 0.944176 train_mae: 0.175346 forecast_len: 3.000000 lr: 0.000050000000:   6%|▌         | 24/400 [12:51<3:21:34, 32.17s/it]Epoch: 15 train_loss: 0.492072 train_acc: 0.944176 train_mae: 0.175346 forecast_len: 3.000000 lr: 0.000050000000:   6%|▋         | 25/400 [13:29<3:30:58, 33.76s/it]Epoch: 15 train_loss: 0.491577 train_acc: 0.944295 train_mae: 0.175185 forecast_len: 3.000000 lr: 0.000050000000:   6%|▋         | 25/400 [13:29<3:30:58, 33.76s/it]Epoch: 15 train_loss: 0.491577 train_acc: 0.944295 train_mae: 0.175185 forecast_len: 3.000000 lr: 0.000050000000:   6%|▋         | 26/400 [14:00<3:26:04, 33.06s/it]Epoch: 15 train_loss: 0.490848 train_acc: 0.944422 train_mae: 0.174976 forecast_len: 3.000000 lr: 0.000050000000:   6%|▋         | 26/400 [14:00<3:26:04, 33.06s/it]Epoch: 15 train_loss: 0.490848 train_acc: 0.944422 train_mae: 0.174976 forecast_len: 3.000000 lr: 0.000050000000:   7%|▋         | 27/400 [14:36<3:30:07, 33.80s/it]Epoch: 15 train_loss: 0.490833 train_acc: 0.944497 train_mae: 0.174817 forecast_len: 3.000000 lr: 0.000050000000:   7%|▋         | 27/400 [14:36<3:30:07, 33.80s/it]INFO:credit.postblock._postblock:TracerFixer step 251 | clipped_lo=440415 (2.7655%)  clipped_hi=69489 (0.4363%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:TracerFixer step 251 | clipped_lo=428637 (2.6916%)  clipped_hi=55655 (0.3495%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:TracerFixer step 251 | clipped_lo=446118 (2.8013%)  clipped_hi=68921 (0.4328%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:MassFixer step 251 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999987  min=0.999756  max=1.000121  drift_pct=-0.0013%
+INFO:credit.postblock._postblock:MassFixer step 251 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999923  min=0.999780  max=1.000103  drift_pct=-0.0077%
+INFO:credit.postblock._postblock:MassFixer step 251 | dry_mass_t0=5.1000e+18  sp_ratio mean=1.000001  min=0.999772  max=1.000209  drift_pct=0.0001%
+INFO:credit.postblock._postblock:TracerFixer step 251 | clipped_lo=420507 (2.6405%)  clipped_hi=51414 (0.3228%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:EnergyFixer step 251 | TE_t0=1.3411e+24  TE_t1_before=1.3411e+24  TE_t1_target=1.3411e+24  drift=-4.0334e+19 (-0.0030%)  ratio mean=1.000031  min=0.999902  max=1.000198
+INFO:credit.postblock._postblock:MassFixer step 251 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999891  min=0.999730  max=1.000149  drift_pct=-0.0109%
+INFO:credit.postblock._postblock:EnergyFixer step 251 | TE_t0=1.3366e+24  TE_t1_before=1.3366e+24  TE_t1_target=1.3366e+24  drift=-8.2506e+18 (-0.0006%)  ratio mean=0.999983  min=0.999860  max=1.000232
+INFO:credit.postblock._postblock:EnergyFixer step 251 | TE_t0=1.3414e+24  TE_t1_before=1.3413e+24  TE_t1_target=1.3413e+24  drift=-6.2546e+19 (-0.0047%)  ratio mean=0.999991  min=0.999898  max=1.000134
+INFO:credit.postblock._postblock:WaterFixer step 251 | dTWC/dt=1.4869e+09  E_src=-1.7511e+10  P_sink=1.5989e+10  residual=3.4901e+07  P_ratio mean=1.003365  min=0.946165  max=1.057670  drift_pct=0.3365%
+INFO:credit.postblock._postblock:WaterFixer step 251 | dTWC/dt=9.3602e+08  E_src=-1.7153e+10  P_sink=1.6153e+10  residual=6.4450e+07  P_ratio mean=1.003965  min=0.962748  max=1.040942  drift_pct=0.3965%
+INFO:credit.postblock._postblock:WaterFixer step 251 | dTWC/dt=1.1257e+09  E_src=-1.6949e+10  P_sink=1.6026e+10  residual=-2.0254e+08  P_ratio mean=0.987728  min=0.958772  max=1.029860  drift_pct=-1.2272%
+INFO:credit.postblock._postblock:EnergyFixer step 251 | TE_t0=1.3384e+24  TE_t1_before=1.3384e+24  TE_t1_target=1.3384e+24  drift=-1.6141e+19 (-0.0012%)  ratio mean=0.999970  min=0.999836  max=1.000160
+INFO:credit.postblock._postblock:WaterFixer step 251 | dTWC/dt=1.0477e+09  E_src=-1.6881e+10  P_sink=1.5703e+10  residual=1.2974e+08  P_ratio mean=1.009002  min=0.974932  max=1.065868  drift_pct=0.9002%
+Epoch: 15 train_loss: 0.490833 train_acc: 0.944497 train_mae: 0.174817 forecast_len: 3.000000 lr: 0.000050000000:   7%|▋         | 28/400 [15:09<3:28:17, 33.60s/it]Epoch: 15 train_loss: 0.490581 train_acc: 0.944569 train_mae: 0.174650 forecast_len: 3.000000 lr: 0.000050000000:   7%|▋         | 28/400 [15:09<3:28:17, 33.60s/it]Epoch: 15 train_loss: 0.490581 train_acc: 0.944569 train_mae: 0.174650 forecast_len: 3.000000 lr: 0.000050000000:   7%|▋         | 29/400 [15:45<3:32:05, 34.30s/it]Epoch: 15 train_loss: 0.490258 train_acc: 0.944656 train_mae: 0.174555 forecast_len: 3.000000 lr: 0.000050000000:   7%|▋         | 29/400 [15:45<3:32:05, 34.30s/it]Epoch: 15 train_loss: 0.490258 train_acc: 0.944656 train_mae: 0.174555 forecast_len: 3.000000 lr: 0.000050000000:   8%|▊         | 30/400 [16:26<3:44:02, 36.33s/it]Epoch: 15 train_loss: 0.490370 train_acc: 0.944730 train_mae: 0.174439 forecast_len: 3.000000 lr: 0.000050000000:   8%|▊         | 30/400 [16:26<3:44:02, 36.33s/it]Epoch: 15 train_loss: 0.490370 train_acc: 0.944730 train_mae: 0.174439 forecast_len: 3.000000 lr: 0.000050000000:   8%|▊         | 31/400 [16:57<3:34:28, 34.87s/it]Epoch: 15 train_loss: 0.489683 train_acc: 0.944851 train_mae: 0.174289 forecast_len: 3.000000 lr: 0.000050000000:   8%|▊         | 31/400 [16:57<3:34:28, 34.87s/it]Epoch: 15 train_loss: 0.489683 train_acc: 0.944851 train_mae: 0.174289 forecast_len: 3.000000 lr: 0.000050000000:   8%|▊         | 32/400 [17:30<3:30:49, 34.37s/it]Epoch: 15 train_loss: 0.489377 train_acc: 0.944929 train_mae: 0.174144 forecast_len: 3.000000 lr: 0.000050000000:   8%|▊         | 32/400 [17:30<3:30:49, 34.37s/it]Epoch: 15 train_loss: 0.489377 train_acc: 0.944929 train_mae: 0.174144 forecast_len: 3.000000 lr: 0.000050000000:   8%|▊         | 33/400 [18:06<3:31:41, 34.61s/it]Epoch: 15 train_loss: 0.488446 train_acc: 0.945078 train_mae: 0.173950 forecast_len: 3.000000 lr: 0.000050000000:   8%|▊         | 33/400 [18:06<3:31:41, 34.61s/it]INFO:credit.postblock._postblock:TracerFixer step 301 | clipped_lo=531407 (3.3369%)  clipped_hi=89739 (0.5635%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:MassFixer step 301 | dry_mass_t0=5.1000e+18  sp_ratio mean=1.000000  min=0.999794  max=1.000173  drift_pct=0.0000%
+INFO:credit.postblock._postblock:EnergyFixer step 301 | TE_t0=1.3382e+24  TE_t1_before=1.3381e+24  TE_t1_target=1.3382e+24  drift=-1.1218e+20 (-0.0084%)  ratio mean=1.000100  min=1.000048  max=1.000164
+INFO:credit.postblock._postblock:WaterFixer step 301 | dTWC/dt=-6.1248e+08  E_src=-1.7683e+10  P_sink=1.5114e+10  residual=3.1818e+09  P_ratio mean=1.211089  min=1.157010  max=1.261923  drift_pct=21.1089%
+INFO:credit.postblock._postblock:TracerFixer step 301 | clipped_lo=529680 (3.3260%)  clipped_hi=85539 (0.5371%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:TracerFixer step 301 | clipped_lo=526368 (3.3052%)  clipped_hi=88440 (0.5553%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:MassFixer step 301 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999965  min=0.999755  max=1.000196  drift_pct=-0.0035%
+INFO:credit.postblock._postblock:MassFixer step 301 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999974  min=0.999773  max=1.000090  drift_pct=-0.0026%
+INFO:credit.postblock._postblock:EnergyFixer step 301 | TE_t0=1.3389e+24  TE_t1_before=1.3387e+24  TE_t1_target=1.3389e+24  drift=-1.8562e+20 (-0.0139%)  ratio mean=1.000125  min=1.000036  max=1.000200
+INFO:credit.postblock._postblock:EnergyFixer step 301 | TE_t0=1.3399e+24  TE_t1_before=1.3397e+24  TE_t1_target=1.3399e+24  drift=-1.7483e+20 (-0.0130%)  ratio mean=1.000140  min=1.000026  max=1.000247
+INFO:credit.postblock._postblock:WaterFixer step 301 | dTWC/dt=-9.7470e+08  E_src=-1.7214e+10  P_sink=1.4615e+10  residual=3.5737e+09  P_ratio mean=1.244299  min=1.191370  max=1.281118  drift_pct=24.4299%
+INFO:credit.postblock._postblock:WaterFixer step 301 | dTWC/dt=-7.2317e+08  E_src=-1.7536e+10  P_sink=1.4937e+10  residual=3.3216e+09  P_ratio mean=1.221723  min=1.132570  max=1.262146  drift_pct=22.1723%
+INFO:credit.postblock._postblock:TracerFixer step 301 | clipped_lo=533694 (3.3512%)  clipped_hi=101373 (0.6366%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:MassFixer step 301 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999976  min=0.999706  max=1.000096  drift_pct=-0.0024%
+INFO:credit.postblock._postblock:EnergyFixer step 301 | TE_t0=1.3372e+24  TE_t1_before=1.3371e+24  TE_t1_target=1.3372e+24  drift=-1.7177e+20 (-0.0128%)  ratio mean=1.000120  min=1.000033  max=1.000216
+INFO:credit.postblock._postblock:WaterFixer step 301 | dTWC/dt=-9.9791e+08  E_src=-1.7293e+10  P_sink=1.5093e+10  residual=3.1981e+09  P_ratio mean=1.212234  min=1.174841  max=1.249776  drift_pct=21.2234%
+Epoch: 15 train_loss: 0.488446 train_acc: 0.945078 train_mae: 0.173950 forecast_len: 3.000000 lr: 0.000050000000:   8%|▊         | 34/400 [18:38<3:27:34, 34.03s/it]Epoch: 15 train_loss: 0.488002 train_acc: 0.945205 train_mae: 0.173791 forecast_len: 3.000000 lr: 0.000050000000:   8%|▊         | 34/400 [18:38<3:27:34, 34.03s/it]Epoch: 15 train_loss: 0.488002 train_acc: 0.945205 train_mae: 0.173791 forecast_len: 3.000000 lr: 0.000050000000:   9%|▉         | 35/400 [19:10<3:22:28, 33.28s/it]Epoch: 15 train_loss: 0.487221 train_acc: 0.945321 train_mae: 0.173580 forecast_len: 3.000000 lr: 0.000050000000:   9%|▉         | 35/400 [19:10<3:22:28, 33.28s/it]Epoch: 15 train_loss: 0.487221 train_acc: 0.945321 train_mae: 0.173580 forecast_len: 3.000000 lr: 0.000050000000:   9%|▉         | 36/400 [19:43<3:21:23, 33.20s/it]Epoch: 15 train_loss: 0.486920 train_acc: 0.945399 train_mae: 0.173482 forecast_len: 3.000000 lr: 0.000050000000:   9%|▉         | 36/400 [19:43<3:21:23, 33.20s/it]Epoch: 15 train_loss: 0.486920 train_acc: 0.945399 train_mae: 0.173482 forecast_len: 3.000000 lr: 0.000050000000:   9%|▉         | 37/400 [20:14<3:17:58, 32.72s/it]Epoch: 15 train_loss: 0.486802 train_acc: 0.945454 train_mae: 0.173385 forecast_len: 3.000000 lr: 0.000050000000:   9%|▉         | 37/400 [20:14<3:17:58, 32.72s/it]Epoch: 15 train_loss: 0.486802 train_acc: 0.945454 train_mae: 0.173385 forecast_len: 3.000000 lr: 0.000050000000:  10%|▉         | 38/400 [20:47<3:17:03, 32.66s/it]Epoch: 15 train_loss: 0.486535 train_acc: 0.945574 train_mae: 0.173274 forecast_len: 3.000000 lr: 0.000050000000:  10%|▉         | 38/400 [20:47<3:17:03, 32.66s/it]INFO:credit.postblock._postblock:TracerFixer step 351 | clipped_lo=473432 (2.9728%)  clipped_hi=70585 (0.4432%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:MassFixer step 351 | dry_mass_t0=5.1000e+18  sp_ratio mean=1.000065  min=0.999823  max=1.000269  drift_pct=0.0065%
+INFO:credit.postblock._postblock:EnergyFixer step 351 | TE_t0=1.3446e+24  TE_t1_before=1.3446e+24  TE_t1_target=1.3446e+24  drift=-1.7852e+19 (-0.0013%)  ratio mean=0.999982  min=0.999805  max=1.000052
+INFO:credit.postblock._postblock:TracerFixer step 351 | clipped_lo=459187 (2.8834%)  clipped_hi=50755 (0.3187%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:TracerFixer step 351 | clipped_lo=471956 (2.9636%)  clipped_hi=65976 (0.4143%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:MassFixer step 351 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999924  min=0.999747  max=1.000026  drift_pct=-0.0076%
+INFO:credit.postblock._postblock:WaterFixer step 351 | dTWC/dt=1.5125e+09  E_src=-1.7378e+10  P_sink=1.6027e+10  residual=-1.6112e+08  P_ratio mean=0.989521  min=0.951775  max=1.024696  drift_pct=-1.0479%
+INFO:credit.postblock._postblock:MassFixer step 351 | dry_mass_t0=5.1000e+18  sp_ratio mean=1.000004  min=0.999791  max=1.000327  drift_pct=0.0004%
+INFO:credit.postblock._postblock:TracerFixer step 351 | clipped_lo=462787 (2.9060%)  clipped_hi=52402 (0.3290%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:MassFixer step 351 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999921  min=0.999784  max=1.000144  drift_pct=-0.0079%
+INFO:credit.postblock._postblock:EnergyFixer step 351 | TE_t0=1.3362e+24  TE_t1_before=1.3363e+24  TE_t1_target=1.3362e+24  drift=2.1996e+19 (0.0016%)  ratio mean=0.999969  min=0.999897  max=1.000038
+INFO:credit.postblock._postblock:EnergyFixer step 351 | TE_t0=1.3405e+24  TE_t1_before=1.3405e+24  TE_t1_target=1.3404e+24  drift=-1.6573e+19 (-0.0012%)  ratio mean=0.999995  min=0.999945  max=1.000030
+INFO:credit.postblock._postblock:WaterFixer step 351 | dTWC/dt=1.6084e+09  E_src=-1.7101e+10  P_sink=1.5217e+10  residual=2.7600e+08  P_ratio mean=1.018165  min=0.960807  max=1.068300  drift_pct=1.8165%
+INFO:credit.postblock._postblock:EnergyFixer step 351 | TE_t0=1.3384e+24  TE_t1_before=1.3384e+24  TE_t1_target=1.3384e+24  drift=1.1169e+18 (0.0001%)  ratio mean=0.999980  min=0.999922  max=1.000039
+INFO:credit.postblock._postblock:WaterFixer step 351 | dTWC/dt=1.5549e+09  E_src=-1.7140e+10  P_sink=1.5896e+10  residual=-3.1054e+08  P_ratio mean=0.981795  min=0.948595  max=1.018486  drift_pct=-1.8205%
+INFO:credit.postblock._postblock:WaterFixer step 351 | dTWC/dt=1.6694e+09  E_src=-1.6936e+10  P_sink=1.5423e+10  residual=-1.5667e+08  P_ratio mean=0.990880  min=0.935081  max=1.059212  drift_pct=-0.9120%
+Epoch: 15 train_loss: 0.486535 train_acc: 0.945574 train_mae: 0.173274 forecast_len: 3.000000 lr: 0.000050000000:  10%|▉         | 39/400 [21:19<3:14:35, 32.34s/it]Epoch: 15 train_loss: 0.486057 train_acc: 0.945639 train_mae: 0.173140 forecast_len: 3.000000 lr: 0.000050000000:  10%|▉         | 39/400 [21:19<3:14:35, 32.34s/it]Epoch: 15 train_loss: 0.486057 train_acc: 0.945639 train_mae: 0.173140 forecast_len: 3.000000 lr: 0.000050000000:  10%|█         | 40/400 [21:51<3:14:38, 32.44s/it]Epoch: 15 train_loss: 0.486063 train_acc: 0.945712 train_mae: 0.173041 forecast_len: 3.000000 lr: 0.000050000000:  10%|█         | 40/400 [21:51<3:14:38, 32.44s/it]Epoch: 15 train_loss: 0.486063 train_acc: 0.945712 train_mae: 0.173041 forecast_len: 3.000000 lr: 0.000050000000:  10%|█         | 41/400 [22:24<3:15:05, 32.60s/it]Epoch: 15 train_loss: 0.485808 train_acc: 0.945771 train_mae: 0.172937 forecast_len: 3.000000 lr: 0.000050000000:  10%|█         | 41/400 [22:24<3:15:05, 32.60s/it]Epoch: 15 train_loss: 0.485808 train_acc: 0.945771 train_mae: 0.172937 forecast_len: 3.000000 lr: 0.000050000000:  10%|█         | 42/400 [22:58<3:16:31, 32.94s/it]Epoch: 15 train_loss: 0.485398 train_acc: 0.945820 train_mae: 0.172854 forecast_len: 3.000000 lr: 0.000050000000:  10%|█         | 42/400 [22:58<3:16:31, 32.94s/it]Epoch: 15 train_loss: 0.485398 train_acc: 0.945820 train_mae: 0.172854 forecast_len: 3.000000 lr: 0.000050000000:  11%|█         | 43/400 [23:32<3:18:42, 33.40s/it]Epoch: 15 train_loss: 0.485171 train_acc: 0.945895 train_mae: 0.172773 forecast_len: 3.000000 lr: 0.000050000000:  11%|█         | 43/400 [23:32<3:18:42, 33.40s/it]Epoch: 15 train_loss: 0.485171 train_acc: 0.945895 train_mae: 0.172773 forecast_len: 3.000000 lr: 0.000050000000:  11%|█         | 44/400 [24:06<3:17:41, 33.32s/it]Epoch: 15 train_loss: 0.484907 train_acc: 0.945962 train_mae: 0.172672 forecast_len: 3.000000 lr: 0.000050000000:  11%|█         | 44/400 [24:06<3:17:41, 33.32s/it]INFO:credit.postblock._postblock:TracerFixer step 401 | clipped_lo=493993 (3.1019%)  clipped_hi=82134 (0.5157%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:TracerFixer step 401 | clipped_lo=508582 (3.1936%)  clipped_hi=73852 (0.4637%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:TracerFixer step 401 | clipped_lo=510634 (3.2064%)  clipped_hi=90128 (0.5659%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:MassFixer step 401 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999943  min=0.999766  max=1.000249  drift_pct=-0.0057%
+INFO:credit.postblock._postblock:MassFixer step 401 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999881  min=0.999698  max=1.000125  drift_pct=-0.0119%
+INFO:credit.postblock._postblock:MassFixer step 401 | dry_mass_t0=5.1000e+18  sp_ratio mean=1.000069  min=0.999817  max=1.000286  drift_pct=0.0069%
+INFO:credit.postblock._postblock:TracerFixer step 401 | clipped_lo=497976 (3.1270%)  clipped_hi=81363 (0.5109%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:MassFixer step 401 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999923  min=0.999750  max=1.000275  drift_pct=-0.0077%
+INFO:credit.postblock._postblock:EnergyFixer step 401 | TE_t0=1.3380e+24  TE_t1_before=1.3379e+24  TE_t1_target=1.3379e+24  drift=-1.0780e+20 (-0.0081%)  ratio mean=1.000065  min=1.000007  max=1.000155
+INFO:credit.postblock._postblock:EnergyFixer step 401 | TE_t0=1.3379e+24  TE_t1_before=1.3378e+24  TE_t1_target=1.3379e+24  drift=-9.5891e+19 (-0.0072%)  ratio mean=1.000077  min=0.999995  max=1.000146
+INFO:credit.postblock._postblock:EnergyFixer step 401 | TE_t0=1.3430e+24  TE_t1_before=1.3429e+24  TE_t1_target=1.3430e+24  drift=-8.1569e+19 (-0.0061%)  ratio mean=1.000071  min=0.999942  max=1.000180
+INFO:credit.postblock._postblock:WaterFixer step 401 | dTWC/dt=-2.8695e+08  E_src=-1.7265e+10  P_sink=1.5212e+10  residual=2.3397e+09  P_ratio mean=1.154049  min=1.100169  max=1.208883  drift_pct=15.4049%
+INFO:credit.postblock._postblock:EnergyFixer step 401 | TE_t0=1.3393e+24  TE_t1_before=1.3392e+24  TE_t1_target=1.3393e+24  drift=-1.2857e+20 (-0.0096%)  ratio mean=1.000077  min=0.999947  max=1.000169
+INFO:credit.postblock._postblock:WaterFixer step 401 | dTWC/dt=1.5920e+08  E_src=-1.7318e+10  P_sink=1.4883e+10  residual=2.2764e+09  P_ratio mean=1.152419  min=1.111232  max=1.177797  drift_pct=15.2419%
+INFO:credit.postblock._postblock:WaterFixer step 401 | dTWC/dt=2.3482e+08  E_src=-1.7762e+10  P_sink=1.5541e+10  residual=1.9866e+09  P_ratio mean=1.127759  min=1.040633  max=1.170143  drift_pct=12.7759%
+INFO:credit.postblock._postblock:WaterFixer step 401 | dTWC/dt=1.3073e+08  E_src=-1.7029e+10  P_sink=1.4811e+10  residual=2.0871e+09  P_ratio mean=1.141152  min=1.107718  max=1.169817  drift_pct=14.1152%
+Epoch: 15 train_loss: 0.484907 train_acc: 0.945962 train_mae: 0.172672 forecast_len: 3.000000 lr: 0.000050000000:  11%|█▏        | 45/400 [24:42<3:22:35, 34.24s/it]Epoch: 15 train_loss: 0.484546 train_acc: 0.946039 train_mae: 0.172561 forecast_len: 3.000000 lr: 0.000050000000:  11%|█▏        | 45/400 [24:42<3:22:35, 34.24s/it]Epoch: 15 train_loss: 0.484546 train_acc: 0.946039 train_mae: 0.172561 forecast_len: 3.000000 lr: 0.000050000000:  12%|█▏        | 46/400 [25:15<3:19:35, 33.83s/it]Epoch: 15 train_loss: 0.484509 train_acc: 0.946066 train_mae: 0.172498 forecast_len: 3.000000 lr: 0.000050000000:  12%|█▏        | 46/400 [25:15<3:19:35, 33.83s/it]Epoch: 15 train_loss: 0.484509 train_acc: 0.946066 train_mae: 0.172498 forecast_len: 3.000000 lr: 0.000050000000:  12%|█▏        | 47/400 [25:48<3:18:12, 33.69s/it]Epoch: 15 train_loss: 0.484272 train_acc: 0.946125 train_mae: 0.172414 forecast_len: 3.000000 lr: 0.000050000000:  12%|█▏        | 47/400 [25:48<3:18:12, 33.69s/it]Epoch: 15 train_loss: 0.484272 train_acc: 0.946125 train_mae: 0.172414 forecast_len: 3.000000 lr: 0.000050000000:  12%|█▏        | 48/400 [26:21<3:16:01, 33.41s/it]Epoch: 15 train_loss: 0.484155 train_acc: 0.946174 train_mae: 0.172333 forecast_len: 3.000000 lr: 0.000050000000:  12%|█▏        | 48/400 [26:21<3:16:01, 33.41s/it]Epoch: 15 train_loss: 0.484155 train_acc: 0.946174 train_mae: 0.172333 forecast_len: 3.000000 lr: 0.000050000000:  12%|█▏        | 49/400 [26:56<3:17:31, 33.76s/it]Epoch: 15 train_loss: 0.483925 train_acc: 0.946234 train_mae: 0.172250 forecast_len: 3.000000 lr: 0.000050000000:  12%|█▏        | 49/400 [26:56<3:17:31, 33.76s/it]Epoch: 15 train_loss: 0.483925 train_acc: 0.946234 train_mae: 0.172250 forecast_len: 3.000000 lr: 0.000050000000:  12%|█▎        | 50/400 [27:30<3:18:41, 34.06s/it]Epoch: 15 train_loss: 0.484179 train_acc: 0.946228 train_mae: 0.172205 forecast_len: 3.000000 lr: 0.000050000000:  12%|█▎        | 50/400 [27:30<3:18:41, 34.06s/it]INFO:credit.postblock._postblock:TracerFixer step 451 | clipped_lo=531834 (3.3396%)  clipped_hi=92541 (0.5811%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:MassFixer step 451 | dry_mass_t0=5.1000e+18  sp_ratio mean=1.000035  min=0.999833  max=1.000210  drift_pct=0.0035%
+INFO:credit.postblock._postblock:EnergyFixer step 451 | TE_t0=1.3397e+24  TE_t1_before=1.3396e+24  TE_t1_target=1.3398e+24  drift=-1.4336e+20 (-0.0107%)  ratio mean=1.000138  min=0.999963  max=1.000216
+INFO:credit.postblock._postblock:WaterFixer step 451 | dTWC/dt=-9.8517e+08  E_src=-1.7676e+10  P_sink=1.4998e+10  residual=3.6630e+09  P_ratio mean=1.244598  min=1.177398  max=1.314023  drift_pct=24.4598%
+INFO:credit.postblock._postblock:TracerFixer step 451 | clipped_lo=543392 (3.4121%)  clipped_hi=88179 (0.5537%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:TracerFixer step 451 | clipped_lo=530686 (3.3324%)  clipped_hi=92399 (0.5802%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:MassFixer step 451 | dry_mass_t0=5.1000e+18  sp_ratio mean=1.000006  min=0.999871  max=1.000231  drift_pct=0.0006%
+INFO:credit.postblock._postblock:MassFixer step 451 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999936  min=0.999712  max=1.000119  drift_pct=-0.0064%
+INFO:credit.postblock._postblock:EnergyFixer step 451 | TE_t0=1.3398e+24  TE_t1_before=1.3397e+24  TE_t1_target=1.3398e+24  drift=-1.5584e+20 (-0.0116%)  ratio mean=1.000111  min=0.999993  max=1.000180
+INFO:credit.postblock._postblock:EnergyFixer step 451 | TE_t0=1.3371e+24  TE_t1_before=1.3369e+24  TE_t1_target=1.3371e+24  drift=-1.7242e+20 (-0.0129%)  ratio mean=1.000106  min=1.000040  max=1.000186
+INFO:credit.postblock._postblock:WaterFixer step 451 | dTWC/dt=-9.6414e+08  E_src=-1.7340e+10  P_sink=1.4956e+10  residual=3.3486e+09  P_ratio mean=1.223851  min=1.176937  max=1.290455  drift_pct=22.3851%
+INFO:credit.postblock._postblock:WaterFixer step 451 | dTWC/dt=-1.0714e+09  E_src=-1.7140e+10  P_sink=1.4766e+10  residual=3.4453e+09  P_ratio mean=1.233846  min=1.183404  max=1.279902  drift_pct=23.3846%
+INFO:credit.postblock._postblock:TracerFixer step 451 | clipped_lo=524081 (3.2909%)  clipped_hi=86944 (0.5460%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:MassFixer step 451 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999886  min=0.999731  max=1.000020  drift_pct=-0.0114%
+INFO:credit.postblock._postblock:EnergyFixer step 451 | TE_t0=1.3372e+24  TE_t1_before=1.3370e+24  TE_t1_target=1.3372e+24  drift=-1.7387e+20 (-0.0130%)  ratio mean=1.000144  min=1.000008  max=1.000214
+INFO:credit.postblock._postblock:WaterFixer step 451 | dTWC/dt=-8.3807e+08  E_src=-1.7126e+10  P_sink=1.4398e+10  residual=3.5667e+09  P_ratio mean=1.248083  min=1.234550  max=1.272243  drift_pct=24.8083%
+W0410 07:57:33.169000 15908 site-packages/torch/distributed/elastic/agent/server/api.py:719] Received 15 death signal, shutting down workers
+W0410 07:57:33.191000 15908 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 16055 closing signal SIGTERM
+W0410 07:57:33.193000 15908 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 16056 closing signal SIGTERM
+W0410 07:57:33.196000 15908 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 16057 closing signal SIGTERM
+W0410 07:57:33.198000 15908 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 16058 closing signal SIGTERM
+Traceback (most recent call last):
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/bin/torchrun", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 355, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/run.py", line 918, in main
+    run(args)
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/run.py", line 909, in run
+    elastic_launch(
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 260, in launch_agent
+    result = agent.run()
+             ^^^^^^^^^^^
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/elastic/metrics/api.py", line 137, in wrapper
+    result = f(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/elastic/agent/server/api.py", line 711, in run
+    result = self._invoke_run(role)
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/elastic/agent/server/api.py", line 870, in _invoke_run
+    time.sleep(monitor_interval)
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/api.py", line 84, in _terminate_process_handler
+    raise SignalException(f"Process {os.getpid()} got signal: {sigval}", sigval=sigval)
+torch.distributed.elastic.multiprocessing.api.SignalException: Process 15908 got signal: 15

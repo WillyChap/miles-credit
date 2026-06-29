@@ -1,0 +1,202 @@
+===== E3 run | CONFIG=/glade/work/wchapman/Roman_Coupling/train_johns/experiments/configs/generated/e3_v2_w0.1.yml =====
+INFO:root:Running DDP on rank 1 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 3 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 2 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 0 with world_size 4 using nccl.
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:root:Loaded a training ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:root:Loaded a validation ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:root:Loaded a training DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:root:Loaded a validation DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:root:Loaded a training ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:root:Loaded a training ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:root:Loaded a training ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:root:Loaded a validation ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:root:Loaded a training DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:root:Loaded a validation DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:root:Loaded a validation ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:root:Loaded a validation ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:root:Loaded a training DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:root:Loaded a validation DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:root:Loaded a training DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:root:Loaded a validation DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:using postblock
+INFO:credit.postblock._postblock:TracerFixer registered
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:using postblock
+INFO:credit.postblock._postblock:TracerFixer registered
+INFO:credit.models.camulator:using postblock
+INFO:credit.postblock._postblock:TracerFixer registered
+INFO:credit.models.camulator:using postblock
+INFO:credit.postblock._postblock:TracerFixer registered
+INFO:root:Activation checkpointing on ddp: True
+INFO:root:Checkpointing custom layers {<class 'credit.models.camulator.FeedForward'>, <class 'credit.models.camulator.DynamicPositionBias'>, <class 'credit.models.camulator.CrossEmbedLayer'>, <class 'credit.models.camulator.Attention'>}
+INFO:root:Activation checkpointing on ddp: True
+INFO:root:Checkpointing custom layers {<class 'credit.models.camulator.FeedForward'>, <class 'credit.models.camulator.DynamicPositionBias'>, <class 'credit.models.camulator.Attention'>, <class 'credit.models.camulator.CrossEmbedLayer'>}
+INFO:root:Activation checkpointing on ddp: True
+INFO:root:Checkpointing custom layers {<class 'credit.models.camulator.CrossEmbedLayer'>, <class 'credit.models.camulator.DynamicPositionBias'>, <class 'credit.models.camulator.Attention'>, <class 'credit.models.camulator.FeedForward'>}
+INFO:root:Activation checkpointing on ddp: True
+INFO:root:Checkpointing custom layers {<class 'credit.models.camulator.DynamicPositionBias'>, <class 'credit.models.camulator.Attention'>, <class 'credit.models.camulator.CrossEmbedLayer'>, <class 'credit.models.camulator.FeedForward'>}
+INFO:root:Fine-tune mode: froze all, unfroze 40 tensors matching ['up_block4', 'up_block3', 'up_block2', 'up_block1']. Trainable: 162,766,736 / 874,382,784 (18.6%)
+INFO:root:Fine-tune mode: froze all, unfroze 40 tensors matching ['up_block4', 'up_block3', 'up_block2', 'up_block1']. Trainable: 162,766,736 / 874,382,784 (18.6%)
+INFO:root:Fine-tune mode: froze all, unfroze 40 tensors matching ['up_block4', 'up_block3', 'up_block2', 'up_block1']. Trainable: 162,766,736 / 874,382,784 (18.6%)
+INFO:root:Fine-tune mode: froze all, unfroze 40 tensors matching ['up_block4', 'up_block3', 'up_block2', 'up_block1']. Trainable: 162,766,736 / 874,382,784 (18.6%)
+INFO:root:Loading DDP model state only from /glade/derecho/scratch/wchapman/CREDIT_runs/e3_v2_w0.1/
+INFO:root:Loading DDP model state only from /glade/derecho/scratch/wchapman/CREDIT_runs/e3_v2_w0.1/
+INFO:root:Loading DDP model state only from /glade/derecho/scratch/wchapman/CREDIT_runs/e3_v2_w0.1/
+INFO:root:Loading DDP model state only from /glade/derecho/scratch/wchapman/CREDIT_runs/e3_v2_w0.1/
+INFO:root:<All keys matched successfully>
+INFO:root:<All keys matched successfully>
+INFO:root:<All keys matched successfully>
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:root:<All keys matched successfully>
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.trainers:ERA5 trainer for the new nested data schema with preblock-assembled batches. forecast_len=1 means 1 step.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers.trainerERA5v2:Loading ERA5-v2 trainer (new nested data schema, preblock-assembled batches)
+[rank1]: Traceback (most recent call last):
+[rank1]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/applications/train.py", line 475, in <module>
+[rank1]:     main_cli()
+[rank1]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/applications/train.py", line 471, in main_cli
+[rank1]:     main(world_rank, world_size, conf, backend)
+[rank1]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/applications/train.py", line 314, in main
+[rank1]:     trainer = trainer_cls(model, rank, conf)
+[rank1]:               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/trainers/trainerERA5v2.py", line 47, in __init__
+[rank1]:     preblocks["norm"] = ERA5Normalizer(conf)
+[rank1]:                         ^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/preblock/norm.py", line 38, in __init__
+[rank1]:     src_cfg = next(iter(data_conf["source"].values()))
+[rank1]:                         ~~~~~~~~~^^^^^^^^^^
+[rank1]: KeyError: 'source'
+INFO:credit.trainers:ERA5 trainer for the new nested data schema with preblock-assembled batches. forecast_len=1 means 1 step.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers.trainerERA5v2:Loading ERA5-v2 trainer (new nested data schema, preblock-assembled batches)
+INFO:credit.trainers:ERA5 trainer for the new nested data schema with preblock-assembled batches. forecast_len=1 means 1 step.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers.trainerERA5v2:Loading ERA5-v2 trainer (new nested data schema, preblock-assembled batches)
+[rank3]: Traceback (most recent call last):
+[rank3]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/applications/train.py", line 475, in <module>
+[rank3]:     main_cli()
+[rank3]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/applications/train.py", line 471, in main_cli
+[rank3]:     main(world_rank, world_size, conf, backend)
+[rank3]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/applications/train.py", line 314, in main
+[rank3]:     trainer = trainer_cls(model, rank, conf)
+[rank3]:               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/trainers/trainerERA5v2.py", line 47, in __init__
+[rank3]:     preblocks["norm"] = ERA5Normalizer(conf)
+[rank3]:                         ^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/preblock/norm.py", line 38, in __init__
+[rank3]:     src_cfg = next(iter(data_conf["source"].values()))
+[rank3]:                         ~~~~~~~~~^^^^^^^^^^
+[rank3]: KeyError: 'source'
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/applications/train.py", line 475, in <module>
+[rank0]:     main_cli()
+[rank0]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/applications/train.py", line 471, in main_cli
+[rank0]:     main(world_rank, world_size, conf, backend)
+[rank0]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/applications/train.py", line 314, in main
+[rank0]:     trainer = trainer_cls(model, rank, conf)
+[rank0]:               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/trainers/trainerERA5v2.py", line 47, in __init__
+[rank0]:     preblocks["norm"] = ERA5Normalizer(conf)
+[rank0]:                         ^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/preblock/norm.py", line 38, in __init__
+[rank0]:     src_cfg = next(iter(data_conf["source"].values()))
+[rank0]:                         ~~~~~~~~~^^^^^^^^^^
+[rank0]: KeyError: 'source'
+INFO:credit.trainers:ERA5 trainer for the new nested data schema with preblock-assembled batches. forecast_len=1 means 1 step.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers.trainerERA5v2:Loading ERA5-v2 trainer (new nested data schema, preblock-assembled batches)
+[rank2]: Traceback (most recent call last):
+[rank2]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/applications/train.py", line 475, in <module>
+[rank2]:     main_cli()
+[rank2]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/applications/train.py", line 471, in main_cli
+[rank2]:     main(world_rank, world_size, conf, backend)
+[rank2]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/applications/train.py", line 314, in main
+[rank2]:     trainer = trainer_cls(model, rank, conf)
+[rank2]:               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank2]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/trainers/trainerERA5v2.py", line 47, in __init__
+[rank2]:     preblocks["norm"] = ERA5Normalizer(conf)
+[rank2]:                         ^^^^^^^^^^^^^^^^^^^^
+[rank2]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/preblock/norm.py", line 38, in __init__
+[rank2]:     src_cfg = next(iter(data_conf["source"].values()))
+[rank2]:                         ~~~~~~~~~^^^^^^^^^^
+[rank2]: KeyError: 'source'
+[rank0]:[W629 10:45:37.660705971 ProcessGroupNCCL.cpp:1496] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+W0629 10:45:38.823000 5575 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 5578 closing signal SIGTERM
+W0629 10:45:38.825000 5575 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 5579 closing signal SIGTERM
+W0629 10:45:38.826000 5575 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 5580 closing signal SIGTERM
+E0629 10:45:39.606000 5575 site-packages/torch/distributed/elastic/multiprocessing/api.py:869] failed (exitcode: 1) local_rank: 0 (pid: 5577) of binary: /glade/work/wchapman/conda-envs/credit-casper-mar2026/bin/python
+Traceback (most recent call last):
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/bin/torchrun", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 355, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/run.py", line 918, in main
+    run(args)
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/run.py", line 909, in run
+    elastic_launch(
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 269, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+credit/applications/train.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-06-29_10:45:38
+  host      : casper44.hpc.ucar.edu
+  rank      : 0 (local_rank: 0)
+  exitcode  : 1 (pid: 5577)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================

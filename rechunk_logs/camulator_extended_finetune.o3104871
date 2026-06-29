@@ -1,0 +1,263 @@
+Config : /glade/derecho/scratch/wchapman/b_credit_runs/camulator_config_extended.yml
+Node   : casper40
+GPUs   : 4
+INFO:root:Running DDP on rank 0 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 2 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 3 with world_size 4 using nccl.
+INFO:root:Running DDP on rank 1 with world_size 4 using nccl.
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:root:Loaded a training ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:root:Loaded a training ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:root:Loaded a training ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:root:Loaded a training ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:credit.transforms.transforms_global:Loading stored mean and std data for z-score-based transform and inverse transform
+INFO:root:Loaded a validation ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:root:Loaded a validation ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:root:Loaded a validation ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:root:Loaded a training DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:root:Loaded a validation DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:root:Loaded a validation ERA5_MultiStep_Batcher dataset (forecast length = 3)
+INFO:root:Loaded a training DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:root:Loaded a validation DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:root:Loaded a training DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:root:Loaded a validation DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:root:Loaded a training DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:root:Loaded a validation DataLoader for the ERA5_MultiStep_Batcher ERA dataset.
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.models:Loading the CAMulator model with a conv decoder head and skip connections ...
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:Adding spectral norm to all conv and linear layers
+INFO:credit.models.camulator:using postblock
+INFO:credit.postblock._postblock:TracerFixer registered
+INFO:credit.models.camulator:using postblock
+INFO:credit.postblock._postblock:TracerFixer registered
+INFO:credit.models.camulator:using postblock
+INFO:credit.postblock._postblock:TracerFixer registered
+INFO:credit.models.camulator:using postblock
+INFO:credit.postblock._postblock:TracerFixer registered
+INFO:credit.postblock._postblock:GlobalMassFixer registered
+INFO:credit.postblock._postblock:GlobalMassFixer registered
+INFO:credit.postblock._postblock:GlobalMassFixer registered
+INFO:credit.postblock._postblock:GlobalMassFixer registered
+INFO:credit.postblock._postblock:GlobalEnergyFixerUpDown registered
+INFO:credit.postblock._postblock:GlobalEnergyFixerUpDown registered
+INFO:credit.postblock._postblock:GlobalEnergyFixerUpDown registered
+INFO:credit.postblock._postblock:GlobalEnergyFixerUpDown registered
+INFO:root:Activation checkpointing on ddp: True
+INFO:root:Checkpointing custom layers {<class 'credit.models.camulator.DynamicPositionBias'>, <class 'credit.models.camulator.Attention'>, <class 'credit.models.camulator.CrossEmbedLayer'>, <class 'credit.models.camulator.FeedForward'>}
+INFO:root:Activation checkpointing on ddp: True
+INFO:root:Checkpointing custom layers {<class 'credit.models.camulator.DynamicPositionBias'>, <class 'credit.models.camulator.Attention'>, <class 'credit.models.camulator.CrossEmbedLayer'>, <class 'credit.models.camulator.FeedForward'>}
+INFO:root:Activation checkpointing on ddp: True
+INFO:root:Checkpointing custom layers {<class 'credit.models.camulator.DynamicPositionBias'>, <class 'credit.models.camulator.Attention'>, <class 'credit.models.camulator.CrossEmbedLayer'>, <class 'credit.models.camulator.FeedForward'>}
+INFO:root:Activation checkpointing on ddp: True
+INFO:root:Checkpointing custom layers {<class 'credit.models.camulator.CrossEmbedLayer'>, <class 'credit.models.camulator.FeedForward'>, <class 'credit.models.camulator.DynamicPositionBias'>, <class 'credit.models.camulator.Attention'>}
+INFO:root:Fine-tune mode: froze all, unfroze 4 tensors matching ['up_block4']. Trainable: 2,904,720 / 874,382,784 (0.3%)
+INFO:root:Fine-tune mode: froze all, unfroze 4 tensors matching ['up_block4']. Trainable: 2,904,720 / 874,382,784 (0.3%)
+INFO:root:Fine-tune mode: froze all, unfroze 4 tensors matching ['up_block4']. Trainable: 2,904,720 / 874,382,784 (0.3%)
+INFO:root:Fine-tune mode: froze all, unfroze 4 tensors matching ['up_block4']. Trainable: 2,904,720 / 874,382,784 (0.3%)
+INFO:root:Loading DDP model state only from /glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended/
+INFO:root:Loading DDP model state only from /glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended/
+INFO:root:Loading DDP model state only from /glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended/
+INFO:root:Loading DDP model state only from /glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended/
+INFO:root:<All keys matched successfully>
+INFO:root:<All keys matched successfully>
+INFO:root:<All keys matched successfully>
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:root:<All keys matched successfully>
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.base_losses:Loaded the mse loss function with parameters: {'reduction': 'none'}
+INFO:credit.losses:Loaded the VariableTotalLoss2D loss wrapper class for applying latititude or variable weights
+INFO:credit.losses.weighted_loss:Using latitude weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.losses.weighted_loss:Using variable weights in loss calculations
+INFO:credit.trainers:Loading a single or multi-step trainer for the ERA5 dataset that uses gradient accumulation on forecast lengths > 1.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers.trainerERA5:Loading a multi-step trainer class
+INFO:credit.trainers.trainerERA5:Activate GlobalWaterFixer outside of model
+INFO:credit.trainers:Loading a single or multi-step trainer for the ERA5 dataset that uses gradient accumulation on forecast lengths > 1.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers.trainerERA5:Loading a multi-step trainer class
+INFO:credit.trainers.trainerERA5:Activate GlobalWaterFixer outside of model
+INFO:credit.trainers:Loading a single or multi-step trainer for the ERA5 dataset that uses gradient accumulation on forecast lengths > 1.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers.trainerERA5:Loading a multi-step trainer class
+INFO:credit.trainers.trainerERA5:Activate GlobalWaterFixer outside of model
+INFO:credit.trainers:Loading a single or multi-step trainer for the ERA5 dataset that uses gradient accumulation on forecast lengths > 1.
+INFO:credit.trainers.base_trainer:Training metric: valid_loss (direction: min)
+INFO:credit.trainers.trainerERA5:Loading a multi-step trainer class
+INFO:credit.trainers.trainerERA5:Activate GlobalWaterFixer outside of model
+INFO:credit.trainers.base_trainer:Beginning epoch 15
+INFO:credit.trainers.base_trainer:Beginning epoch 15
+INFO:credit.trainers.trainerERA5:Using grad-max-norm value: 1.0
+INFO:credit.trainers.base_trainer:Beginning epoch 15
+INFO:credit.trainers.trainerERA5:Using grad-max-norm value: 1.0
+  0%|          | 0/400 [00:00<?, ?it/s]  0%|          | 0/400 [00:00<?, ?it/s]INFO:credit.trainers.preflight:DataLoader memory estimate: 0.3 GB (workers=4 × prefetch=2 × batch=8)
+INFO:credit.trainers.preflight:Preflight: fetching first training batch (timeout=300s) …
+INFO:credit.trainers.trainerERA5:Using grad-max-norm value: 1.0
+  0%|          | 0/400 [00:00<?, ?it/s]WARNING:root:You must first set the epoch number using set_epoch method.
+WARNING:root:You must first set the epoch number using set_epoch method.
+WARNING:root:You must first set the epoch number using set_epoch method.
+WARNING:root:You must first set the epoch number using set_epoch method.
+INFO:credit.trainers.preflight:Preflight: first batch ready in 38.4s.
+INFO:credit.trainers.base_trainer:Beginning epoch 15
+INFO:credit.trainers.trainerERA5:Using grad-max-norm value: 1.0
+  0%|          | 0/400 [00:00<?, ?it/s]INFO:credit.postblock._postblock:TracerFixer step 1 | clipped_lo=539528 (3.3879%)  clipped_hi=105244 (0.6609%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:TracerFixer step 1 | clipped_lo=530614 (3.3319%)  clipped_hi=103665 (0.6509%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:TracerFixer step 1 | clipped_lo=536460 (3.3686%)  clipped_hi=109008 (0.6845%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:TracerFixer step 1 | clipped_lo=530759 (3.3328%)  clipped_hi=110912 (0.6965%)  total_elements=15925248  n_channels=36
+INFO:credit.postblock._postblock:MassFixer step 1 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999921  min=0.999656  max=1.000124  drift_pct=-0.0079%
+INFO:credit.postblock._postblock:MassFixer step 1 | dry_mass_t0=5.1000e+18  sp_ratio mean=0.999908  min=0.999673  max=1.000156  drift_pct=-0.0092%
+INFO:credit.postblock._postblock:MassFixer step 1 | dry_mass_t0=5.1000e+18  sp_ratio mean=1.000002  min=0.999813  max=1.000326  drift_pct=0.0002%
+INFO:credit.postblock._postblock:MassFixer step 1 | dry_mass_t0=5.1000e+18  sp_ratio mean=1.000025  min=0.999792  max=1.000261  drift_pct=0.0025%
+INFO:credit.postblock._postblock:EnergyFixer step 1 | TE_t0=1.3394e+24  TE_t1_before=1.3395e+24  TE_t1_target=1.3394e+24  drift=8.8018e+19 (0.0066%)  ratio mean=0.999984  min=0.999922  max=1.000069
+INFO:credit.postblock._postblock:EnergyFixer step 1 | TE_t0=1.3371e+24  TE_t1_before=1.3372e+24  TE_t1_target=1.3371e+24  drift=7.4183e+19 (0.0055%)  ratio mean=0.999979  min=0.999762  max=1.000105
+INFO:credit.postblock._postblock:EnergyFixer step 1 | TE_t0=1.3411e+24  TE_t1_before=1.3412e+24  TE_t1_target=1.3411e+24  drift=5.7700e+19 (0.0043%)  ratio mean=0.999922  min=0.999822  max=1.000025
+INFO:credit.postblock._postblock:EnergyFixer step 1 | TE_t0=1.3392e+24  TE_t1_before=1.3393e+24  TE_t1_target=1.3393e+24  drift=4.4676e+19 (0.0033%)  ratio mean=0.999972  min=0.999862  max=1.000125
+INFO:credit.postblock._postblock:WaterFixer step 1 | dTWC/dt=-1.4221e+08  E_src=-1.7080e+10  P_sink=1.4815e+10  residual=2.4070e+09  P_ratio mean=1.162901  min=1.082144  max=1.212146  drift_pct=16.2901%
+INFO:credit.postblock._postblock:WaterFixer step 1 | dTWC/dt=3.0415e+08  E_src=-1.7942e+10  P_sink=1.4955e+10  residual=2.6829e+09  P_ratio mean=1.180614  min=1.117228  max=1.200515  drift_pct=18.0614%
+INFO:credit.postblock._postblock:WaterFixer step 1 | dTWC/dt=-8.3795e+07  E_src=-1.7498e+10  P_sink=1.4685e+10  residual=2.8971e+09  P_ratio mean=1.196639  min=1.149851  max=1.307154  drift_pct=19.6639%
+INFO:credit.postblock._postblock:WaterFixer step 1 | dTWC/dt=1.4162e+08  E_src=-1.7672e+10  P_sink=1.4752e+10  residual=2.7785e+09  P_ratio mean=1.188467  min=1.114148  max=1.270616  drift_pct=18.8467%
+  0%|          | 1/400 [00:45<5:05:04, 45.88s/it]Epoch: 15 train_loss: 0.526239 train_acc: 0.937790 train_mae: 0.185827 forecast_len: 3.000000 lr: 0.000050000000:   0%|          | 1/400 [00:45<5:05:04, 45.88s/it][rank3]: Traceback (most recent call last):
+[rank3]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/applications/train.py", line 475, in <module>
+[rank3]:     main_cli()
+[rank3]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/applications/train.py", line 471, in main_cli
+[rank3]:     main(world_rank, world_size, conf, backend)
+[rank3]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/applications/train.py", line 317, in main
+[rank3]:     result = trainer.fit(
+[rank3]:              ^^^^^^^^^^^^
+[rank3]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/trainers/base_trainer.py", line 401, in fit
+[rank3]:     train_results = self.train_one_epoch(
+[rank3]:                     ^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/trainers/trainerERA5.py", line 284, in train_one_epoch
+[rank3]:     metrics_dict = metrics(y_pred, y)
+[rank3]:                    ^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/metrics.py", line 54, in __call__
+[rank3]:     w_lat = self.w_lat.to(dtype=pred.dtype, device=pred.device) if self.w_lat is not None else 1.0
+[rank3]:                                 ^^^^^^^^^^
+[rank3]: AttributeError: 'NoneType' object has no attribute 'dtype'
+[rank1]: Traceback (most recent call last):
+[rank1]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/applications/train.py", line 475, in <module>
+[rank1]:     main_cli()
+[rank1]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/applications/train.py", line 471, in main_cli
+[rank1]:     main(world_rank, world_size, conf, backend)
+[rank1]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/applications/train.py", line 317, in main
+[rank1]:     result = trainer.fit(
+[rank1]:              ^^^^^^^^^^^^
+[rank1]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/trainers/base_trainer.py", line 401, in fit
+[rank1]:     train_results = self.train_one_epoch(
+[rank1]:                     ^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/trainers/trainerERA5.py", line 284, in train_one_epoch
+[rank1]:     metrics_dict = metrics(y_pred, y)
+[rank1]:                    ^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/metrics.py", line 54, in __call__
+[rank1]:     w_lat = self.w_lat.to(dtype=pred.dtype, device=pred.device) if self.w_lat is not None else 1.0
+[rank1]:                                 ^^^^^^^^^^
+[rank1]: AttributeError: 'NoneType' object has no attribute 'dtype'
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/applications/train.py", line 475, in <module>
+[rank0]:     main_cli()
+[rank0]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/applications/train.py", line 471, in main_cli
+[rank0]:     main(world_rank, world_size, conf, backend)
+[rank0]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/applications/train.py", line 317, in main
+[rank0]:     result = trainer.fit(
+[rank0]:              ^^^^^^^^^^^^
+[rank0]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/trainers/base_trainer.py", line 401, in fit
+[rank0]:     train_results = self.train_one_epoch(
+[rank0]:                     ^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/trainers/trainerERA5.py", line 284, in train_one_epoch
+[rank0]:     metrics_dict = metrics(y_pred, y)
+[rank0]:                    ^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/metrics.py", line 54, in __call__
+[rank0]:     w_lat = self.w_lat.to(dtype=pred.dtype, device=pred.device) if self.w_lat is not None else 1.0
+[rank0]:                                 ^^^^^^^^^^
+[rank0]: AttributeError: 'NoneType' object has no attribute 'dtype'
+[rank2]: Traceback (most recent call last):
+[rank2]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/applications/train.py", line 475, in <module>
+[rank2]:     main_cli()
+[rank2]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/applications/train.py", line 471, in main_cli
+[rank2]:     main(world_rank, world_size, conf, backend)
+[rank2]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/applications/train.py", line 317, in main
+[rank2]:     result = trainer.fit(
+[rank2]:              ^^^^^^^^^^^^
+[rank2]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/trainers/base_trainer.py", line 401, in fit
+[rank2]:     train_results = self.train_one_epoch(
+[rank2]:                     ^^^^^^^^^^^^^^^^^^^^^
+[rank2]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/trainers/trainerERA5.py", line 284, in train_one_epoch
+[rank2]:     metrics_dict = metrics(y_pred, y)
+[rank2]:                    ^^^^^^^^^^^^^^^^^^
+[rank2]:   File "/glade/work/wchapman/Roman_Coupling/train_johns/credit/metrics.py", line 54, in __call__
+[rank2]:     w_lat = self.w_lat.to(dtype=pred.dtype, device=pred.device) if self.w_lat is not None else 1.0
+[rank2]:                                 ^^^^^^^^^^
+[rank2]: AttributeError: 'NoneType' object has no attribute 'dtype'
+  0%|          | 0/400 [01:25<?, ?it/s]
+Epoch: 15 train_loss: 0.526239 train_acc: 0.937790 train_mae: 0.185827 forecast_len: 3.000000 lr: 0.000050000000:   0%|          | 1/400 [00:46<5:11:02, 46.77s/it]
+  0%|          | 0/400 [01:25<?, ?it/s]
+  0%|          | 0/400 [01:25<?, ?it/s]
+[rank0]:[W410 06:58:06.636151129 ProcessGroupNCCL.cpp:1496] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+W0410 06:58:08.033000 206517 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 206619 closing signal SIGTERM
+W0410 06:58:08.034000 206517 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 206620 closing signal SIGTERM
+W0410 06:58:08.034000 206517 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 206622 closing signal SIGTERM
+E0410 06:58:08.764000 206517 site-packages/torch/distributed/elastic/multiprocessing/api.py:869] failed (exitcode: 1) local_rank: 2 (pid: 206621) of binary: /glade/work/wchapman/conda-envs/credit-casper-mar2026/bin/python
+Traceback (most recent call last):
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/bin/torchrun", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 355, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/run.py", line 918, in main
+    run(args)
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/run.py", line 909, in run
+    elastic_launch(
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/glade/work/wchapman/conda-envs/credit-casper-mar2026/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 269, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+/glade/work/wchapman/Roman_Coupling/train_johns/applications/train.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-04-10_06:58:08
+  host      : casper40.hpc.ucar.edu
+  rank      : 2 (local_rank: 2)
+  exitcode  : 1 (pid: 206621)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================
