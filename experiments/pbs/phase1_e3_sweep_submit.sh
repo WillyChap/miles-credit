@@ -1,20 +1,19 @@
 #!/bin/bash
 # =====================================================================================
-# PHASE 1 · E3 — controlled v1-vs-v2 + weight sweep, submitter
+# PHASE 1 · E3 — controlled v1-vs-v2 / weight sweep, staged-screen submitter
 # -------------------------------------------------------------------------------------
-# Generates one config per (trainer, weight) from the two preserved base configs by
-# editing only conservation_loss_weight and save_loc, then qsubs phase1_e3_train.pbs
-# for each. The single sweep knob:
-#   v1 base (trainer era5):     weight 0.0 = BROKEN control, >0 = the fix
-#   v2 base (trainer era5-v2):  weight 0.0 .. 0.5 = the untested penalty-only path
+# Short fine-tunes from a common pre-fixer checkpoint. The failure/fix appear within ~1
+# epoch, so each cell runs only SWEEP_EPOCHS (default 3). Default grid is the coarse
+# screen chosen for the paper: {v1, v2} x weight {0.0, 0.1} = 4 runs. Expand WEIGHTS to
+# {0.0 0.05 0.1 0.5} once the screen warrants it.
 #
-# PREREQUISITE (clean common start): each generated run must load the SAME baseline
-# checkpoint (baseline_no_fixers, fixers off) so the only difference is the sweep knob.
-# Seed each run dir with that checkpoint, or set the load path in the base config, before
-# launching. This script does NOT copy checkpoints for you — see the TODO below.
+# For each cell this script: generates a config (sets conservation_loss_weight, save_loc,
+# reload_epoch=False so the epoch counter starts at 0, num_epoch=SWEEP_EPOCHS), seeds the
+# common-start checkpoint into the run dir (COPY, not symlink, so training does not clobber
+# the shared base), and qsubs phase1_e3_train.pbs (4 GPU, gpu_type in select).
 #
-# Usage:  bash experiments/pbs/phase1_e3_sweep_submit.sh            # generate + submit
-#         DRYRUN=1 bash experiments/pbs/phase1_e3_sweep_submit.sh   # generate only
+# Usage:  bash experiments/pbs/phase1_e3_sweep_submit.sh            # seed + generate + submit
+#         DRYRUN=1 bash experiments/pbs/phase1_e3_sweep_submit.sh   # generate configs only
 # =====================================================================================
 set -euo pipefail
 
@@ -24,41 +23,52 @@ GEN="$REPO/experiments/configs/generated"
 PBS="$REPO/experiments/pbs/phase1_e3_train.pbs"
 mkdir -p "$GEN"
 
-# Common start = the PRE-FIXER, well-trained base: the surgery-extended 17-channel model
-# (cp00092_extended) before any water fixer was ever active. This is the only neutral start
-# for a clean sweep; the w=0.0 broken control must begin from a model that has NOT yet been
-# shaped by a conservation penalty.
-#   DO NOT use NEW_CLI_JOHN_CASPER_extended_v2/checkpoint.pt00079.pt -- that is the already-
-#   FIXED endpoint (64 epochs of penalty training, drift ~0), which would make the sweep
-#   circular. DO NOT use NEW_CLI_JOHN_CASPER_extended/ either -- that run is itself the
-#   feedback configuration (water fixer on, conservation_loss_weight: 0.0; drifted to ~45%).
+# Pre-fixer common start (17-channel surgery output, before any water fixer was active).
+# See the comment block in this file's git history for why extended_v2/extended are wrong.
 BASE_CKPT="$SCRATCH/CREDIT_runs/wxformermod_sharp_SpatPS_pxshf/checkpoint.pt00092_extended.pt"
 
-declare -A BASECFG=(
-    [v1]="$REPO/experiments/configs/recommended_v1_decouple.train.yml"
-    [v2]="$REPO/experiments/configs/alt_v2_penalty.train.yml"
-)
-WEIGHTS=(0.0 0.05 0.1 0.5)
+SWEEP_EPOCHS=${SWEEP_EPOCHS:-4}
+BATCHES_PER_EPOCH=${BATCHES_PER_EPOCH:-150}   # halve the per-epoch cost vs the 300 default
+WALLTIME=${WALLTIME:-08:00:00}                # ~41 s/step x 600 steps ~= 6.8 h + margin
+# total gradient steps per cell = SWEEP_EPOCHS * BATCHES_PER_EPOCH (default 600), enough to
+# show v1 recovery-and-hold and v2 oscillation onset; raise if chasing v2's NaN tail.
 
-for trainer in v1 v2; do
+# Both trainers use the SAME base config (128-dim model matching cp00092_extended); the v2
+# cells only flip trainer type era5 -> era5-v2. This keeps the architecture, data, rollout,
+# and common-start checkpoint identical so the ONLY variables are loss placement and weight.
+# (The separate alt_v2_penalty.yml is a different, smaller architecture incompatible with the
+# common checkpoint, so it is NOT used for the controlled sweep.)
+BASE_V1="$REPO/experiments/configs/recommended_v1_decouple.train.yml"
+WEIGHTS=(${WEIGHTS:-0.0 0.1})
+
+[ -f "$BASE_CKPT" ] || { echo "ERROR: common-start checkpoint missing: $BASE_CKPT" >&2; exit 1; }
+
+for trainer in ${TRAINERS:-v1 v2}; do
     for w in "${WEIGHTS[@]}"; do
         name="e3_${trainer}_w${w}"
         out="$GEN/${name}.yml"
         save_loc="$SCRATCH/CREDIT_runs/${name}/"
 
-        # edit only the two lines; preserve the rest of the config verbatim
-        sed -e "s|conservation_loss_weight:.*|conservation_loss_weight: ${w}|" \
-            -e "s|^save_loc:.*|save_loc: '${save_loc}'|" \
-            "${BASECFG[$trainer]}" > "$out"
+        # v2 cells: flip only the trainer type (the line whose value is exactly 'era5')
+        trainer_sed=""
+        [ "$trainer" = "v2" ] && trainer_sed='s|\(type:[[:space:]]*\)era5[[:space:]]*$|\1era5-v2|'
 
-        echo "generated $out  (save_loc=$save_loc)"
-        # TODO before launch: mkdir -p "$save_loc" && cp "$BASE_CKPT" "$save_loc/checkpoint.pt"
-        #   and confirm the base config's load_weights/reload_epoch resume from it.
+        sed -e "s|^save_loc:.*|save_loc: '${save_loc}'|" \
+            -e "s|^\([[:space:]]*\)conservation_loss_weight:.*|\1conservation_loss_weight: ${w}|" \
+            -e "s|^\([[:space:]]*\)reload_epoch:.*|\1reload_epoch: False|" \
+            -e "s|^\([[:space:]]*\)num_epoch:.*|\1num_epoch: ${SWEEP_EPOCHS}|" \
+            -e "s|^\([[:space:]]*\)batches_per_epoch:.*|\1batches_per_epoch: ${BATCHES_PER_EPOCH}|" \
+            ${trainer_sed:+-e "$trainer_sed"} \
+            "$BASE_V1" > "$out"
+        echo "generated $out  (weight=$w, ${SWEEP_EPOCHS} epochs, save_loc=$save_loc)"
 
-        if [ "${DRYRUN:-0}" != "1" ]; then
-            qsub -v CONFIG="$out" -N "$name" "$PBS"
-        fi
+        if [ "${DRYRUN:-0}" = "1" ]; then continue; fi
+
+        mkdir -p "$save_loc"
+        [ -f "$save_loc/checkpoint.pt" ] || cp "$BASE_CKPT" "$save_loc/checkpoint.pt"
+        qsub -N "$name" -l "walltime=${WALLTIME}" -v CONFIG="$out" "$PBS"
     done
 done
 
-echo "Done. 8 configs in $GEN. Set DRYRUN=1 to generate without submitting."
+echo "Done. ${SWEEP_EPOCHS}-epoch cells: $(for t in v1 v2; do for w in "${WEIGHTS[@]}"; do echo -n "$t/w$w "; done; done)"
+echo "Set DRYRUN=1 to generate without seeding/submitting; WEIGHTS='0.0 0.05 0.1 0.5' to expand."

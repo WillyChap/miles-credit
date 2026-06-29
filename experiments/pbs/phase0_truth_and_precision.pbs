@@ -14,6 +14,7 @@
 #PBS -q casper
 #PBS -j oe
 #PBS -k eod
+#PBS -o /glade/work/wchapman/Roman_Coupling/train_johns/experiments/logs/
 
 set -euo pipefail
 

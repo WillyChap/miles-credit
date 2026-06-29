@@ -170,3 +170,7 @@ cython_debug/
 
 # local dev / HPC-specific test scripts
 test_energy_fixer_updown.py
+
+# AMS LaTeX package (extracted) and archive — not tracked; paper dir has cls/bst
+/papers/AMS LaTeX Package V6.1/
+/papers/*.zip

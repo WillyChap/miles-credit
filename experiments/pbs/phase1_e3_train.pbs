@@ -8,12 +8,12 @@
 # =====================================================================================
 #PBS -N lessons_e3
 #PBS -A P93300042
-#PBS -l select=1:ncpus=32:ngpus=4:mem=250GB
+#PBS -l select=1:ncpus=32:ngpus=4:mem=250GB:gpu_type=a100
 #PBS -l walltime=12:00:00
 #PBS -q casper
-#PBS -l gpu_type=a100
 #PBS -j oe
 #PBS -k eod
+#PBS -o /glade/work/wchapman/Roman_Coupling/train_johns/experiments/logs/
 
 set -euo pipefail
 

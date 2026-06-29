@@ -1,0 +1,371 @@
+%% AMS Lessons Learned manuscript (AMS LaTeX Package V6.1).
+%% Target journal: Artificial Intelligence for the Earth Systems (AIES), Lessons Learned.
+%% Body limit 3000 words (excl. title page, abstract, references, captions, figures); <=3 figures.
+%% Compile: latexmk -pdf main   (or pdflatex; bibtex; pdflatex; pdflatex)
+
+% 1.5-spaced submission version:
+\documentclass{ametsocV6.1}
+
+% TODO: confirm full author list, affiliations, and corresponding email.
+\title{Lessons Learned: Hard conservation correctors placed inside the training
+loss create optimizer-exploitable feedback in AI weather and climate emulators}
+
+\authors{William E. Chapman\aff{a}\correspondingauthor{William E. Chapman, wich6609@colorado.edu}
+% and Coauthors\aff{a}     % TODO: add coauthors
+}
+
+\affiliation{\aff{a}{National Center for Atmospheric Research, Boulder, Colorado}}
+
+\abstract{Data-driven emulators of the atmosphere increasingly enforce physical
+conservation laws through correction layers that adjust the network output so that a
+global budget closes. We report a failure mode that arises when such a corrector is
+applied during training and the supervised loss is computed on the corrected output.
+In a global climate emulator, a water-budget corrector that rescales precipitation to
+close the global moisture balance produced a positive feedback loop: the optimizer
+learned to under-predict raw precipitation and let the corrector inflate it, driving
+the global water-budget drift from near zero to roughly 23\% over 12 epochs. The
+corrected output still closed the budget, so a diagnostic computed on the corrected
+field reported success while the underlying prediction degraded. We identify the cause
+as gradient flow through the corrector and the absence of any loss term rewarding
+genuine closure. The remedy is a hybrid constraint: a hard correction continues to
+guarantee exact closure of the delivered field, while the same budget imbalance enters
+the training loss as a soft penalty evaluated on the uncorrected prediction, so
+gradients never pass through the corrector. With this decoupling the drift returned to
+near zero within one epoch and held there for 64 epochs. The lesson generalizes to any
+AI weather or climate emulator that combines a hard physical-constraint correction with
+end-to-end training: hard correctors and soft penalties enforce the same constraint in
+different places, and only the soft penalty belongs inside the gradient path to the
+supervised target.}
+
+\begin{document}
+
+\maketitle
+
+\statement
+A growing number of AI weather and climate models bolt a physical correction onto the
+network so that conserved quantities, such as global water or energy, balance exactly.
+We show that leaving such a correction inside the training loop, where the loss is
+measured on the corrected output, lets the optimizer cheat: it learns a physically wrong
+prediction and relies on the correction to hide it, while standard conservation
+diagnostics still look perfect. The fix is to keep the hard correction out of the
+gradient path and instead add the imbalance as a soft penalty on the uncorrected
+prediction. The practical lesson is simple and transferable: enforce constraints hard on
+the delivered field but soft in the loss.
+
+\section{Introduction}\label{sec:intro}
+
+Neural network emulators of weather and climate now match or exceed traditional
+numerical models on several deterministic forecast metrics, yet they do not inherit the
+conservation laws that physical models satisfy by construction. A trained network can
+produce fields that violate global mass, water, or energy budgets even when its
+pointwise error is small \citep{beucler2021}. Two broad strategies address this. The
+first enforces constraints as soft penalties: a term proportional to the constraint
+violation is added to the loss, and the network is rewarded for reducing it
+\citep[their loss-constrained networks]{beucler2021}. The second enforces constraints as
+hard corrections: a deterministic operator projects or rescales the network output so
+the constraint holds exactly, either inside the architecture or as a post-processing
+layer \citep[their architecture-constrained networks]{beucler2021}; \citep{sha2025}. The
+two are not exclusive. A hard correction can guarantee exact closure of the delivered
+field while a soft penalty shapes what the network learns, a hybrid we return to in
+section~\ref{sec:fix}.
+
+Hard correctors are attractive because they guarantee closure to machine precision and
+require no weight tuning. In the CREDIT modeling framework \citep{schreck2025}, global
+mass, water, and energy budgets are closed by post-block correctors that adjust surface
+pressure, precipitation, and atmospheric energy after the network forward pass
+\citep{sha2025}. These correctors were designed for inference, where the network weights
+are fixed and the correction simply cleans up the final field.
+
+We report what happens when one such hard corrector is left active during training and
+the supervised loss sees the corrected output. The result is a degenerate solution that
+the optimizer actively seeks. We describe the mechanism, quantify the drift it produces,
+present the fixes, and state the conditions under which the failure should be expected.
+The finding applies to the class of AI weather and climate emulators that pair a hard
+physical-constraint correction with gradient-based end-to-end training.
+
+\section{Setup}\label{sec:setup}
+
+The emulator is CAMulator, a global atmospheric model trained to reproduce 6-hourly
+states of the Community Atmosphere Model (CAM6) on a $1.0^\circ$ grid with 32 hybrid
+sigma levels. Prognostic fields include winds, temperature, total specific humidity,
+surface pressure, and surface precipitation. Training minimizes a latitude- and
+variable-weighted error between the predicted and target next state.
+
+The water-budget corrector enforces global moisture conservation. At each step it
+computes three globally integrated, area-weighted quantities: the tendency of total
+column water content, the global evaporation source, and the global precipitation sink.
+Conservation requires that the storage tendency equal the net of source and sink. The
+corrector forms the residual of this balance and rescales the predicted precipitation
+field by the multiplicative factor that would close it. We denote the closure factor
+$r$, so that $r=1$ indicates a budget that already closes and the corrector does
+nothing. The fractional drift we report is $r-1$, expressed as a percentage; it equals
+the budget residual divided by the global precipitation sink.
+
+The reference for a closed budget comes from the training data itself. Integrating the
+same three quantities with the same area weights and the same physics over one year of
+CAM6 output (1459 6-hourly steps, calendar year 1980) gives a mean drift of 0.024\% with
+a standard deviation of 2.22\%, and a global precipitation sink that balances the global
+evaporation source at $1.72\times10^{10}$~kg~s$^{-1}$ with near-zero net storage. The
+data close the global water budget to within a few hundredths of a percent in the mean.
+Any persistent model drift of order 10\% is therefore a property of the model, not of
+the target.
+
+\section{The failure: a feedback loop the optimizer exploits}\label{sec:failure}
+
+The corrector was enabled during a fine-tuning phase, applied to the predicted state
+before the loss was computed. In code terms, the corrector rescaled precipitation in
+place and the supervised error was then evaluated on the rescaled field. Over 12 epochs
+the global water-budget drift rose monotonically from about 2\% to a plateau near 23\%
+(Fig.~\ref{fig:drift}). The target value is 0.024\%. A second, independent training run
+in the same configuration reproduced the failure and drifted further, to roughly 45\%,
+which shows the behavior is a property of the configuration rather than of a single run.
+
+The mechanism is a closed feedback loop between the corrector and the optimizer
+(Fig.~\ref{fig:schematic}b). The corrector multiplies predicted precipitation by the
+closure factor $r$. When raw precipitation is too low to close the budget, $r$ exceeds 1
+and the corrector scales precipitation up. The loss, computed on the corrected field,
+then sees precipitation that slightly overshoots the target and produces a gradient that
+lowers raw precipitation further. Lower raw precipitation enlarges the residual, which
+raises $r$, which scales the next prediction up more. The system converges to a
+degenerate equilibrium in which raw precipitation is far too low, the closure factor is
+large, and the corrected precipitation sits near the target. At the 23\% plateau the
+corrector was inflating precipitation by roughly a quarter, implying a raw precipitation
+sink about 18\% below the reference.
+
+Two design choices made this possible. First, gradients flowed through the corrector:
+because the loss was a function of the corrected output, and the correction depended on
+the network output through $r$, the optimizer could reduce the loss by manipulating the
+input to the corrector rather than by improving the physics. Second, nothing in the loss
+rewarded genuine closure. The corrector computed the budget imbalance but the training
+objective never included it, so a large closure factor carried no penalty.
+
+This failure is dangerous because it hides. A diagnostic computed on the corrected
+field, the quantity a user would naturally monitor, reported a closed budget throughout,
+since closure is what the corrector guarantees by construction. The degradation was
+visible only in the closure factor itself and in the raw, pre-correction precipitation.
+Evaluating the corrected output confirms only that the corrector ran.
+
+\section{The fix: keep the corrector out of the gradient path, and penalize the
+imbalance}\label{sec:fix}
+
+Two responses are available, and they are not equivalent
+(Fig.~\ref{fig:schematic} contrasts the unconstrained, feedback, and decoupled cases).
+
+The first is to disable the corrector during training and apply it only at inference.
+This removes the feedback loop and is the least invasive option. It forgoes any benefit
+of training-time conservation, and prior work on physics-constrained emulators reports
+that conservation learned during training can improve fields beyond what an
+inference-only correction achieves \citep{fuxiphys}. We did not measure that trade-off
+here.
+
+The second response keeps the corrector in place but stops gradients from flowing
+through it. The supervised loss is computed on the pre-correction prediction, so the
+optimizer drives raw precipitation toward the target directly and never optimizes against
+the corrector. The budget imbalance is then added as a separate penalty, proportional to
+the squared closure deviation. Because $r-1$ equals the budget residual divided by the
+global precipitation sink, this penalty is the normalized global imbalance of the
+network's uncorrected output. The soft penalty and the hard corrector then enforce the
+same constraint on the same field, differing only in that the penalty rewards closure
+while the corrector imposes it. This is a hybrid of the loss-constrained and
+architecture-constrained formulations of \citet{beucler2021}: the soft penalty shapes the
+learned solution during training, and the hard corrector is retained to guarantee exact
+closure of the delivered field at inference. Structurally it cannot juice the residual,
+because no path exists from the closure factor to the supervised gradient. In a
+continuation run from the degenerate checkpoint, at a penalty weight of 0.1, the
+decoupling returned the drift from 23\% to below 1\% within a single epoch and held it
+near zero for the following 64 epochs, with a mean of 0.11\% and a standard deviation of
+0.83\% over the final five epochs.
+
+We recommend the second response as the principled solution: it removes the feedback path
+by construction, and it is the configuration we have shown to be stable. What separates it
+from the failing configuration is two changes: the budget imbalance enters the loss as a
+penalty rather than being computed and discarded, and the supervised gradient is kept off
+the corrected field. The penalty is what converts the corrector from a quantity the
+optimizer games into a constraint the optimizer respects. A third option, supervising the
+corrected output directly while relying on the penalty to contain the feedback, is
+discussed in Section~\ref{sec:lesson} as a direction we did not pursue.
+
+Two implementation details proved necessary for the diagnosis rather than the fix.
+Global budget integrals must be accumulated in double precision. The budget terms are
+differences of large area-weighted sums over roughly 55{,}000 grid cells, so the drift is
+sensitive to the accumulation precision. Single-precision accumulation is already
+adequate (pairwise summation keeps the float32 error negligible); the error appears at
+the bfloat16 precision used for mixed-precision training, where the drift error reaches a
+few tenths of a percent (mean 0.22\%, up to 0.52\% across 30 sampled steps), comparable to
+the natural per-step spread and large enough to obscure small genuine drifts. Casting the
+sums to float64 removes it. And the corrector must run as an explicit step whose imbalance
+is returned to the training loop, rather than as an opaque in-line operation, so that the
+penalty term can be formed at all.
+
+\section{The generalizable lesson}\label{sec:lesson}
+
+Hard correctors and soft penalties enforce the same constraint in different places, and
+the placement determines whether end-to-end training is stable. A soft penalty acts on
+the loss surface: it adds a gradient that points toward the constraint, and the network
+moves with it. A hard corrector acts on the output: it removes the constraint violation
+after the fact, and if that corrected output then feeds the loss, the corrector becomes
+part of the computational graph the optimizer searches. The optimizer will exploit any
+degree of freedom the corrector exposes, including the freedom to offload error onto the
+correction.
+
+The lesson for AI weather and climate emulators is therefore specific and actionable. A
+hard physical-constraint correction may be used freely at inference, but during training
+it must be kept out of the gradient path between the network and the supervised target.
+If a constraint is to influence training, it should enter as a penalty on the constraint
+violation, which is the soft formulation, not as a correction of the field that the
+supervised loss evaluates. The two strategies can be combined, with the corrector
+guaranteeing exact closure of the delivered field and the penalty shaping the learned
+solution, provided the supervised loss is taken on the uncorrected prediction. This
+hybrid is, in short, a hard constraint that is trained softly. The two parts do not act
+in the same place at the same time. Under the decoupling, the hard correction
+contributes nothing to the gradient during training and matters only for the delivered
+field and at inference, while the soft penalty carries all of the constraint's influence
+on learning.
+
+A corollary concerns evaluation. A conservation diagnostic computed on a hard-corrected
+field is uninformative about the model, because closure is imposed by construction. The
+honest diagnostics are the magnitude of the correction the model requires and the
+physical fidelity of the pre-correction field. Reporting only the corrected budget can
+present a degrading model as a conserving one.
+
+These points apply wherever a deterministic projection or rescaling enforces a global
+invariant on a trained emulator: mass and surface-pressure fixers, energy-balance
+fixers, moisture fixers, and tracer non-negativity clamps all expose a correction factor
+that an end-to-end optimizer can manipulate if the loss sees the corrected output.
+
+A speculative variant is worth noting as future work. One could supervise the corrected
+output directly, which a production model arguably should since that is the field it
+delivers, while relying on the conservation penalty to contain the feedback rather than
+remove it. This keeps the corrector in the gradient path, trading the structural guarantee
+of the decoupled loss for a tuning-dependent balance; a single exploratory run in this
+configuration was unstable in our hands, though under conditions too confounded to draw a
+firm conclusion. The one element of that variant clearly worth keeping, an additional
+conservation penalty applied at intermediate steps of a multi-step rollout, is independent
+of where the supervised loss is taken and can be added on top of the decoupled loss
+without reintroducing the coupling. The productive path is therefore the decoupled loss
+augmented with such penalties; a controlled comparison of corrected-output supervision is
+left to future work.
+
+\section{Limitations}\label{sec:limits}
+
+The evidence comes from a single emulator, a single physical constraint, and a small
+number of training configurations rather than a controlled comparison across models and
+constraints. The drift trajectory and the recovery are drawn from training-log
+diagnostics of production runs, not from a designed experiment with held-out evaluation.
+The decoupled penalty formulation was stable over 64 training epochs, but this is drift
+measured per training step on teacher-forced data; we have not verified that the budget
+remains closed over a long free-running climate integration, where slow drift would
+matter most. We report the behavior of the global water budget and its closure, and
+deliberately do not claim an improvement in forecast skill or climate fidelity, which
+require separate evaluation. The reference budget is stationary across the five years we
+evaluated (1980--1984): the annual mean drift stays within 0.022\% to 0.029\% and the
+standard deviation within 2.04\% to 2.29\%, so the near-zero baseline is not specific to a
+single year. Finally, we did not measure the inference-only baseline against the
+training-time penalty, so the claim that training-time conservation helps rests on prior
+work rather than on results presented here.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% FIGURES
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{figure}[t]
+  \noindent\includegraphics[width=19pc,angle=0]{fig01_drift.pdf}\\
+  \caption{Global water-budget drift across training. Drift (\%) versus epoch for the
+  failing configuration (corrector inside the loss, feedback present) and the decoupled
+  penalty configuration, overlaid on the CAM6 reference band (mean 0.024\%, $\pm$ one
+  standard deviation 2.22\%). In every configuration with the corrector active the
+  delivered global water budget closes to machine precision; the plotted drift is the
+  correction the model required, that is the imbalance of the uncorrected prediction, not
+  a violation of conservation in the delivered field. (b)~Global precipitation sink
+  versus epoch against the CAM6 reference; the raw sink collapses under feedback and
+  recovers under the penalty while the delivered budget closes throughout. (c)~Drift
+  distributions for the two model configurations and the CAM6 truth.}\label{fig:drift}
+\end{figure}
+
+\begin{figure}[t]
+  \noindent\includegraphics[width=19pc,angle=0]{fig02_schematic.pdf}\\
+  \caption{Constraint-placement schematic. The training computational graph for
+  (a)~no constraint, (b)~a hard corrector inside the loss, with the exploitable path by
+  which $\partial L/\partial r$ flows through the corrector to the network, and
+  (c)~a decoupled loss on the pre-correction prediction plus an additive imbalance
+  penalty $(r-1)^2$. In configurations with the corrector active (b,~c) the delivered
+  output closes the water budget to machine precision; the drift gauge is read off the
+  correction magnitude $|r-1|$, not the delivered field. The configurations differ only
+  in what reaches the supervised gradient, not in whether the delivered budget conserves.
+  Panel~(a), with no corrector, is the one case whose delivered budget does not close.}
+  \label{fig:schematic}
+\end{figure}
+
+\clearpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\acknowledgments
+% TODO: funding, computing allocation, collaborators. Computing was performed on the
+% NSF NCAR Casper and Derecho systems.
+
+\datastatement
+The model code, training and inference configurations, job scripts, and the analysis and
+figure-generation code underlying this study are organized in the project repository
+under the \texttt{experiments/} directory; the figures in this paper rebuild from the
+small cached data in \texttt{experiments/figure\_data/}. The CAM6 training data are
+output of the Community Earth System Model. % TODO: add archive DOI / access details.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% APPENDIX
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\appendix
+\appendixtitle{The conservation-coupled training loss}
+
+Let $\hat y$ be the network prediction and $y$ the target next state. The supervised term is
+a latitude- and variable-weighted error,
+\begin{equation}
+\mathcal{L}_{\mathrm{sup}}(y,\hat y)=\frac{1}{V}\sum_{v=1}^{V}
+\frac{1}{B\,H\,W}\sum_{b,i,j} w_v\, L^{\mathrm{lat}}_{i}\,
+\ell\!\left(y_{b,v,ij},\hat y_{b,v,ij}\right),
+\end{equation}
+with per-variable weights $w_v$, latitude weights $L^{\mathrm{lat}}_i=\cos(\varphi_i)^p/
+\overline{\cos(\varphi)^p}$, and a pointwise error $\ell$ (here mean squared error), summed
+over batch $B$, latitude $H$, and longitude $W$.
+
+The water corrector forms three globally integrated, area-weighted ($a_{ij}$) quantities
+per sample $b$: the total-column-water tendency, the evaporation source, and the
+precipitation sink,
+\begin{equation}
+\mathcal{T}_b=\!\sum_{ij} a_{ij}\frac{\mathrm{TWC}^{\mathrm{pred}}_{b,ij}-\mathrm{TWC}^{\mathrm{in}}_{b,ij}}{\Delta t},\quad
+\mathcal{E}_b=\!\sum_{ij} a_{ij}\frac{E_{b,ij}\rho_w}{\Delta t},\quad
+\mathcal{P}_b=\!\sum_{ij} a_{ij}\frac{P_{b,ij}\rho_w}{\Delta t},
+\end{equation}
+where $\Delta t$ is the step length and $\rho_w$ the density of water. These sums are
+accumulated in float64 (Section~\ref{sec:fix}). The budget residual and the multiplicative
+closure factor that the corrector applies to precipitation are
+\begin{equation}
+R_b=-\mathcal{T}_b-\mathcal{E}_b-\mathcal{P}_b,\qquad
+r_b=\frac{\mathcal{P}_b+R_b}{\mathcal{P}_b},\qquad
+r_b-1=\frac{R_b}{\mathcal{P}_b}.
+\end{equation}
+The corrector rescales precipitation as $P\!\to\!r_b\,P$, which closes the delivered budget
+exactly. The conservation penalty is the mean squared closure deviation, equivalently the
+normalized budget imbalance of the uncorrected field,
+\begin{equation}
+\mathcal{L}_{\mathrm{water}}=\frac{1}{B}\sum_{b=1}^{B}\left(r_b-1\right)^2
+=\frac{1}{B}\sum_{b=1}^{B}\left(\frac{R_b}{\mathcal{P}_b}\right)^2 .
+\end{equation}
+The total objective at a back-propagated step is
+\begin{equation}
+\mathcal{L}=\mathcal{L}_{\mathrm{sup}}\!\left(y,\hat y_{\mathrm{pre}}\right)
++\lambda_w\,\mathcal{L}_{\mathrm{water}},
+\label{eq:total}
+\end{equation}
+where $\hat y_{\mathrm{pre}}$ is the \emph{pre-correction} prediction and
+$\lambda_w$ is the penalty weight. The failing configuration is recovered by evaluating
+$\mathcal{L}_{\mathrm{sup}}$ on the corrected output $r_b\,\hat y$ instead of
+$\hat y_{\mathrm{pre}}$: the supervised gradient then flows through $r_b$ and the optimizer
+can reduce $\mathcal{L}_{\mathrm{sup}}$ by lowering raw precipitation, which inflates $r_b$.
+Equation~\eqref{eq:total} removes that path. Mass and energy correctors compute analogous
+factors but contribute no term to $\mathcal{L}$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bibliographystyle{ametsocV6}
+\bibliography{references}
+
+\end{document}

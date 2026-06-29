@@ -1,0 +1,14 @@
+*.aux
+*.log
+*.bbl
+*.blg
+*.out
+*.synctex.gz
+main.pdf
+a1.log
+a2.log
+r1.log
+r2.log
+final.log
+rebuild.log
+build.log
