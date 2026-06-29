@@ -222,11 +222,13 @@ contributes nothing to the gradient during training and matters only for the del
 field and at inference, while the soft penalty carries all of the constraint's influence
 on learning.
 
-A corollary concerns evaluation. A conservation diagnostic computed on a hard-corrected
-field is uninformative about the model, because closure is imposed by construction. The
-honest diagnostics are the magnitude of the correction the model requires and the
-physical fidelity of the pre-correction field. Reporting only the corrected budget can
-present a degrading model as a conserving one.
+A corollary concerns evaluation, and it may be the lesson most likely to be missed: a
+global conservation diagnostic is not a check on the model when a hard corrector is
+present, because the corrector guarantees closure by construction. Monitoring the
+corrected budget reported nothing wrong for twelve epochs while the prediction degraded.
+The informative quantities are the magnitude of the correction the model requires and the
+physical fidelity of the pre-correction field; a closed corrected budget can conceal a
+model in free fall.
 
 These points apply wherever a deterministic projection or rescaling enforces a global
 invariant on a trained emulator: mass and surface-pressure fixers, energy-balance
@@ -248,6 +250,17 @@ report the largest gains, long free-running rollouts, is also where our per-step
 diagnostics are silent: we verify closure at each training step but not over a
 multi-decade integration, and their stabilization effect is the natural target for that
 test.
+
+We can only speculate on why the raw prediction biased low to begin with, giving the
+feedback a direction to amplify. Mean-squared-error training is subject to the
+double-penalty problem in precipitation: a sharp but displaced precipitation feature is
+penalized both where it is predicted and where it is observed, so the loss rewards
+smoother, weaker precipitation, the same tendency that produces drizzle bias and that
+\citet{sha2025} verify with SEEPS rather than RMSE. This pre-existing bias plausibly seeds
+the under-prediction that the conservation feedback then amplifies into the roughly 25\%
+correction at plateau; the feedback supplies the amplification, not the initial direction.
+Isolating the two would require training with a displacement-aware precipitation loss,
+which we did not do.
 
 A speculative variant is worth noting as future work. One could supervise the corrected
 output directly, which a production model arguably should since that is the field it
