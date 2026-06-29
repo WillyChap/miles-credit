@@ -147,6 +147,17 @@ two independent runs settled at different plateaus, near 23\% and 45\%. At the 2
 plateau the corrector was inflating precipitation by about a quarter, leaving a raw
 precipitation sink roughly 18\% below the reference.
 
+The invariance is necessary but not sufficient, and the same run shows why. The mass and
+energy correctors were active alongside the water corrector and all three entered the loss,
+yet only the water correction grew (Fig.~\ref{fig:fixers}). The energy corrector exposes
+the same invariance, but its correction is carried by temperature, which the loss
+supervises at every one of the 32 levels, so the free direction cannot be taken without
+paying elsewhere; the mass correction lands on humidity and surface pressure, also closely
+supervised. Only water's correction lands on precipitation, a single diagnostic field whose
+global amplitude the rest of the loss leaves nearly free. The runaway therefore needs two
+things: a corrector that opens a flat direction, and a flat direction that falls on a field
+the loss does not pin.
+
 This failure is dangerous because it hides. A diagnostic computed on the corrected
 field, the quantity a user would naturally monitor, reported a closed budget throughout,
 since closure is what the corrector guarantees by construction. The degradation was
@@ -331,6 +342,20 @@ work rather than on results presented here.
   in what reaches the supervised gradient, not in whether the delivered budget conserves.
   Panel~(a), with no corrector, is the one case whose delivered budget does not close.}
   \label{fig:schematic}
+\end{figure}
+
+\begin{figure}[t]
+  \noindent\includegraphics[width=20pc,angle=0]{fig03_fixer_control.pdf}\\
+  \caption{Only the water correction runs away. Magnitude of the correction applied by the
+  global mass, water, and energy fixers ($|r-1|$, log scale) across the feedback run, with
+  all three active and all entering the loss. The water correction climbs from a few
+  percent to about 24\%, above the CAM6 natural per-step budget spread (gray band), while
+  the mass and energy corrections stay near 0.01\%, far below it. The mass and energy
+  corrections are carried by surface pressure, humidity, and temperature, prognostic fields
+  the loss supervises at every level; the water correction is carried by precipitation, a
+  single diagnostic field whose global amplitude the rest of the loss leaves nearly free.
+  The runaway is specific to the corrector whose adjustment lands on a weakly constrained
+  field, not a general degradation.}\label{fig:fixers}
 \end{figure}
 
 \clearpage
