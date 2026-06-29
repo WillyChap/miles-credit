@@ -126,11 +126,18 @@ closure factor $r$. When raw precipitation is too low to close the budget, $r$ e
 and the corrector scales precipitation up. The loss, computed on the corrected field,
 then sees precipitation that slightly overshoots the target and produces a gradient that
 lowers raw precipitation further. Lower raw precipitation enlarges the residual, which
-raises $r$, which scales the next prediction up more. The system converges to a
-degenerate equilibrium in which raw precipitation is far too low, the closure factor is
-large, and the corrected precipitation sits near the target. At the 23\% plateau the
-corrector was inflating precipitation by roughly a quarter, implying a raw precipitation
-sink about 18\% below the reference.
+raises $r$, which scales the next prediction up more. Because each optimizer step moves
+raw precipitation only slightly and the corrector responds in kind, the imbalance grows
+gradually rather than jumping, producing the multi-epoch ramp of Fig.~\ref{fig:drift}
+instead of a step change. That monotonic ramp is the fingerprint of the feedback, distinct
+from a static bias, which would instead appear as a fixed offset from the first epoch. The
+ramp halts when the corrected precipitation reaches the target: there the supervised
+gradient on raw precipitation vanishes, leaving a degenerate equilibrium in which raw
+precipitation is far too low and the closure factor is large. The plateau level is
+therefore set by the interplay of the loss and the corrector, not by any physical scale,
+which is why the two independent runs settle at different values, near 23\% and 45\%. At
+the 23\% plateau the corrector was inflating precipitation by roughly a quarter, implying
+a raw precipitation sink about 18\% below the reference.
 
 Two design choices made this possible. First, gradients flowed through the corrector:
 because the loss was a function of the corrected output, and the correction depended on
