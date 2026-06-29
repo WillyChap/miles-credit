@@ -1,0 +1,34 @@
+#!/bin/bash
+# =====================================================================================
+# PHASE 1  ·  E3 training — ONE sweep point  (4 GPUs, Casper)
+# Parameterized single fine-tune. Do not submit directly; use phase1_e3_sweep_submit.sh,
+# which generates the per-(trainer,weight) configs and qsubs this script with -v CONFIG=...
+# Manual single run:
+#   qsub -v CONFIG=/abs/path/to/cfg.yml -N e3_v1_w0.1 experiments/pbs/phase1_e3_train.pbs
+# =====================================================================================
+#PBS -N lessons_e3
+#PBS -A P93300042
+#PBS -l select=1:ncpus=32:ngpus=4:mem=250GB
+#PBS -l walltime=12:00:00
+#PBS -q casper
+#PBS -l gpu_type=a100
+#PBS -j oe
+#PBS -k eod
+
+set -euo pipefail
+
+if [ -z "${CONFIG:-}" ]; then
+    echo "ERROR: pass the config via 'qsub -v CONFIG=/abs/path/to/cfg.yml ...'" >&2
+    exit 2
+fi
+
+source ~/.bashrc
+conda activate /glade/work/wchapman/conda-envs/credit-casper-mar2026
+
+export CUDA_VISIBLE_DEVICES=0,1,2,3
+cd /glade/work/wchapman/Roman_Coupling/train_johns
+
+echo "===== E3 run | CONFIG=$CONFIG ====="
+torchrun --nproc_per_node=4 \
+    credit/applications/train.py \
+    -c "$CONFIG"

@@ -1,0 +1,407 @@
+# =====================================================================================
+# EXPERIMENT CONFIG  ·  ALTERNATIVE  (v2 penalty-only, post-correction loss)
+# -------------------------------------------------------------------------------------
+# Paper role : R3 in papers/EXPERIMENT_TRACKER.md  (the UNTESTED / unstable alternative)
+# Trainer    : type: era5-v2  (trainerERA5v2.py = MSE on corrected output + penalty +
+#              intermediate-step conservation backward)
+# Water fixer: global_water_fixer.activate_outside_model: True, conservation_loss_weight: 0.5
+# Caveat     : the one run in this configuration was unstable (NaN losses, a branch that
+#              diverged to several hundred percent drift, recovery only after restart).
+#              Confounded (from-scratch, weight not logged). Treat as a config to RE-RUN
+#              cleanly (G3), not as validated.
+# Source     : /glade/derecho/scratch/wchapman/b_credit_runs/camulator_config_casper.yml
+# Update save_loc + pbs before use; data paths are shared read-only.
+# =====================================================================================
+# --------------------------------------------------------------------------------------------------------------------- #
+# CAMulator training config — v2 data schema
+# Model: Crossformer on 6-hourly CESM/CAMulator hybrid sigma-level data (192×288, 32 levels)
+# Variables: U, V, T, Qtot (3D) + PS, TREFHT (2D prognostic)
+#            SOLIN, SST, ICEFRAC, co2vmr_3d (dynamic forcing)
+#            17 diagnostic output-only channels
+# --------------------------------------------------------------------------------------------------------------------- #
+
+save_loc: '/glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_small/'
+seed: 42
+
+# Training data block
+data:
+    source:
+        CAMulator:
+            variables:
+                prognostic:
+                    vars_3D: ['U', 'V', 'T', 'Qtot']
+                    vars_2D: ['PS', 'TREFHT']
+                    path: '/glade/derecho/scratch/wchapman/b_credit_runs_f32_02/b.e21.CREDIT_climate_branch_1980_????_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+                    filename_time_index: -1
+
+                diagnostic:
+                    vars_2D: ['PRECT', 'TS', 'CLDHGH', 'CLDLOW', 'CLDMED', 'TAUX', 'TAUY', 'U10', 'QFLX',
+                              'SHFLX', 'LHFLX', 'FSDS_J', 'FLDS_J', 'FSUS', 'FLUS', 'FSUTOA', 'FLUT']
+                    path: '/glade/derecho/scratch/wchapman/b_credit_runs_f32_02/b.e21.CREDIT_climate_branch_1980_????_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+                    filename_time_index: -1
+
+                dynamic_forcing:
+                    vars_2D: ['SOLIN', 'SST', 'ICEFRAC', 'co2vmr_3d']
+                    path: '/glade/derecho/scratch/wchapman/b_credit_runs_f32_02/b.e21.CREDIT_climate_branch_1980_????_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+                    filename_time_index: -1
+
+                static:
+                    vars_2D: ['z_norm', 'LANDM_COSLAT']
+                    path: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc'
+
+    # physics reference file (for postblock sigma-level grid)
+    save_loc_physics: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc'
+
+    mean_path: '/glade/derecho/scratch/wchapman/b_credit_runs/mean_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+    std_path: '/glade/derecho/scratch/wchapman/b_credit_runs/std_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+
+    start_datetime: "1980-01-01"
+    end_datetime: "2012-12-31"
+    timestep: "6h"
+
+    history_len: 1
+    forecast_len: 2
+    one_shot: True
+    lead_time_periods: 6
+    skip_periods: null
+    static_first: True
+    scaler_type: 'std_new'
+
+# Validation data block
+data_valid:
+    source:
+        CAMulator:
+            variables:
+                prognostic:
+                    vars_3D: ['U', 'V', 'T', 'Qtot']
+                    vars_2D: ['PS', 'TREFHT']
+                    path: '/glade/derecho/scratch/wchapman/b_credit_runs_f32_02/b.e21.CREDIT_climate_branch_1980_????_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+                    filename_time_index: -1
+
+                diagnostic:
+                    vars_2D: ['PRECT', 'TS', 'CLDHGH', 'CLDLOW', 'CLDMED', 'TAUX', 'TAUY', 'U10', 'QFLX',
+                              'SHFLX', 'LHFLX', 'FSDS_J', 'FLDS_J', 'FSUS', 'FLUS', 'FSUTOA', 'FLUT']
+                    path: '/glade/derecho/scratch/wchapman/b_credit_runs_f32_02/b.e21.CREDIT_climate_branch_1980_????_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+                    filename_time_index: -1
+
+                dynamic_forcing:
+                    vars_2D: ['SOLIN', 'SST', 'ICEFRAC', 'co2vmr_3d']
+                    path: '/glade/derecho/scratch/wchapman/b_credit_runs_f32_02/b.e21.CREDIT_climate_branch_1980_????_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+                    filename_time_index: -1
+
+                static:
+                    vars_2D: ['z_norm', 'LANDM_COSLAT']
+                    path: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc'
+
+    mean_path: '/glade/derecho/scratch/wchapman/b_credit_runs/mean_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+    std_path: '/glade/derecho/scratch/wchapman/b_credit_runs/std_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+
+    start_datetime: "2013-01-01"
+    end_datetime: "2014-12-31"
+    timestep: "6h"
+
+    history_len: 1
+    forecast_len: 2
+    one_shot: True
+    lead_time_periods: 6
+    skip_periods: null
+    static_first: True
+    scaler_type: 'std_new'
+
+trainer:
+    type: era5-v2
+
+    mode: ddp
+    cpu_offload: False
+    activation_checkpoint: False
+
+    load_weights: True
+    load_optimizer: True
+    load_scaler: True
+    load_scheduler: False
+
+    skip_validation: False
+    update_learning_rate: True
+
+    save_backup_weights: True
+    save_best_weights: True
+    save_every_epoch: True
+
+    save_metric_vars: ["PRECT", "TREFHT", "TAUX", "TAUY", "U", "T"]
+
+    learning_rate: 5.0e-05  # 2x lower than single-step peak for fine-tuning
+    weight_decay: 0
+
+    train_batch_size: 20
+    valid_batch_size: 20
+
+    batches_per_epoch: 0
+    valid_batches_per_epoch: 100
+    stopping_patience: 5000
+
+    start_epoch: 29
+    num_epoch: 4            # 2-step is ~2x slower; ~4 epochs per 12h Casper job
+    reload_epoch: True
+    epochs: 69              # 52 done + 17 more multi-step epochs
+
+    use_scheduler: True
+    use_ema: True
+    ema_decay: 0.9999
+    scheduler:
+        scheduler_type: 'linear-warmup-cosine'
+        warmup_steps: 1200   # ~2 epochs (603 batches/epoch × 4 GPUs, bs=20)
+        total_steps: 18000   # ~30 epochs
+        min_lr: 1.0e-06
+
+    amp: True
+    mixed_precision:
+        param_dtype: "bfloat16"
+        reduce_dtype: "float32"
+        buffer_dtype: "float32"
+
+    use_compile: False
+
+    grad_accum_every: 1
+    grad_max_norm: 1.0
+
+    thread_workers: 4
+    valid_thread_workers: 4
+    prefetch_factor: 2
+
+
+model:
+    type: "camulator"
+    frames: 1
+    image_height: 192
+    image_width: 288
+    levels: 32
+    channels: 4                  # 3D prognostic: U, V, T, Qtot
+    surface_channels: 2          # 2D prognostic: PS, TREFHT
+    input_only_channels: 6       # dynamic forcing (4) + static (2)
+    output_only_channels: 17     # diagnostic: 11 standard + 4 surface up/down + FSUTOA + FLUT
+
+    patch_width: 1
+    patch_height: 1
+    frame_patch_size: 1
+
+    dim: [128, 256, 512, 1024]
+    depth: [2, 2, 12, 2]
+    global_window_size: [4, 4, 2, 1]
+    local_window_size: 3
+    cross_embed_kernel_sizes:
+    - [4, 8, 16, 24]
+    - [2, 4]
+    - [2, 4]
+    - [2, 4]
+    cross_embed_strides: [2, 2, 2, 2]
+    attn_dropout: 0.
+    ff_dropout: 0.
+
+    use_spectral_norm: True
+    interp: True
+
+    padding_conf:
+        activate: True
+        mode: earth
+        pad_lat: 24
+        pad_lon: 24
+
+    post_conf:
+        activate: True
+
+        requires_scaling: False
+        scaling_coefs:
+            tot_precip: 1
+            surf_net_solar: 1
+            surf_net_therm: 1
+            surf_shflx: 1
+            surf_lhflx: 1
+            top_net_solar: 1
+            top_net_therm: 1
+            evap: 1
+            SP: 1
+            U: 1
+            V: 1
+            gph_surf: 1
+            temp: 1
+            Q: 1
+            T: 1
+
+        skebs:
+            activate: False
+
+        tracer_fixer:
+            activate: True
+            activate_outside_model: False
+            denorm: True
+            mean_path: '/glade/derecho/scratch/wchapman/b_credit_runs/mean_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+            std_path:  '/glade/derecho/scratch/wchapman/b_credit_runs/std_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+            tracer_ind_ranges: [[96, 127], [130, 130], [132, 132], [133, 133], [134, 134]]
+            tracer_var_names:  ['Qtot',    'PRECT',    'CLDHGH',   'CLDLOW',   'CLDMED']
+            tracer_thres:      [0,          0,          0,          0,          0]
+            tracer_thres_max:  [null,        null,       1,          1,          1]
+
+        global_mass_fixer:
+            activate: True
+            activate_outside_model: False
+            fix_level_num: 14
+            simple_demo: False
+            denorm: True
+            grid_type: 'sigma'
+            midpoint: True
+            lon_lat_level_name: ['lon2d', 'lat2d', 'hyai', 'hybi']
+            surface_pressure_name: ['PS']
+            specific_total_water_name: ['Qtot']
+            save_loc_physics: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc'
+            mean_path: '/glade/derecho/scratch/wchapman/b_credit_runs/mean_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+            std_path:  '/glade/derecho/scratch/wchapman/b_credit_runs/std_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+            q_inds:  [96, 127]
+            sp_inds: 128
+
+        global_water_fixer:
+            activate: True
+            activate_outside_model: True   # must be outside model to return conservation loss to trainer
+            conservation_loss_weight: 0.5  # penalizes (P_ratio - 1)^2; shrinks as model converges
+            simple_demo: False
+            denorm: True
+            grid_type: 'sigma'
+            midpoint: True
+            lon_lat_level_name: ['lon2d', 'lat2d', 'hyai', 'hybi']
+            surface_pressure_name: ['PS']
+            specific_total_water_name: ['Qtot']
+            precipitation_name: ['PRECT']
+            evaporation_name: ['QFLX']
+            save_loc_physics: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc'
+            mean_path: '/glade/derecho/scratch/wchapman/b_credit_runs/mean_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+            std_path:  '/glade/derecho/scratch/wchapman/b_credit_runs/std_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+            lead_time_periods: 6
+            q_inds:     [96, 127]
+            sp_inds:    128
+            precip_ind: 130
+            evapor_ind: 138
+
+        global_energy_fixer:
+            activate: False  # replaced by global_energy_fixer_updown
+
+        global_energy_fixer_updown:
+            activate: True
+            activate_outside_model: False
+            simple_demo: False
+            denorm: True
+            grid_type: 'sigma'
+            midpoint: True
+            lead_time_periods: 6        # 6-hr timestep → N_seconds = 21600
+            save_loc_physics: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc'
+            mean_path: '/glade/derecho/scratch/wchapman/b_credit_runs/mean_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+            std_path:  '/glade/derecho/scratch/wchapman/b_credit_runs/std_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+            lon_lat_level_name: ['lon2d', 'lat2d', 'hyai', 'hybi']
+            surface_pressure_name: ['PS']
+            surface_geopotential_name: ['PHIS']
+            air_temperature_name: ['T']
+            specific_total_water_name: ['Qtot']
+            u_wind_name: ['U']
+            v_wind_name: ['V']
+            # Channel indices (x and y share the same prognostic layout):
+            #   x: U[0-31], V[32-63], T[64-95], Qtot[96-127], PS[128], TREFHT[129],
+            #      SOLIN[130], SST[131], ICEFRAC[132], co2vmr_3d[133], z_norm[134], LANDM_COSLAT[135]
+            #   y: U[0-31], V[32-63], T[64-95], Qtot[96-127], PS[128], TREFHT[129],
+            #      PRECT[130], TS[131], CLDHGH[132], CLDLOW[133], CLDMED[134], TAUX[135],
+            #      TAUY[136], U10[137], QFLX[138], SHFLX[139], LHFLX[140],
+            #      FSDS_J[141], FLDS_J[142], FSUS[143], FLUS[144], FSUTOA[145], FLUT[146]
+            T_inds:  [64, 95]
+            q_inds:  [96, 127]
+            U_inds:  [0, 31]
+            V_inds:  [32, 63]
+            sp_inds: 128
+            # TOA: SOLIN from x (forcing, W/m²), FSUTOA/FLUT from y_pred (W/m²)
+            TOA_forcing_solar_ind: 130   # SOLIN in x
+            TOA_up_solar_ind:      145   # FSUTOA in y_pred
+            TOA_up_OLR_ind:        146   # FLUT in y_pred
+            # Surface: explicit up/down fluxes (J/m²/timestep)
+            surf_down_solar_ind: 141   # FSDS_J
+            surf_up_solar_ind:   143   # FSUS
+            surf_down_LW_ind:    142   # FLDS_J
+            surf_up_LW_ind:      144   # FLUS
+            # Turbulent: zarr convention (negative = upward → +SH +LH adds energy to atmosphere)
+            surf_SH_ind: 139   # SHFLX
+            surf_LH_ind: 140   # LHFLX
+
+
+loss:
+    training_loss: "mse"
+
+    use_power_loss: False
+    use_spectral_loss: True
+    spectral_vars: ['PRECT']
+    spectral_lambda_reg: 0.1
+    spectral_wavenum_init: 20
+
+    use_latitude_weights: True
+    latitude_weights: "/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/f.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc"
+    latitude_weight_power: 0.7   # 1.0=full cos(lat), 0.5=softer poles, 0.0=uniform
+
+    use_variable_weights: True
+    variable_weights:
+        PRECT:  2.0
+        TREFHT: 2.0
+        TS:     2.0
+
+
+postprocessing:
+    wind_artifact_filter:
+        activate: True
+        mask_level: 14
+        target_levels: [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+        target_vars: ["U", "V", "T", "Qtot"]
+        speed_threshold: 3.0000
+        smooth_sigma: 1.2
+        dilation_zonal: 15
+        dilation_meridional: 5
+        falloff_sigma: 4.0
+
+
+predict:
+    mode: none
+    batch_size: 1
+    ensemble_size: 1
+
+    forecasts:
+        type: "custom"
+        start_year: 2000
+        start_month: 1
+        start_day: 1
+        start_hours: [0]
+        duration: 1
+        days: 365
+
+    start_datetime: '2000-01-01 00:00:00'
+    climate_rescale_output: True
+
+    metadata: '/glade/work/schreck/repos/credit/miles-credit/metadata/era5.yaml'
+    save_forecast: '/glade/derecho/scratch/wchapman/CREDIT/new_pxshf/Get_Coupling/'
+    use_laplace_filter: False
+    climatology: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/ERA5_clim_1990_2019_6h_interp.nc'
+
+    save_vars: ['PRECT', 'TS', 'CLDHGH', 'CLDLOW', 'CLDMED', 'TAUX', 'TAUY', 'U10', 'QFLX',
+                'SHFLX', 'LHFLX', 'FSDS_J', 'FLDS_J', 'FSUS', 'FLUS', 'FSUTOA', 'FLUT',
+                'TREFHT', 'PS', 'Qtot', 'U', 'V', 'T']
+    forcing_file: '/glade/derecho/scratch/wchapman/CAMULATOR_FORCING/b.e21.CREDIT_climate_cyclic_1yr.nc'
+
+    run_fast_climate: False
+    init_cond_fast_climate: '/glade/derecho/scratch/wchapman/CAMULATOR_FORCING/init_be21_condition_tensor_2000-01-01T00Z.pth'
+    inds_rmse_fast_climate: ['rmse_PRECT', 'rmse_TREFHT']
+    seasonal_mean_fast_climate: '/glade/work/wchapman/miles_branchs/CESM_Spatial_PS/truth_be21_tensor_2013-01-01T00Z.pth'
+    timesteps_fast_climate: 50
+
+
+pbs:  # derecho
+    conda: "/glade/work/wchapman/conda-envs/credit-casper-mar2026"
+    project: "P93300042"
+    job_name: "ps_wxformer_CESM_6h"
+    walltime: "12:00:00"
+    nodes: 1
+    ncpus: 16
+    ngpus: 4
+    mem: '256GB'
+    queue: 'casper'
+    priority: 'premium'

@@ -1,0 +1,428 @@
+# =====================================================================================
+# EXPERIMENT CONFIG  ·  RECOMMENDED FIX  (v1 structural decouple)
+# -------------------------------------------------------------------------------------
+# Paper role : R2 in papers/EXPERIMENT_TRACKER.md  (the principled, demonstrated fix)
+# Trainer    : type: era5   (trainerERA5.py = pre-correction MSE + conservation penalty)
+# Water fixer: global_water_fixer.activate_outside_model: True, conservation_loss_weight: 0.1
+# Behavior   : drift 23% -> <1% in one epoch; stable 64 epochs (last-5 mean 0.11%, std 0.83%)
+#
+# KNOB: conservation_loss_weight is the single sweep knob (G3).
+#   0.0  -> reproduces the BROKEN feedback run (use_pre gate off; loss on corrected output)
+#   >0   -> the fix (supervised loss on pre-correction prediction + penalty)
+#
+# Source (preserved from purgeable scratch on 2026-06-29):
+#   /glade/derecho/scratch/wchapman/b_credit_runs/camulator_config_extended_v2.yml
+# Before launching, update for your environment:
+#   save_loc, pbs.conda, pbs.project.  Data / mean-std / statics paths below point at
+#   shared read-only scratch+campaign storage and are intentionally left unchanged.
+# =====================================================================================
+# --------------------------------------------------------------------------------------------------------------------- #
+# camulator_config_extended.yml
+#
+# Fine-tuning config: extends cp00092 (15 diag) → 17 diag with energy-fixer-updown channels.
+#
+# KEY CHANGES vs original stable run (wxformermod_sharp_SpatPS_pxshf):
+#   - output_only_channels: 15 → 17
+#   - diagnostic_variables: replaced FSNS/FLNS/FSNT/FLNT with FSDS_J/FLDS_J/FSUS/FLUS/FSUTOA/FLUT
+#     and reordered SHFLX/LHFLX (pos 13-14 → pos 9-10)
+#   - postblock: added global_energy_fixer_updown (was absent in old run)
+#   - postblock activate_outside_model settings matched to training convention
+#   - learning_rate: 1e-4 → 5e-5 (fine-tuning)
+#   - load_optimizer: False, load_scaler: False (fresh Adam state)
+#   - save_loc: NEW_CLI_JOHN_CASPER_extended/ (separate checkpoint directory)
+#
+# ARCHITECTURE (IDENTICAL to cp00092 — do not change):
+#   dim: [256, 512, 1024, 2048]   depth: [2, 2, 18, 2]
+#   pad_lat: 48   kernel[0]: [4,8,16,32]
+#
+# WORKFLOW:
+#   1. python surgery_extend_channels.py       # creates checkpoint.pt00092_extended.pt
+#   2. python -m credit.applications.train \
+#        /glade/derecho/scratch/wchapman/b_credit_runs/camulator_config_extended.yml
+# --------------------------------------------------------------------------------------------------------------------- #
+
+save_loc: '/glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended_v2/'
+seed: 1000
+
+data:
+    variables: ['U','V','T','Qtot']
+    save_loc: '/glade/derecho/scratch/wchapman/b_credit_runs/b.e21.CREDIT_climate_branch_1980_????_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+
+    surface_variables: ['PS','TREFHT']
+    save_loc_surface: '/glade/derecho/scratch/wchapman/b_credit_runs/b.e21.CREDIT_climate_branch_1980_????_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+
+    dynamic_forcing_variables: ['SOLIN','SST','ICEFRAC','co2vmr_3d']
+    save_loc_dynamic_forcing: '/glade/derecho/scratch/wchapman/b_credit_runs/b.e21.CREDIT_climate_branch_1980_????_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+
+    # 17 diagnostic variables — SHFLX/LHFLX kept at same positions as old model (13-14)
+    # so their trained weights copy directly with no channel reordering.
+    # New up/down flux components inserted at positions 9-12 (where FSNS/FLNS/FSNT/FLNT were).
+    # FSUTOA/FLUT added at positions 15-16.
+    diagnostic_variables: ['PRECT','TS','CLDHGH','CLDLOW','CLDMED','TAUX','TAUY','U10','QFLX','FSDS_J','FLDS_J','FSUS','FLUS','SHFLX','LHFLX','FSUTOA','FLUT']
+    save_loc_diagnostic: '/glade/derecho/scratch/wchapman/b_credit_runs/b.e21.CREDIT_climate_branch_1980_????_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+
+    forcing_variables: []
+    save_loc_forcing: '/glade/derecho/scratch/wchapman/b_credit_runs/b.e21.CREDIT_climate_branch_1980_????_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+
+    static_variables: ['z_norm','LANDM_COSLAT']
+    save_loc_static: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc'
+    save_loc_physics: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc'
+
+    # Use full-period (1980-2014) stats that include all 17 diagnostic variables
+    mean_path: '/glade/derecho/scratch/wchapman/b_credit_runs/mean_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+    std_path: '/glade/derecho/scratch/wchapman/b_credit_runs/std_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+
+    train_years: [1980, 2012]
+    valid_years: [2013, 2014]
+
+    scaler_type: 'std_new'
+
+    history_len: 1
+    valid_history_len: 1
+
+    forecast_len: 2
+    valid_forecast_len: 2
+
+    one_shot: True
+
+    lead_time_periods: 6
+
+    skip_periods: null
+
+    static_first: True
+
+    dataset_type: ERA5_MultiStep_Batcher
+
+    data_clamp: null
+
+trainer:
+    type: era5
+    mode: ddp
+
+    cpu_offload: False
+    activation_checkpoint: True
+
+    compile: False
+
+    # Fine-tuning: load weights from surgery checkpoint; fresh optimizer + scaler
+    load_weights: True
+    load_optimizer: False
+    load_scaler: False
+    load_scheduler: False
+
+    save_backup_weights: True
+    save_best_weights: True
+    save_every_epoch: True
+
+    save_metric_vars: ["PRECT", "TREFHT", "TAUX", "TAUY", "U", "T", "SHFLX", "LHFLX", "FSDS_J", "FSUTOA", "FLUT"]
+
+    update_learning_rate: True
+
+    # Reduced learning rate for fine-tuning (half of original 1e-4)
+    learning_rate: 2.5e-05
+
+    # PHASE 1 (epochs 0-3, no constraints): train up_block4 only so the zero-initialized
+    # new diagnostic channel rows (FSDS_J, FLDS_J, FSUS, FLUS, FSUTOA, FLUT) learn
+    # non-trivial values before the physics fixers are applied.
+    #
+    # NOTE: up_block4 outputs ALL 147 channels (U, V, T, Qtot, PS, diagnostics).
+    # The zero-init rows compete with the well-trained prognostic rows in the same
+    # gradient update, causing a systematic positive moisture drift (~9%) until the
+    # new channels settle. This is expected and resolves over ~10-15 epochs.
+    #
+    # PHASE 2 (epochs 4-16, constraints on): continue training up_block4 with all
+    # physics fixers active. Monitor drift_pct in WaterFixer logs — should trend
+    # toward 0 and become mixed-sign as new channels converge.
+    #
+    # PHASE 3 (epoch 16+): unfreeze all layers for full fine-tune. The backbone
+    # can then also compensate for any residual drift the output layer alone can't
+    # fix. Switch to:
+    #   trainable_layers: []
+    #   learning_rate: 2.5e-05   # halve again for full fine-tune
+    trainable_layers: ['up_block4', 'up_block3', 'up_block2', 'up_block1']
+
+    frozen_layers: []
+
+    weight_decay: 0
+
+    train_batch_size: 12
+    valid_batch_size: 12
+
+    batches_per_epoch: 300
+    valid_batches_per_epoch: 20
+    stopping_patience: 5000
+    skip_validation: False
+
+    start_epoch: 0
+    num_epoch: 1
+    reload_epoch: True     # continue epoch counter from checkpoint
+    epochs: &epochs 80     # Phase 5: 3-step rollout, frozen backbone, up_block4 only
+
+    use_scheduler: False
+    scheduler: {'scheduler_type': 'cosine-annealing', 'T_max': *epochs, 'last_epoch': -1}
+
+    # AMP off: fp16 caused instability at poles during prior run
+    amp: False
+
+    mixed_precision:
+        param_dtype: "float32"
+        reduce_dtype: "float32"
+        buffer_dtype: "float32"
+
+    grad_accum_every: 1
+    grad_max_norm: 1.0
+
+    thread_workers: 1
+    valid_thread_workers: 1
+    prefetch_factor: 4
+
+model:
+    type: "camulator"
+    frames: 1
+    image_height: 192
+    image_width: 288
+    levels: 32
+    channels: 4
+    surface_channels: 2
+    input_only_channels: 6
+    output_only_channels: 17          # was 15 in cp00092; surgery adds 2
+
+    patch_width: 1
+    patch_height: 1
+    frame_patch_size: 1
+
+    # LARGE architecture — identical to cp00092 except output_only_channels: 15→17; do NOT change
+    dim: [256, 512, 1024, 2048]
+    depth: [2, 2, 18, 2]
+    global_window_size: [4, 4, 2, 1]
+    local_window_size: 3
+    cross_embed_kernel_sizes:
+    - [4, 8, 16, 32]
+    - [2, 4]
+    - [2, 4]
+    - [2, 4]
+    cross_embed_strides: [2, 2, 2, 2]
+    attn_dropout: 0.
+    ff_dropout: 0.
+
+    use_spectral_norm: True
+    interp: True
+
+    # padding: already 48 in the original stable model
+    padding_conf:
+        activate: True
+        mode: earth
+        pad_lat: 48
+        pad_lon: 48
+
+    # postblock: settings matched to training convention
+    # activate_outside_model:
+    #   tracer_fixer  → False  (runs inside model via PostBlock)
+    #   global_mass   → False  (runs inside model via PostBlock)
+    #   global_water  → True   (must be outside to return conservation loss to trainer)
+    #   global_energy_updown → False (runs inside model via PostBlock)
+    post_conf:
+        activate: True
+        requires_scaling: False
+        scaling_coefs:
+            tot_precip: 1
+            surf_net_solar: 1
+            surf_net_therm: 1
+            surf_shflx: 1
+            surf_lhflx: 1
+            top_net_solar: 1
+            top_net_therm: 1
+            evap: 1
+            SP: 1
+            U: 1
+            V: 1
+            gph_surf: 1
+            temp: 1
+            Q: 1
+            T: 1
+        skebs:
+            activate: False
+        tracer_fixer:
+            activate: True
+            activate_outside_model: True
+            denorm: True
+            mean_path: '/glade/derecho/scratch/wchapman/b_credit_runs/mean_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+            std_path: '/glade/derecho/scratch/wchapman/b_credit_runs/std_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+            tracer_name: ['Qtot', 'PRECT', 'CLDHGH', 'CLDLOW', 'CLDMED']
+            tracer_thres: [0, 0, 0, 0, 0]
+            tracer_thres_max: [null, null, 1, 1, 1]
+        global_mass_fixer:
+            activate: True
+            activate_outside_model: True
+            fix_level_num: 14
+            simple_demo: False
+            denorm: True
+            grid_type: 'sigma'
+            midpoint: True
+            lon_lat_level_name: ['lon2d', 'lat2d', 'hyai', 'hybi']
+            surface_pressure_name: ['PS']
+            specific_total_water_name: ['Qtot']
+            save_loc_physics: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc'
+            mean_path: '/glade/derecho/scratch/wchapman/b_credit_runs/mean_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+            std_path: '/glade/derecho/scratch/wchapman/b_credit_runs/std_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+            q_inds: [96, 127]
+            sp_inds: 128
+        global_water_fixer:
+            activate: True
+            activate_outside_model: True   # must be outside to return conservation loss to trainer
+            conservation_loss_weight: 0.1
+            simple_demo: False
+            denorm: True
+            grid_type: 'sigma'
+            midpoint: True
+            lon_lat_level_name: ['lon2d', 'lat2d', 'hyai', 'hybi']
+            surface_pressure_name: ['PS']
+            specific_total_water_name: ['Qtot']
+            precipitation_name: ['PRECT']
+            evaporation_name: ['QFLX']
+            save_loc_physics: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc'
+            mean_path: '/glade/derecho/scratch/wchapman/b_credit_runs/mean_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+            std_path: '/glade/derecho/scratch/wchapman/b_credit_runs/std_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+            lead_time_periods: 6
+            q_inds: [96, 127]
+            sp_inds: 128
+            precip_ind: 130
+            evapor_ind: 138
+        global_energy_fixer:
+            activate: False
+        global_energy_fixer_updown:
+            activate: True
+            activate_outside_model: True
+            simple_demo: False
+            denorm: True
+            grid_type: 'sigma'
+            midpoint: True
+            lead_time_periods: 6
+            save_loc_physics: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc'
+            mean_path: '/glade/derecho/scratch/wchapman/b_credit_runs/mean_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+            std_path: '/glade/derecho/scratch/wchapman/b_credit_runs/std_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+            lon_lat_level_name: ['lon2d', 'lat2d', 'hyai', 'hybi']
+            surface_pressure_name: ['PS']
+            surface_geopotential_name: ['PHIS']
+            air_temperature_name: ['T']
+            specific_total_water_name: ['Qtot']
+            u_wind_name: ['U']
+            v_wind_name: ['V']
+            T_inds: [64, 95]
+            q_inds: [96, 127]
+            U_inds: [0, 31]
+            V_inds: [32, 63]
+            sp_inds: 128
+            # Indices into the full output tensor (0-based).
+            # Prognostic: 0-129.  Diagnostics start at 130.
+            # Ordering matches diagnostic_variables list above:
+            #   130:PRECT 131:TS 132-134:CLD* 135-136:TAU* 137:U10 138:QFLX
+            #   139:FSDS_J 140:FLDS_J 141:FSUS 142:FLUS
+            #   143:SHFLX 144:LHFLX  ← same indices as old model (no reorder)
+            #   145:FSUTOA 146:FLUT
+            TOA_forcing_solar_ind: 132       # SOLIN: input tensor = 130 prog + 2 static (z_norm,LANDM_COSLAT) + SOLIN at 132
+            TOA_up_solar_ind: 145          # FSUTOA
+            TOA_up_OLR_ind: 146            # FLUT
+            surf_down_solar_ind: 139       # FSDS_J
+            surf_up_solar_ind: 141         # FSUS
+            surf_down_LW_ind: 140          # FLDS_J
+            surf_up_LW_ind: 142            # FLUS
+            surf_SH_ind: 143               # SHFLX (same index as old model)
+            surf_LH_ind: 144               # LHFLX (same index as old model)
+
+
+loss:
+    training_loss: "mse"
+    use_power_loss: False
+    use_spectral_loss: False
+    spectral_lambda_reg: 0.1
+    spectral_wavenum_init: 20
+    latitude_weights: "/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/f.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc"
+    use_latitude_weights: True
+    latitude_weight_power: 0.4
+    use_variable_weights: True
+    variable_weights:
+        U:    [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+        V:    [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+        T:    [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+        Qtot: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+        PS:      1.0
+        TREFHT:  3.0
+        PRECT:   3.0
+        TS:      1.0
+        CLDHGH:  1.0
+        CLDLOW:  1.0
+        CLDMED:  1.0
+        TAUX:    1.0
+        TAUY:    1.0
+        U10:     1.0
+        QFLX:    3.0
+        FSDS_J:  1.0
+        FLDS_J:  1.0
+        FSUS:    1.0
+        FLUS:    1.0
+        SHFLX:   1.0
+        LHFLX:   1.0
+        FSUTOA:  1.0
+        FLUT:    1.0
+
+
+postprocessing:
+    wind_artifact_filter:
+        activate: True
+        mask_level: 14
+        target_levels: [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+        target_vars: ["U","V","T","Qtot"]
+        speed_threshold: 3.0000
+        smooth_sigma: 1.2
+        dilation_zonal: 15
+        dilation_meridional: 5
+        falloff_sigma: 4.0
+
+
+predict:
+    mode: none
+    batch_size: 1
+
+    forecasts:
+        type: "custom"
+        start_year: 1981
+        start_month: 1
+        start_day: 1
+        start_hours: [0]
+        duration: 1
+        days: 365
+
+    start_datetime: '1981-01-01 00:00:00'
+    climate_rescale_output: True
+
+    metadata: '/glade/work/schreck/repos/credit/miles-credit/metadata/era5.yaml'
+
+    save_forecast: '/glade/derecho/scratch/wchapman/CREDIT/climate_extended/'
+
+    use_laplace_filter: False
+
+    climatology: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/ERA5_clim_1990_2019_6h_interp.nc'
+
+    save_vars: ['PRECT','TS','CLDHGH','CLDLOW','CLDMED','TAUX','TAUY','U10','QFLX','FSDS_J','FLDS_J','FSUS','FLUS','SHFLX','LHFLX','FSUTOA','FLUT','TREFHT','PS','Qtot','U','V','T']
+    forcing_file: '/glade/derecho/scratch/wchapman/CAMULATOR_FORCING/b.e21.CREDIT_climate_cyclic_1yr.nc'
+
+    run_fast_climate: False
+    init_cond_fast_climate: '/glade/derecho/scratch/wchapman/CAMULATOR_FORCING/init_be21_condition_tensor_1981-01-01T00Z.pth'
+    inds_rmse_fast_climate: ['rmse_PRECT','rmse_TREFHT']
+    seasonal_mean_fast_climate: '/glade/work/wchapman/miles_branchs/CESM_Spatial_PS/truth_be21_tensor_2013-01-01T00Z.pth'
+    timesteps_fast_climate: 14600
+
+
+pbs: #casper
+    conda: "/glade/work/wchapman/conda-envs/credit-casper-mar2026"
+    project: "P93300042"
+    job_name: "camulator_v2_consfix"
+    walltime: "12:00:00"
+    nodes: 1
+    ncpus: 32
+    ngpus: 4
+    mem: '250GB'
+    queue: 'casper'
+    gpu_type: 'a100'
+    job_priority: 'premium'

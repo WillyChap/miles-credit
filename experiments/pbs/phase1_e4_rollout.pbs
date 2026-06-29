@@ -1,0 +1,39 @@
+#!/bin/bash
+# =====================================================================================
+# PHASE 1  ·  E4 long free-running climate rollout  (1 GPU, Casper)
+# -------------------------------------------------------------------------------------
+# Rolls out the recommended-fix (v1 decouple) checkpoint for a long integration so the
+# water budget can be measured over the rollout itself, not just per training step
+# (claim C7 / the main limitation). Set the rollout length in the climate config's
+# predict.timesteps_fast_climate (1460 = 1 year at 6-hourly).
+#
+# PREREQUISITE: the climate config's save_loc / weights path must point at the R2 run
+# dir so --model_name resolves to the v1-fix checkpoint below. Edit the config if needed.
+# Submit:  qsub experiments/pbs/phase1_e4_rollout.pbs
+# =====================================================================================
+#PBS -N lessons_e4_rollout
+#PBS -A P93300042
+#PBS -l select=1:ncpus=8:ngpus=1:mem=250GB
+#PBS -l walltime=12:00:00
+#PBS -q casper
+#PBS -l gpu_type=a100
+#PBS -j oe
+#PBS -k eod
+
+set -euo pipefail
+
+source ~/.bashrc
+conda activate /glade/work/wchapman/conda-envs/credit-casper-mar2026
+
+REPO=/glade/work/wchapman/Roman_Coupling/train_johns
+cd "$REPO"
+
+CONFIG=climate/camulator_config.yml
+CKPT=checkpoint.pt00079.pt          # recommended-fix (v1, weight 0.1) checkpoint
+
+echo "===== E4 rollout | config=$CONFIG ckpt=$CKPT ====="
+python climate/Quick_Climate.py \
+    --config "$CONFIG" \
+    --model_name "$CKPT" \
+    --save_append paper_rollout_v1fix \
+    --device cuda
