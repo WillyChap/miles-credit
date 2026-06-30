@@ -79,7 +79,7 @@ def main():
     ax.annotate("penalty enabled", xy=(trans, 6), xytext=(trans + 16, 16), fontsize=7,
                 color="0.35", arrowprops=dict(arrowstyle="->", color="0.35", lw=0.8))
     ax.legend(loc="upper right"); ax.set_ylim(-8, 30)
-    ax.set_xlabel("Training epoch"); ax.set_ylabel("Water-budget drift (%)")
+    ax.set_xlabel("Training epoch"); ax.set_ylabel("Required water-budget correction (%)")
     tag(ax, "(a)")
 
     # (b) 2x2 ablation: each cell its own color/marker. Warm = corrected supervision,
@@ -98,7 +98,7 @@ def main():
                 mew=0, label=f"{c}: {lab}")
     ax.legend(loc="center left", fontsize=6.0, handlelength=2.0)
     ax.set_ylim(-12, 78)
-    ax.set_xlabel("Training epoch"); ax.set_ylabel("Water-budget drift (%)")
+    ax.set_xlabel("Training epoch"); ax.set_ylabel("Required water-budget correction (%)")
     tag(ax, "(b)")
 
     # (c) precipitation sink vs truth (production)
@@ -123,7 +123,7 @@ def main():
     ax.hist(pf[pf["epoch"] > trans]["drift_pct"], bins=bins, density=True, color=C_FIXED,
             alpha=0.6, label="pre-correction + penalty")
     ax.axvline(0, color="0.6", lw=0.6)
-    ax.set_xlabel("Water-budget drift (%)"); ax.set_ylabel("Density")
+    ax.set_xlabel("Required water-budget correction (%)"); ax.set_ylabel("Density")
     ax.legend(loc="upper right")
     tag(ax, "(d)")
 
