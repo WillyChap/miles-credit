@@ -1,13 +1,19 @@
 #!/usr/bin/env python3
 """Cache the E3 controlled-screen drift trajectories for Figure 1b/1c.
 
-Parses the two screen job logs (broken w0.0 and fix w0.1, both fine-tuned from the same
-cp00092_extended checkpoint, differing only in conservation_loss_weight) for the WaterFixer
-per-step drift and global precip sink, tracking the training epoch from the interleaved
-tqdm progress. Averages the four per-GPU-rank entries at each step. Writes
-screen_broken.csv and screen_fix.csv next to this script.
+Parses the four 2x2 ablation job logs, all fine-tuned from the same cp00092_extended
+checkpoint, for the WaterFixer per-step drift and global precip sink, tracking the
+training epoch from the interleaved tqdm progress. Averages the per-GPU-rank entries at
+each step. The 2x2 crosses supervised-loss placement (corrected vs raw, the v1 trainer's
+supervise_precorrection gate) with the imbalance penalty weight (0.0 vs 0.1):
 
-Re-run after the jobs finish to pick up the full 4-epoch trajectories:
+    A  corrected supervision, no penalty   (e3_v1_w0.0,     5032824)  -> the broken cell
+    B  corrected supervision, penalty 0.1  (e3_B_corr_w0.1, 5035892)
+    C  raw supervision,       no penalty   (e3_C_raw_w0.0,  5035893)
+    D  raw supervision,       penalty 0.1  (e3_v1_w0.1,     5032826)
+
+Writes screen_A.csv .. screen_D.csv (and screen_broken.csv/screen_fix.csv as aliases for
+A and D, kept for older figure scripts). Re-run after the jobs finish:
     python experiments/figure_data/build_screen_data.py
 """
 import os
@@ -20,8 +26,13 @@ LOGDIR = os.path.join(REPO, "experiments", "logs")
 
 # (output name, job id, label)
 CELLS = [
-    ("screen_broken.csv", "5032824", "w0.0 (feedback)"),
-    ("screen_fix.csv", "5032826", "w0.1 (decoupled + penalty)"),
+    ("screen_A.csv", "5032824", "A: corrected loss, no penalty"),
+    ("screen_B.csv", "5035892", "B: corrected loss, penalty 0.1"),
+    ("screen_C.csv", "5035893", "C: raw loss, no penalty"),
+    ("screen_D.csv", "5032826", "D: raw loss, penalty 0.1"),
+    # aliases for older scripts
+    ("screen_broken.csv", "5032824", "A (alias: broken)"),
+    ("screen_fix.csv", "5032826", "D (alias: fix)"),
 ]
 BATCHES_PER_EPOCH = 150
 RE_EPOCH = re.compile(r"Epoch:\s*(\d+).*?(\d+)/%d" % BATCHES_PER_EPOCH)

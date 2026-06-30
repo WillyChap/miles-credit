@@ -3,9 +3,10 @@
 
 (a) Production fine-tune: drift ramps under the feedback, the penalty is enabled at epoch
     16, then drift holds near zero for tens of epochs.
-(b) Controlled screen: two runs from the identical cp00092_extended checkpoint differing
-    only in conservation_loss_weight (0.0 vs 0.1); the feedback runs away, the penalty
-    holds drift at zero. This isolates the loss coupling as the cause.
+(b) 2x2 ablation from the identical cp00092_extended checkpoint, crossing supervised-loss
+    placement (corrected vs pre-correction) with penalty weight (0.0 vs 0.1). Only cell A
+    (corrected supervision, no penalty) runs away; flipping either knob (B or C) pins drift
+    near zero.
 (c) Global precipitation sink vs the CAM6 reference (production runs): the raw sink
     collapses under feedback and recovers under the penalty.
 (d) Drift distributions for the feedback and penalty configurations vs the CAM6 truth.
@@ -51,9 +52,9 @@ def main():
     pb = pd.read_csv(os.path.join(DATA, "drift_broken.csv"))
     pf = pd.read_csv(os.path.join(DATA, "drift_fixed.csv"))
     truth = pd.read_csv(os.path.join(DATA, "truth_water_budget_1980.csv"))
-    sb = pd.read_csv(os.path.join(DATA, "screen_broken.csv"))
-    sf = pd.read_csv(os.path.join(DATA, "screen_fix.csv"))
-    sb, sf = sb[sb["step"] > 1], sf[sf["step"] > 1]  # drop cold-start transient
+    # 2x2 ablation cells, all warm-started from the same checkpoint
+    cells = {c: pd.read_csv(os.path.join(DATA, f"screen_{c}.csv")) for c in "ABCD"}
+    cells = {c: df[df["epoch"] >= 0.25] for c, df in cells.items()}  # drop cold-start transient
 
     tm, ts = truth["drift_pct"].mean(), truth["drift_pct"].std()
     p_truth = truth["P_sink"].mean()
@@ -70,9 +71,9 @@ def main():
     ax = ax_a
     truthband(ax); ax.axhline(0, color="0.6", lw=0.6)
     ax.plot(pb["global_step"] / STEPS_PER_EPOCH, pb["drift_pct"], color=C_BROKEN,
-            label="feedback")
+            label="corrected, no penalty")
     ax.plot(pf["global_step"] / STEPS_PER_EPOCH, pf["drift_pct"], color=C_FIXED,
-            label="decoupled + penalty")
+            label="pre-correction + penalty")
     trans = pf["epoch"].min()
     ax.axvline(trans, color="0.35", lw=0.9, ls="--")
     ax.annotate("penalty enabled", xy=(trans, 6), xytext=(trans + 16, 16), fontsize=7,
@@ -81,21 +82,31 @@ def main():
     ax.set_xlabel("Training epoch"); ax.set_ylabel("Water-budget drift (%)")
     tag(ax, "(a)")
 
-    # (b) controlled screen drift
+    # (b) 2x2 ablation: each cell its own color/marker. Warm = corrected supervision,
+    # cool = pre-correction supervision; darker shade = no penalty, lighter = penalty.
     ax = ax_b
     truthband(ax); ax.axhline(0, color="0.6", lw=0.6)
-    ax.plot(sb["epoch"], sb["drift_pct"], color=C_BROKEN, marker="o", ms=2.5, label="weight 0.0")
-    ax.plot(sf["epoch"], sf["drift_pct"], color=C_FIXED, marker="o", ms=2.5, label="weight 0.1")
-    ax.legend(loc="center right", title="same checkpoint", title_fontsize=6.5)
+    ablation = [
+        ("A", C_BROKEN, "-", "o", "corrected, no penalty"),       # vermillion (= (a/c/d) broken run)
+        ("B", "#E69F00", "--", "s", "corrected, penalty"),        # orange
+        ("C", "#56B4E9", "-", "^", "pre-correction, no penalty"), # sky blue
+        ("D", C_FIXED, "--", "D", "pre-correction, penalty"),     # blue (= (a/c/d) fixed run)
+    ]
+    for c, color, ls, mk, lab in ablation:
+        df = cells[c]
+        ax.plot(df["epoch"], df["drift_pct"], color=color, ls=ls, marker=mk, ms=2.6,
+                mew=0, label=f"{c}: {lab}")
+    ax.legend(loc="center left", fontsize=6.0, handlelength=2.0)
+    ax.set_ylim(-12, 78)
     ax.set_xlabel("Training epoch"); ax.set_ylabel("Water-budget drift (%)")
     tag(ax, "(b)")
 
     # (c) precipitation sink vs truth (production)
     ax = ax_c
     ax.plot(pb["global_step"] / STEPS_PER_EPOCH, pb["P_sink"] / PSINK_SCALE, color=C_BROKEN,
-            label="feedback")
+            label="corrected, no penalty")
     ax.plot(pf["global_step"] / STEPS_PER_EPOCH, pf["P_sink"] / PSINK_SCALE, color=C_FIXED,
-            label="decoupled + penalty")
+            label="pre-correction + penalty")
     ax.axhline(p_truth / PSINK_SCALE, color=C_TRUTH, lw=1.1, ls="--", label="CAM6 truth")
     ax.axvline(trans, color="0.35", lw=0.9, ls="--")
     ax.set_xlabel("Training epoch"); ax.set_ylabel(r"Precip sink ($10^{10}\ \mathrm{kg\,s^{-1}}$)")
@@ -108,9 +119,9 @@ def main():
     ax.hist(truth["drift_pct"], bins=bins, density=True, color=C_TRUTH, alpha=0.55,
             label="CAM6 truth")
     ax.hist(pb["drift_pct"], bins=bins, density=True, color=C_BROKEN, alpha=0.55,
-            label="feedback")
+            label="corrected, no penalty")
     ax.hist(pf[pf["epoch"] > trans]["drift_pct"], bins=bins, density=True, color=C_FIXED,
-            alpha=0.6, label="decoupled + penalty")
+            alpha=0.6, label="pre-correction + penalty")
     ax.axvline(0, color="0.6", lw=0.6)
     ax.set_xlabel("Water-budget drift (%)"); ax.set_ylabel("Density")
     ax.legend(loc="upper right")
@@ -118,7 +129,8 @@ def main():
 
     for ext in ("pdf", "png"):
         fig.savefig(f"{OUT}.{ext}", bbox_inches="tight")
-    print(f"wrote {OUT}.pdf and {OUT}.png  (screen pts: broken={len(sb)}, fix={len(sf)})")
+    print(f"wrote {OUT}.pdf and {OUT}.png  "
+          f"(ablation pts: " + ", ".join(f"{c}={len(cells[c])}" for c in 'ABCD') + ")")
 
 
 if __name__ == "__main__":

@@ -8,7 +8,7 @@ Ordered launch plan and the preserved, documented configs live in `experiments/`
 (`experiments/README.md` + `experiments/configs/`). The gaps G2–G6 below are ordered there
 as E1–E6.
 
-Last updated 2026-06-29. Drift trajectories were extracted from the training logs in
+Last updated 2026-06-30. Drift trajectories were extracted from the training logs in
 `rechunk_logs/` and are filled in below; no values remain pending.
 
 ---
@@ -26,8 +26,13 @@ All logs live under `/glade/work/wchapman/Roman_Coupling/train_johns/rechunk_log
 | R3 | v2 penalty-only path | `NEW_CLI_JOHN_CASPER_small/` | `era5-v2` | on, outside | **unconfirmed** (not logged; config says 0.5) | post-correction + penalty + intermediate | `ps_wxformer_CESM_6h.o*` (0–68, drift 30–68) | **unstable**: osc. −15 to −30%, epoch-53 fork → **+389% + NaN**, restart recovers to last-5 mean +1.15%, std 2.07% | ⚠ confounded |
 | R5 | energy-fixer test | `NEW_CLI_JOHN_CASPER_energy_test/` | ? | n/a | n/a | n/a | n/a (2 epochs logged) | n/a | not used |
 | T1 | **Ground-truth budget** | n/a (CSV in repo) | n/a | n/a | n/a | n/a | `water_budget_1980.csv` | mean 0.024%, std 2.22% | ✓ have |
+| A | **2×2 cell A** (broken) | `CREDIT_runs/e3_v1_w0.0/` | `era5` (v1) | on, outside | 0.0 | post-correction (gate) | `5032824.casper-pbs.OU` (0–4) | **runaway**, settled mean +60%, peaks 72% | ✓ have |
+| B | **2×2 cell B** | `CREDIT_runs/e3_B_corr_w0.1/` | `era5` (v1) | on, outside | 0.1 | post-correction (`supervise_precorrection: False`) | `5035892.casper-pbs.OU` (0–4) | drift +0.5% ± 1.6% | ✓ have |
+| C | **2×2 cell C** | `CREDIT_runs/e3_C_raw_w0.0/` | `era5` (v1) | on, outside | 0.0 | pre-correction (`supervise_precorrection: True`) | `5035893.casper-pbs.OU` (0–4) | drift +1.1% ± 3.1% | ✓ have |
+| D | **2×2 cell D** (fix) | `CREDIT_runs/e3_v1_w0.1/` | `era5` (v1) | on, outside | 0.1 | pre-correction (gate) | `5032826.casper-pbs.OU` (0–4) | drift +0.1% ± 1.6% | ✓ have |
 
 Notes (from log parse):
+- **The 2×2 ablation (A/B/C/D) is complete and is now the paper's strongest causal evidence** (Fig. 1b, §5). All four warm-start from the same `cp00092_extended` checkpoint and cross supervised target (corrected vs raw, the v1 `supervise_precorrection` gate) with penalty weight (0 vs 0.1). Clean double dissociation: only cell A (corrected + no penalty) runs away; flipping either knob (B or C) pins drift near zero, both together (D) tightest. Stats over epoch>0.5. Data cached in `experiments/figure_data/screen_{A,B,C,D}.csv`; rebuild via `experiments/figure_data/build_screen_data.py` then `experiments/figures/plot_fig1.py`.
 - Only R2 logs the init line `trainerERA5:WaterFixer: MSE loss on pre-correction prediction + conservation penalty weight=0.1000`, confirming both the **v1 pre-correction decouple** and the **0.1 weight**. This is direct evidence for the fix the paper recommends as principled.
 - R1 and R2 share one `save_loc` and checkpoint history (`training_log.csv` epochs 0–79). R2 is the continuation of R1 after the fix.
 - **R1b is a second, independent occurrence of the same feedback failure** (drifts further, to ~45%). Reproducibility of the failure, not a one-off.
@@ -69,7 +74,10 @@ Status: ✓ sufficient · ⚠ partial/confounded · ✗ not in hand
 | C7 Fix is stable long-horizon **in training** | R2: epochs 16–79, last-5 mean +0.11%, std 0.83%, no secular drift | ✓ | this is training-step drift; free-running rollout drift is separate (G4) |
 | C8 Training-time conservation beats inference-only | none (relies on prior work) | ✗ | needs G2 or cite-only |
 | C9 float64 accumulation removes ~0.6% rounding | code (`physics_core.py`) | ⚠ | could add a 5-line numerical demo (G6) |
-| C10 Outcome depends on penalty weight | 3 configs at 0.05/0.1/0.5, not controlled | ⚠ | not a clean sweep (G3) |
+| C10 Outcome depends on penalty weight | 3 configs at 0.05/0.1/0.5, not controlled | ⚠ | not a clean sweep (G3); but the 2×2 below cleanly contrasts weight 0 vs 0.1 |
+| C12 Runaway needs corrected-supervision **and** no penalty (double dissociation) | 2×2 cells A/B/C/D, common checkpoint | ✓ | only A drifts; clean dissociation (Fig 1b, §5) |
+| C13 Raw supervision alone (no penalty) prevents runaway | cell C: +1.1% ± 3.1% | ✓ | confirms the mechanism: loss sees raw amplitude |
+| C14 Penalty alone stabilizes corrected-output supervision | cell B: +0.5% ± 1.6% | ✓ | establishes the alternative the draft previously only conjectured |
 | C11 Fix does not degrade forecast skill | `training_log.csv` (R1+R2) | ⚠ | confounded: loss jumps at epochs 20 & 36 (rollout/fixer-set changes) → not a clean on/off comparison |
 | Fig 2 schematic (gradient paths) | none | ✗ | to draw (not an experiment) |
 
