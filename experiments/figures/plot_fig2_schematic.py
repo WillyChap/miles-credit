@@ -3,8 +3,9 @@
 
 Three stacked panels showing the training computational graph for:
   (a) no constraint
-  (b) hard corrector inside the loss (feedback): the supervised gradient flows back
-      THROUGH the corrector (exploitable path, highlighted)
+  (b) hard corrector inside the loss (scale degeneracy): the loss sees only the corrected
+      output, so the raw-amplitude direction is annihilated by the corrector (J_C(P)P = 0,
+      gate highlighted) and no amplitude signal reaches the network
   (c) decoupled loss on the pre-correction prediction + additive imbalance penalty
 
 All configurations with the corrector active deliver a water budget closed to machine
@@ -120,18 +121,23 @@ def panel_a(ax):
 
 
 def panel_b(ax):
-    setup(ax, "b", "Hard corrector inside the loss  —  feedback")
+    setup(ax, "b", "Hard corrector inside the loss  —  scale degeneracy")
     _, net, raw, cor, del_ = _common(ax, True, "Delivered output\nbudget closed to\nmachine precision", FC_CLOSED, C_TRUTH)
     loss = box(ax, 8.6, YL, 2.7, 0.66, "Supervised loss vs $y_t$\n(sees $\\hat{y}_{\\mathrm{corr}}$)", FC_LOSS)
     arrow(ax, raw["R"], cor["L"]); arrow(ax, cor["R"], del_["L"])
     arrow(ax, cor["T"], loss["B"])
-    # EXPLOITABLE gradient: loss -> through corrector -> network (red bus, passes corrector)
+    # Backward gradient: from the loss along the bottom lane toward the network, but the
+    # raw-amplitude component is annihilated AT the corrector (J_C(P)P = 0). Solid up to the
+    # corrector gate, faded beyond it: no amplitude signal reaches the network.
     ax.plot([loss["c"][0], loss["c"][0]], [YL - 0.33, YG], color=C_BROKEN, ls=(0, (4, 2)), lw=1.7, zorder=2)
-    ax.plot([loss["c"][0], X_NET], [YG, YG], color=C_BROKEN, ls=(0, (4, 2)), lw=1.7, zorder=2)
-    arrow(ax, (X_NET, YG), (X_NET, YF - 0.45), color=C_BROKEN, ls=(0, (4, 2)), lw=1.7)
-    arrow(ax, (X_COR, YF - 0.45), (X_COR, YG), color=C_BROKEN, ls=(0, (4, 2)), lw=1.7)  # passes corrector
-    label(ax, (X_NET + X_COR) / 2, YG - 0.30,
-          "exploitable: $\\partial L/\\partial r$ flows through the corrector to the network",
+    ax.plot([loss["c"][0], X_COR], [YG, YG], color=C_BROKEN, ls=(0, (4, 2)), lw=1.7, zorder=2)
+    ax.plot([X_COR, X_NET], [YG, YG], color=C_BROKEN, ls=(0, (4, 2)), lw=1.7, alpha=0.25, zorder=2)
+    ax.plot([X_NET, X_NET], [YG, YF - 0.55], color=C_BROKEN, ls=(0, (4, 2)), lw=1.7, alpha=0.25, zorder=2)
+    # cancellation gate at the corrector (circle-slash)
+    ax.scatter([X_COR], [YG], s=170, facecolors="white", edgecolors=C_BROKEN, linewidths=1.7, zorder=5)
+    ax.plot([X_COR - 0.14, X_COR + 0.14], [YG - 0.14, YG + 0.14], color=C_BROKEN, lw=1.7, zorder=6)
+    label(ax, (X_COR + X_NET) / 2 - 0.1, YG - 0.30,
+          "raw-amplitude direction canceled:  $J_C(P)\\,P = 0$",
           color=C_BROKEN, fs=7.2)
     gauge(ax)
 
