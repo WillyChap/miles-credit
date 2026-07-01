@@ -47,7 +47,7 @@ The failure was therefore both physical and diagnostic. The raw precipitation am
 
 \section{Why the supervised loss could not see the degradation}\label{sec:mechanism}
 
-A loss that sees only the corrected field cannot tell whether the raw precipitation amplitude was right, doubled, or halved. The corrector rescales raw precipitation to whatever global total the budget demands: if the network multiplied its entire precipitation field by two, the corrector would simply halve its correction factor and deliver the identical output, the two changes cancelling exactly. Formally, let $P$ be the raw precipitation field and $Q$ the global precipitation total required by the predicted storage tendency and evaporation. The corrected field is
+A loss that sees only the corrected field cannot tell whether the raw precipitation amplitude was right, doubled, or halved. The corrector rescales raw precipitation to whatever global total the budget demands: if the network multiplied its entire precipitation field by two, the corrector would simply halve its correction factor and deliver the identical output, the two changes cancelling exactly. Formally, let $P$ be the raw precipitation field and $Q$ the global precipitation total required by the predicted storage tendency and evaporation. The correction operator $C$, the water fixer of Fig.~\ref{fig:schematic}, rescales the field to that total, so the corrected field is
 \begin{equation}
 C(P)=Q\frac{P}{\mathbf{1}^{T}P},\qquad C(cP)=C(P),\qquad J_C(P)P=0.
 \label{eq:null}
@@ -76,10 +76,10 @@ Two implementation details aided diagnosis. Global reductions should not be accu
 
 A hard corrector need not be excluded from every differentiable architecture \citep{beucler2021,zanetta2023,valente2025,harder2023hardconstrained}. The specific danger occurs when the corrected field is the sole supervised target and the correction operator has a nontrivial null direction corresponding to a physically meaningful property of the raw prediction. The loss then cannot identify that property unless another term constrains it.
 
-This yields a general diagnostic beyond multiplicative precipitation correction. Let $C(\hat y)$ be a differentiable correction and let the supervised objective be $\mathcal{L}_{\mathrm{sup}}(y,C(\hat y))$. Any perturbation $v$ satisfying $J_C(\hat y)v=0$ is locally invisible to that objective because
+This yields a general diagnostic beyond multiplicative precipitation correction. Let $C(\hat x)$ be a differentiable correction and let the supervised objective be $\mathcal{L}_{\mathrm{sup}}(x_{t+1},C(\hat x))$. Any perturbation $v$ satisfying $J_C(\hat x)v=0$ is locally invisible to that objective because
 \begin{equation}
-\left.\frac{d}{d\epsilon}\mathcal{L}_{\mathrm{sup}}\!\left(y,C(\hat y+\epsilon v)\right)\right|_{\epsilon=0}
-=\nabla_C\mathcal{L}_{\mathrm{sup}}^{T}J_C(\hat y)v=0.
+\left.\frac{d}{d\epsilon}\mathcal{L}_{\mathrm{sup}}\!\left(x_{t+1},C(\hat x+\epsilon v)\right)\right|_{\epsilon=0}
+=\nabla_C\mathcal{L}_{\mathrm{sup}}^{T}J_C(\hat x)v=0.
 \label{eq:generalnull}
 \end{equation}
 If $v$ represents a physically meaningful property and no other term identifies it, the raw model is nonidentifiable in that direction. The pretraining question is therefore not only whether the corrected field satisfies the constraint, but which information the correction removes from the learning problem.
@@ -137,9 +137,9 @@ The model code, configurations, job scripts, and figure-generation code are avai
 \appendix
 \appendixtitle{The conservation-coupled training loss}
 
-Let $\hat y$ be the network prediction and $y$ the target next state. The supervised term is a latitude- and variable-weighted error,
+Let $x_t$ be the input state, $\hat x_{t+1}$ the network prediction of the next state, and $x_{t+1}$ the target next state. The supervised term is a latitude- and variable-weighted error,
 \begin{equation}
-\mathcal{L}_{\mathrm{sup}}(y,\hat y)=\frac{1}{V}\sum_{v=1}^{V}\frac{1}{BHW}\sum_{b,i,j}w_vL_i^{\mathrm{lat}}\ell\!\left(y_{b,v,ij},\hat y_{b,v,ij}\right),
+\mathcal{L}_{\mathrm{sup}}(x_{t+1},\hat x_{t+1})=\frac{1}{V}\sum_{v=1}^{V}\frac{1}{BHW}\sum_{b,i,j}w_vL_i^{\mathrm{lat}}\ell\!\left(x_{b,v,ij},\hat x_{b,v,ij}\right),
 \end{equation}
 where $L_i^{\mathrm{lat}}=\cos(\varphi_i)^p/\overline{\cos(\varphi)^p}$ and $\ell$ is mean squared error.
 
@@ -161,10 +161,10 @@ The corrector applies $P\!\to\!r_bP$. The soft penalty is the normalized raw imb
 \end{equation}
 The stable objective is
 \begin{equation}
-\mathcal{L}=\mathcal{L}_{\mathrm{sup}}\!\left(y,\hat y_{\mathrm{pre}}\right)+\lambda_w\mathcal{L}_{\mathrm{water}},
+\mathcal{L}=\mathcal{L}_{\mathrm{sup}}\!\left(x_{t+1},\hat x^{\mathrm{pre}}_{t+1}\right)+\lambda_w\mathcal{L}_{\mathrm{water}},
 \label{eq:total}
 \end{equation}
-where $\hat y_{\mathrm{pre}}$ is the pre-correction prediction and $\lambda_w=0.1$ in the stable runs reported here. Evaluating the supervised term only on corrected precipitation removes the uniform-amplitude direction from that term, as shown by Eq.~\eqref{eq:null}; it does not by itself choose the direction of drift. Equation~\eqref{eq:total} restores direct supervision of raw amplitude and adds a gradient toward raw budget closure. Mass and energy correctors compute analogous factors but contribute no penalty here.
+where $\hat x^{\mathrm{pre}}_{t+1}$ is the pre-correction prediction and $\lambda_w=0.1$ in the stable runs reported here. Evaluating the supervised term only on corrected precipitation removes the uniform-amplitude direction from that term, as shown by Eq.~\eqref{eq:null}; it does not by itself choose the direction of drift. Equation~\eqref{eq:total} restores direct supervision of raw amplitude and adds a gradient toward raw budget closure. Mass and energy correctors compute analogous factors but contribute no penalty here.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \bibliographystyle{ametsocV6}
