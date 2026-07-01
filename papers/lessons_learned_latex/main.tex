@@ -113,7 +113,7 @@ The reported correction is measured per teacher-forced training step. We have no
 
 \begin{figure}[t]
 \noindent\includegraphics[width=19pc,angle=0]{fig02_schematic.pdf}\\
-\caption{Constraint placement. (a)~No constraint. (b)~A hard corrector inside the supervised path makes raw precipitation amplitude unidentifiable because uniform scaling lies in the correction Jacobian's null space. (c)~The supervised loss is evaluated on the pre-correction prediction and an additive penalty $(r-1)^2$ acts on its imbalance. In (b) and (c), the delivered output closes exactly; the configurations differ in what information reaches the training objective.}
+\caption{Constraint placement. The correction operator $C$ (the water fixer) multiplicatively rescales the raw precipitation field $P$ so the delivered water budget closes exactly; $C(\hat x)$ is the resulting corrected prediction, not a loss term. (a)~No constraint. (b)~A hard corrector inside the supervised path makes raw precipitation amplitude unidentifiable because uniform scaling of $P$ lies in the null space of the correction Jacobian ($J_C(P)\,P=0$), so the supervised loss, which sees only $C(\hat x)$, carries no gradient on that amplitude. (c)~The supervised loss is evaluated on the pre-correction prediction $\hat x^{\mathrm{pre}}_{t+1}$ and an additive penalty $(r-1)^2$ acts on its imbalance. In (b) and (c), the delivered output closes exactly; the configurations differ in what information reaches the training objective.}
 \label{fig:schematic}
 \end{figure}
 
