@@ -115,7 +115,7 @@ def _common(ax, with_corrector, del_text, del_fc, del_ec):
     net = box(ax, X_NET, YF, 1.7, 0.9, "Network", FC_NET)
     rawtxt = r"$\hat{x}_{t+1}$" if not with_corrector else r"$\hat{x}^{\mathrm{pre}}_{t+1}$"
     raw = box(ax, X_RAW, YF, 1.2, 0.7, rawtxt, FC_RAW)
-    cor = box(ax, X_COR, YF, 1.9, 0.9, "Water fixer\n$(\\times\\, r)$", FC_COR) if with_corrector else None
+    cor = box(ax, X_COR, YF, 1.9, 0.9, "Water fixer $C$\n$(\\times\\, r)$", FC_COR) if with_corrector else None
     del_ = box(ax, X_DEL, YF, 3.0, 0.95, del_text, del_fc, ec=del_ec)
     arrow(ax, inp["R"], net["L"]); arrow(ax, net["R"], raw["L"])
     return inp, net, raw, cor, del_
