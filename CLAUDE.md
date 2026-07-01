@@ -109,7 +109,7 @@ The WaterFixer (`GlobalWaterFixer.forward`, ~lines 690–803) computes, per step
 `dTWC/dt` (total water content tendency) → `E_src`, `P_sink` (area-weighted global sums) →
 `residual = -TWC_sum - E_sum - P_sum` → `P_correct_ratio = (P_sum + residual) / P_sum`, then scales
 PRECT by that ratio. It logs `drift_pct = 100*(ratio-1)` every 50 steps. Ground-truth drift is ≈0% (see
-`compute_water_budget_truth.py`, which reproduces the *exact* same physics on raw zarr for validation).
+`experiments/compute_water_budget_truth.py`, which reproduces the *exact* same physics on raw zarr for validation).
 
 ### The conservation-loss coupling (the key fork-specific behavior)
 

@@ -38,7 +38,7 @@ trust in the baseline; Phase 1 is the scientific core; Phase 2 is conditional po
 - What: extend the ground-truth water budget from 1 year to ~5 (1980–1984) to confirm the
   reference drift (mean 0.024%, std 2.22%) and its spread are stationary across years.
 - Why: the entire paper measures model drift against this baseline; one year is a weak base.
-- How: `python compute_water_budget_truth.py --years 1980 1981 1982 1983 1984 --out experiments/out/water_budget_1980_1984.csv`
+- How: `python experiments/compute_water_budget_truth.py --years 1980 1981 1982 1983 1984 --out experiments/out/water_budget_1980_1984.csv`
 - Cost: minutes, CPU. Supports claim C1.
 
 **E2. float32-vs-float64 rounding demo** (was G6)

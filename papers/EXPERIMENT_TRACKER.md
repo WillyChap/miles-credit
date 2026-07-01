@@ -52,7 +52,7 @@ Notes (from log parse):
 | climate_new (infer) | `climate/camulator_config_new.yml` | n/a | on/outside, 0.05 | n/a | inference rollout |
 
 Reference checkpoints / data (read-only, shared):
-- Ground-truth budget CSV: `water_budget_1980.csv` (repo root); generator `compute_water_budget_truth.py`.
+- Ground-truth budget CSV: `water_budget_1980.csv` (repo root); generator `experiments/compute_water_budget_truth.py`.
 - Pre-trained well-validated checkpoint (epoch 91): `/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/CAMulator_models/checkpoint.pt00091.pt`.
 - Pre-made ICs for rollouts: `/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/init_times/`.
 - Drift figures already produced: `drift_comparison_combined.png`, `_old.png`, `_new.png`, `drift_comparison.png`; script `plot_drift_comparison.py`.
@@ -112,7 +112,7 @@ Beucler et al. (2021) across the abstract, §1, §4, and §5.
 | G3 | Clean v2-vs-v1 comparison: from one common checkpoint, fine-tune both trainers with matched rollout/LR; sweep weight (0.0, 0.05, 0.1, 0.5); record drift recovery + NaN incidence + skill | C6, C10 | **high** | 4–6 short fine-tunes | launch if the paper makes any claim about v2 or about weight sensitivity |
 | G4 | Long free-running climate rollout (≥1 yr) from the R2 checkpoint via `Quick_Climate.py`; measure budget drift over the rollout, not just per training step | C7 limitation | **high** | 1–2 inference rollouts | recommended; closes the main limitation (rollout vs training drift) |
 | G2 | Inference-only baseline: fixer OFF in training, applied only at inference; compare drift + skill to R2 | C8 | med | 1 fine-tune | only if we want first-party evidence vs citing prior work |
-| G5 | Multi-year truth budget (1980–1984) to confirm ±2.2% spread is stationary | C1 limitation | low | cheap (`compute_water_budget_truth.py --years`) | optional |
+| G5 | Multi-year truth budget (1980–1984) to confirm ±2.2% spread is stationary | C1 limitation | low | cheap (`experiments/compute_water_budget_truth.py --years`) | optional |
 | G6 | float32-vs-float64 numerical demo of the ~0.6% rounding | C9 | low | trivial script | optional |
 
 **Recommended minimal launch set:** G3 and G4. G3 is now the pivotal one: without a clean

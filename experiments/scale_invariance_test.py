@@ -23,7 +23,7 @@ import numpy as np
 import torch
 import xarray as xr
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from compute_water_budget_truth import build_physics_core, RHO_WATER, N_SECONDS, ZARR_TMPL  # noqa: E402
 
 

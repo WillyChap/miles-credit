@@ -16,11 +16,11 @@ Formula (identical to _postblock.py GlobalWaterFixer.forward):
     residual    = -TWC_sum - E_sum - P_sum
     drift_pct   = 100 * residual / P_sum
 
-Usage:
-    python compute_water_budget_truth.py --years 1980              # single year
-    python compute_water_budget_truth.py --years 1980 1981 1982    # multiple years
-    python compute_water_budget_truth.py --years 1980-2012         # range
-    python compute_water_budget_truth.py --out water_budget.csv    # custom output path
+Usage (run from the repo root):
+    python experiments/compute_water_budget_truth.py --years 1980              # single year
+    python experiments/compute_water_budget_truth.py --years 1980 1981 1982    # multiple years
+    python experiments/compute_water_budget_truth.py --years 1980-2012         # range
+    python experiments/compute_water_budget_truth.py --out water_budget.csv    # custom output path
 """
 
 import argparse

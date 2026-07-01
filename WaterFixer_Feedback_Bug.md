@@ -16,10 +16,10 @@ then stalls — the model learns a degenerate solution, not a balanced one.
 ```bash
 cd /glade/work/wchapman/Roman_Coupling/train_johns
 
-python compute_water_budget_truth.py --years 1980 --out water_budget_1980.csv
+python experiments/compute_water_budget_truth.py --years 1980 --out water_budget_1980.csv
 ```
 
-Script: `train_johns/compute_water_budget_truth.py`
+Script: `train_johns/experiments/compute_water_budget_truth.py`
 
 Computes dTWC/dt, E_src, P_sink, residual, drift_pct at every 6-hourly timestep
 in one year of CESM training data using the **exact same physics** as
@@ -221,7 +221,7 @@ train_johns/camulator_v2_consfix.o*   # epoch 16+ (fix active)
 
 | File | Purpose |
 |---|---|
-| `train_johns/compute_water_budget_truth.py` | Compute ground-truth P_sink/E_src/dTWC/dt/residual/drift_pct from zarr |
+| `train_johns/experiments/compute_water_budget_truth.py` | Compute ground-truth P_sink/E_src/dTWC/dt/residual/drift_pct from zarr |
 | `train_johns/plot_water_budget_truth.py` | Plot the ground-truth CSV (4-panel) |
 | `train_johns/plot_drift_comparison.py` | Parse training logs + compare model drift to truth |
 | `train_johns/water_budget_1980.csv` | Ground-truth water budget output (1980, 1459 rows) |
