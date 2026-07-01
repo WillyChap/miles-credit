@@ -57,7 +57,7 @@ def main():
     cells = {c: df[df["epoch"] >= 0.25] for c, df in cells.items()}  # drop cold-start transient
 
     tm, ts = truth["drift_pct"].mean(), truth["drift_pct"].std()
-    p_truth = truth["P_sink"].mean()
+    p_truth, p_std_sink = truth["P_sink"].mean(), truth["P_sink"].std()
 
     fig, axes = plt.subplots(2, 2, figsize=(7.2, 5.7))
     fig.subplots_adjust(left=0.09, right=0.975, top=0.94, bottom=0.09, hspace=0.45, wspace=0.27)
@@ -103,11 +103,13 @@ def main():
 
     # (c) precipitation sink vs truth (production)
     ax = ax_c
+    ax.axhspan((p_truth - p_std_sink) / PSINK_SCALE, (p_truth + p_std_sink) / PSINK_SCALE,
+               color=C_TRUTH, alpha=0.15, zorder=0)
     ax.plot(pb["global_step"] / STEPS_PER_EPOCH, pb["P_sink"] / PSINK_SCALE, color=C_BROKEN,
             label="corrected, no penalty")
     ax.plot(pf["global_step"] / STEPS_PER_EPOCH, pf["P_sink"] / PSINK_SCALE, color=C_FIXED,
             label="pre-correction + penalty")
-    ax.axhline(p_truth / PSINK_SCALE, color=C_TRUTH, lw=1.1, ls="--", label="CAM6 truth")
+    ax.axhline(p_truth / PSINK_SCALE, color=C_TRUTH, lw=1.1, ls="--", label="CAM6 mean sink")
     ax.axvline(trans, color="0.35", lw=0.9, ls="--")
     ax.set_xlabel("Training epoch"); ax.set_ylabel(r"Precip sink ($10^{10}\ \mathrm{kg\,s^{-1}}$)")
     ax.legend(loc="lower right")
