@@ -1,35 +1,39 @@
 #!/usr/bin/env python3
-"""Figure 1 for the Lessons Learned paper (2x2).
+"""Fine-tuning-run figure for the Lessons Learned paper (2x2).
 
-(a) Production fine-tune: drift ramps under the feedback, the penalty is enabled at epoch
-    16, then drift holds near zero for tens of epochs.
-(b) 2x2 ablation from the identical cp00092_extended checkpoint, crossing supervised-loss
-    placement (corrected vs pre-correction) with penalty weight (0.0 vs 0.1). Only cell A
-    (corrected supervision, no penalty) runs away; flipping either knob (B or C) pins drift
-    near zero.
-(c) Global precipitation sink vs the CAM6 reference (production runs): the raw sink
-    collapses under feedback and recovers under the penalty.
-(d) Drift distributions for the feedback and penalty configurations vs the CAM6 truth.
+The production fine-tune only: the corrected-output feedback and its recovery under
+pre-correction supervision with a penalty. The controlled 2x2 ablation lives in its own
+figure now (plot_fig_ablation.py).
 
-Reads cached CSVs in experiments/figure_data/. Re-run after the screen jobs finish to
-refresh (b). Writes experiments/figures/fig1.{pdf,png}.
+(a) Required water-budget correction vs epoch: drift ramps under corrected-output
+    supervision, the penalty is enabled at the handoff, then drift holds near zero.
+(b) Correction distributions for the feedback and penalty configurations vs the CAM6 truth.
+(c) Global precipitation sink vs the CAM6 reference: the raw sink collapses under feedback
+    and recovers under the penalty.
+(d) Only the water correction runs away: magnitudes of the global mass, water, and energy
+    corrections (|r-1|, log scale) during the feedback run. Mass and energy stay near the
+    CAM6 natural per-step spread; water climbs to ~24%.
+
+Reads cached CSVs in experiments/figure_data/. Writes experiments/figures/fig_finetune.{pdf,png}.
 """
 import os
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 import numpy as np
 import pandas as pd
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(HERE, "..", "figure_data")
-OUT = os.path.join(HERE, "fig1")
+OUT = os.path.join(HERE, "fig_finetune")
 
 STEPS_PER_EPOCH = 150
 PSINK_SCALE = 1e10
-C_BROKEN = "#D55E00"
-C_FIXED = "#0072B2"
-C_TRUTH = "#009E73"
+C_BROKEN = "#D55E00"   # vermillion
+C_FIXED = "#0072B2"    # blue
+C_TRUTH = "#009E73"    # green
+C_WATER = C_BROKEN     # water correction is the broken corrector
+C_MASS = C_FIXED
+C_ENERGY = "#CC79A7"   # reddish purple
 
 
 def style():
@@ -52,12 +56,11 @@ def main():
     pb = pd.read_csv(os.path.join(DATA, "drift_broken.csv"))
     pf = pd.read_csv(os.path.join(DATA, "drift_fixed.csv"))
     truth = pd.read_csv(os.path.join(DATA, "truth_water_budget_1980.csv"))
-    # 2x2 ablation cells, all warm-started from the same checkpoint
-    cells = {c: pd.read_csv(os.path.join(DATA, f"screen_{c}.csv")) for c in "ABCD"}
-    cells = {c: df[df["epoch"] >= 0.25] for c, df in cells.items()}  # drop cold-start transient
+    fx = pd.read_csv(os.path.join(DATA, "fixer_control_broken.csv"))
 
     tm, ts = truth["drift_pct"].mean(), truth["drift_pct"].std()
     p_truth = truth["P_sink"].mean()
+    trans = pf["epoch"].min()
 
     fig, axes = plt.subplots(2, 2, figsize=(7.2, 5.7))
     fig.subplots_adjust(left=0.09, right=0.975, top=0.94, bottom=0.09, hspace=0.45, wspace=0.27)
@@ -74,7 +77,6 @@ def main():
             label="corrected, no penalty")
     ax.plot(pf["global_step"] / STEPS_PER_EPOCH, pf["drift_pct"], color=C_FIXED,
             label="pre-correction + penalty")
-    trans = pf["epoch"].min()
     ax.axvline(trans, color="0.35", lw=0.9, ls="--")
     ax.annotate("penalty enabled", xy=(trans, 6), xytext=(trans + 16, 16), fontsize=7,
                 color="0.35", arrowprops=dict(arrowstyle="->", color="0.35", lw=0.8))
@@ -82,26 +84,21 @@ def main():
     ax.set_xlabel("Training epoch"); ax.set_ylabel("Required water-budget correction (%)")
     tag(ax, "(a)")
 
-    # (b) 2x2 ablation: each cell its own color/marker. Warm = corrected supervision,
-    # cool = pre-correction supervision; darker shade = no penalty, lighter = penalty.
+    # (b) correction distributions
     ax = ax_b
-    truthband(ax); ax.axhline(0, color="0.6", lw=0.6)
-    ablation = [
-        ("A", C_BROKEN, "-", "o", "corrected, no penalty"),       # vermillion (= (a/c/d) broken run)
-        ("B", "#E69F00", "--", "s", "corrected, penalty"),        # orange
-        ("C", "#56B4E9", "-", "^", "pre-correction, no penalty"), # sky blue
-        ("D", C_FIXED, "--", "D", "pre-correction, penalty"),     # blue (= (a/c/d) fixed run)
-    ]
-    for c, color, ls, mk, lab in ablation:
-        df = cells[c]
-        ax.plot(df["epoch"], df["drift_pct"], color=color, ls=ls, marker=mk, ms=2.6,
-                mew=0, label=f"{c}: {lab}")
-    ax.legend(loc="center left", fontsize=6.0, handlelength=2.0)
-    ax.set_ylim(-12, 78)
-    ax.set_xlabel("Training epoch"); ax.set_ylabel("Required water-budget correction (%)")
+    bins = np.linspace(-8, 30, 40)
+    ax.hist(truth["drift_pct"], bins=bins, density=True, color=C_TRUTH, alpha=0.55,
+            label="CAM6 truth")
+    ax.hist(pb["drift_pct"], bins=bins, density=True, color=C_BROKEN, alpha=0.55,
+            label="corrected, no penalty")
+    ax.hist(pf[pf["epoch"] > trans]["drift_pct"], bins=bins, density=True, color=C_FIXED,
+            alpha=0.6, label="pre-correction + penalty")
+    ax.axvline(0, color="0.6", lw=0.6)
+    ax.set_xlabel("Required water-budget correction (%)"); ax.set_ylabel("Density")
+    ax.legend(loc="upper right")
     tag(ax, "(b)")
 
-    # (c) precipitation sink vs truth (production)
+    # (c) precipitation sink vs truth
     ax = ax_c
     ax.plot(pb["global_step"] / STEPS_PER_EPOCH, pb["P_sink"] / PSINK_SCALE, color=C_BROKEN,
             label="corrected, no penalty")
@@ -113,24 +110,25 @@ def main():
     ax.legend(loc="lower right")
     tag(ax, "(c)")
 
-    # (d) drift distributions
+    # (d) only water runs away: mass/water/energy correction magnitudes (log)
     ax = ax_d
-    bins = np.linspace(-8, 30, 40)
-    ax.hist(truth["drift_pct"], bins=bins, density=True, color=C_TRUTH, alpha=0.55,
-            label="CAM6 truth")
-    ax.hist(pb["drift_pct"], bins=bins, density=True, color=C_BROKEN, alpha=0.55,
-            label="corrected, no penalty")
-    ax.hist(pf[pf["epoch"] > trans]["drift_pct"], bins=bins, density=True, color=C_FIXED,
-            alpha=0.6, label="pre-correction + penalty")
-    ax.axvline(0, color="0.6", lw=0.6)
-    ax.set_xlabel("Required water-budget correction (%)"); ax.set_ylabel("Density")
-    ax.legend(loc="upper right")
+    nat = ts  # CAM6 natural per-step budget spread
+    ep = fx["global_step"] / STEPS_PER_EPOCH
+    ax.axhspan(1e-3, nat, color="0.85", zorder=0)
+    ax.axhline(nat, color="0.6", lw=0.8, ls=":", zorder=1)
+    ax.text(ep.max(), nat * 1.25, "CAM6 natural spread", ha="right", va="bottom",
+            fontsize=6.5, color="0.45")
+    ax.plot(ep, fx["water"], color=C_WATER, marker="o", ms=3, label="water (precip)")
+    ax.plot(ep, fx["mass"], color=C_MASS, marker="s", ms=3, label="mass (q, $p_s$)")
+    ax.plot(ep, fx["energy"], color=C_ENERGY, marker="^", ms=3, label="energy (T)")
+    ax.set_yscale("log"); ax.set_ylim(1e-3, 1e2)
+    ax.set_xlabel("Training epoch"); ax.set_ylabel(r"Correction magnitude $|r-1|$ (%)")
+    ax.legend(loc="center right")
     tag(ax, "(d)")
 
     for ext in ("pdf", "png"):
         fig.savefig(f"{OUT}.{ext}", bbox_inches="tight")
-    print(f"wrote {OUT}.pdf and {OUT}.png  "
-          f"(ablation pts: " + ", ".join(f"{c}={len(cells[c])}" for c in 'ABCD') + ")")
+    print(f"wrote {OUT}.pdf and {OUT}.png")
 
 
 if __name__ == "__main__":
