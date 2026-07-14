@@ -1181,6 +1181,10 @@ class GlobalEnergyFixerUpDown(nn.Module):
         self.surf_SH_ind = int(cfg["surf_SH_ind"])
         self.surf_LH_ind = int(cfg["surf_LH_ind"])
 
+        # How often to log the energy-budget diagnostic (forward passes). Set to 1
+        # in a rollout to trace every step; the default keeps long-run logs quiet.
+        self.log_every = int(cfg.get("log_every", 50))
+
         # ------------------------------------------------------------------ #
         # Optional denorm: load per-variable mean/std directly from NC files.
         # We do selective channel-wise denorm in forward() rather than full
@@ -1361,29 +1365,59 @@ class GlobalEnergyFixerUpDown(nn.Module):
         expected_TE_t1 = global_TE_t0 + flux_correction
         E_correct_ratio = expected_TE_t1 / global_TE_t1
 
-        # Diagnostic: log energy budget every 50 forward passes
         self._fixer_calls = getattr(self, "_fixer_calls", 0) + 1
-        if self._fixer_calls % 50 == 1:
-            r   = E_correct_ratio.detach().float()
-            te0 = global_TE_t0.detach().float()
-            te1 = global_TE_t1.detach().float()
-            exp = expected_TE_t1.detach().float()
-            # TE_after = global_TE_t1 * ratio = expected_TE_t1 by construction
-            logger.info(
-                "EnergyFixer step %d | "
-                "TE_t0=%.4e  TE_t1_before=%.4e  TE_t1_target=%.4e  "
-                "drift=%.4e (%.4f%%)  ratio mean=%.6f  min=%.6f  max=%.6f",
-                self._fixer_calls,
-                te0.mean().item(), te1.mean().item(), exp.mean().item(),
-                (te1 - te0).mean().item(),
-                100 * (te1 - te0).mean().item() / te0.mean().item(),
-                r.mean().item(), r.min().item(), r.max().item(),
-            )
+        log_now = (self._fixer_calls % self.log_every == 1) or self.log_every == 1
 
-        E_correct_ratio = E_correct_ratio.unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)
+        # Guard: the fixer is only meaningful on PHYSICAL units. If it is ever fed
+        # normalized values (denorm misconfigured, or mean/std paths wrong), every
+        # budget term below is garbage and the rollout will diverge. Fail loudly here
+        # rather than mysteriously hundreds of steps into a run.
+        if log_now or self._fixer_calls == 1:
+            t_mean = T_input.detach().float().mean().item()
+            if not (150.0 < t_mean < 350.0):
+                logger.error(
+                    "EnergyFixer: T_input global mean = %.3f K is not physical (expected 150-350 K). "
+                    "The fixer is being fed NORMALIZED data — check denorm / mean_path / std_path. "
+                    "Energy corrections are meaningless until this is fixed.",
+                    t_mean,
+                )
 
-        E_t1_correct = E_level_t1 * E_correct_ratio
-        T_pred = (E_t1_correct - E_qgk_t1) / CP_t1
+        E_correct_ratio_b = E_correct_ratio.unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)
+
+        E_t1_correct = E_level_t1 * E_correct_ratio_b
+        T_pred_corrected = (E_t1_correct - E_qgk_t1) / CP_t1
+
+        # ---- Diagnostics: the RESIDUAL CORRECTION MAGNITUDE -------------------
+        # `residual` is the gap between the model's own energy tendency and what its
+        # predicted fluxes claim; the fixer forces that gap onto T every step. For
+        # reference, ERA5-scaled truth closes this budget to ~0.4 W/m^2. Reported in
+        # W/m^2 and K/step because the raw total energy (~1.3e24 J) is far too large
+        # for a fatal drift to be visible in it.
+        if log_now:
+            with torch.no_grad():
+                area = self.core_compute.area.to(global_TE_t0.device).sum()
+                flux_tendency = ((R_T_sum - F_S_sum) / area).float()            # W/m^2
+                model_tendency = (
+                    (global_TE_t1 - global_TE_t0) / self.N_seconds / area
+                ).float()                                                        # W/m^2
+                residual = flux_tendency - model_tendency                        # W/m^2
+                dT = (T_pred_corrected - T_pred).detach().float()                # K
+                r = E_correct_ratio.detach().float()
+                logger.info(
+                    "EnergyFixer step %d | residual=%+.3f W/m2 "
+                    "(model dTE/dt=%+.3f, fluxes say R_T-F_S=%+.3f) | "
+                    "correction dT mean=%+.4f K  |dT|max=%.4f K | "
+                    "ratio mean=%.6f min=%.6f max=%.6f",
+                    self._fixer_calls,
+                    residual.mean().item(),
+                    model_tendency.mean().item(),
+                    flux_tendency.mean().item(),
+                    dT.mean().item(),
+                    dT.abs().max().item(),
+                    r.mean().item(), r.min().item(), r.max().item(),
+                )
+
+        T_pred = T_pred_corrected
 
         # ------------------------------------------------------------------ #
         # Write corrected T back to y_pred (re-normalize if denorm was applied)

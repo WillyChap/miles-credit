@@ -34,6 +34,9 @@ import torch
 from credit.output import make_xarray, save_netcdf_increment
 
 logger = logging.getLogger(__name__)
+# Without this the root logger sits at WARNING and silently swallows the
+# conservation-fixer diagnostics (mass/water/energy correction magnitudes).
+logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(name)s:%(message)s")
 warnings.filterwarnings("ignore")
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 os.environ["OMP_NUM_THREADS"] = "1"
@@ -371,8 +374,15 @@ def run_climate_integration(pool: mp.Pool, context: dict, save_append: str = Non
     print("Time-stepping complete. Waiting for I/O to finish...")
     time.sleep(30)  # Allow async writes to complete
 
-    print(f"Integration finished. Energy fixer active: {stepper.flag_energy}")
-    return stepper.flag_energy
+    # Report BOTH energy fixers. CAMulator is trained with the up/down-flux variant
+    # (global_energy_fixer_updown), so reporting only `flag_energy` hides whether the
+    # constraint the model was trained under is actually being applied.
+    energy_active = stepper.flag_energy or stepper.flag_energy_updown
+    print(
+        f"Integration finished. Energy fixer active: {energy_active} "
+        f"(net={stepper.flag_energy}, updown={stepper.flag_energy_updown})"
+    )
+    return energy_active
 
 
 # ============================================================================

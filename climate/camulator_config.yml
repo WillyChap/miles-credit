@@ -426,15 +426,15 @@ model:
             U_inds: [0, 31]
             V_inds: [32, 63]
             sp_inds: 128
-            TOA_forcing_solar_ind: 130       # SOLIN: 130 prog + SOLIN at 130 (dyn_forcing first, static_first=False)
-            TOA_up_solar_ind: 145          # FSUTOA
-            TOA_up_OLR_ind: 146            # FLUT
-            surf_down_solar_ind: 141       # FSDS_J  (diag index 11 → ch 141)
-            surf_up_solar_ind: 143         # FSUS    (diag index 13 → ch 143)
-            surf_down_LW_ind: 142          # FLDS_J  (diag index 12 → ch 142)
-            surf_up_LW_ind: 144            # FLUS    (diag index 14 → ch 144)
-            surf_SH_ind: 139               # SHFLX   (diag index  9 → ch 139)
-            surf_LH_ind: 140               # LHFLX   (diag index 10 → ch 140)
+            TOA_forcing_solar_ind: 132       # SOLIN  (static_first=True: z_norm 130, LANDM_COSLAT 131, SOLIN 132)
+            TOA_up_solar_ind: 145          # FSUTOA  (diag 15)
+            TOA_up_OLR_ind: 146            # FLUT    (diag 16)
+            surf_down_solar_ind: 139       # FSDS_J  (diag  9)
+            surf_up_solar_ind: 141         # FSUS    (diag 11)
+            surf_down_LW_ind: 140          # FLDS_J  (diag 10)
+            surf_up_LW_ind: 142            # FLUS    (diag 12)
+            surf_SH_ind: 143               # SHFLX   (diag 13)
+            surf_LH_ind: 144               # LHFLX   (diag 14)
             
 
 loss:

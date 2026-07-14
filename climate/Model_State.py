@@ -38,7 +38,7 @@ except ImportError:
 
 # Import post-processing components
 try:
-    from credit.postblock import GlobalMassFixer, GlobalWaterFixer, GlobalEnergyFixer
+    from credit.postblock import GlobalMassFixer, GlobalWaterFixer, GlobalEnergyFixer, GlobalEnergyFixerUpDown
 
     POSTBLOCK_AVAILABLE = True
 except ImportError:
@@ -577,9 +577,20 @@ class CAMulatorStepper:
             self.opt_energy = GlobalEnergyFixer(post_conf)
             logger.info("Global energy fixer initialized (outside model)")
         if self.flag_energy_updown:
+            self.opt_energy_updown = GlobalEnergyFixerUpDown(post_conf)
             logger.info("Global energy fixer (updown) initialized (outside model)")
         if self.flag_tracer:
             logger.info("Tracer fixer initialized")
+
+        # The two energy fixers enforce the SAME global-energy budget by rescaling T,
+        # so running both would apply the correction twice. CAMulator is trained with
+        # the up/down-flux variant only; `global_energy_fixer` should stay deactivated.
+        if self.flag_energy and self.flag_energy_updown:
+            raise ValueError(
+                "Both global_energy_fixer and global_energy_fixer_updown are active. "
+                "They enforce the same energy budget and would double-correct T. "
+                "CAMulator uses the up/down variant: set global_energy_fixer.activate: False."
+            )
 
         # Wind filtering flag
         self.enable_wind_filtering = WINDPP_AVAILABLE
@@ -644,6 +655,12 @@ class CAMulatorStepper:
 
         if self.flag_energy:
             prediction = self.opt_energy({"y_pred": prediction, "x": model_input})["y_pred"]
+
+        # Up/down-flux energy fixer. This is the variant CAMulator is TRAINED with
+        # (see global_energy_fixer_updown in the config), so skipping it here would
+        # run inference under a different physics constraint than training.
+        if self.flag_energy_updown:
+            prediction = self.opt_energy_updown({"y_pred": prediction, "x": model_input})["y_pred"]
 
         return prediction
 
