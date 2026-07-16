@@ -48,7 +48,7 @@ CONFIG=${CONFIG:-./camulator_config.yml}
 # Set CONDA_ENV="" to skip activation (e.g. you already activated it).
 CONDA_ENV=${CONDA_ENV:-camulator}
 FOLD_OUT=${FOLD_OUT:-run_default}     # experiment subfolder under save_forecast
-MODEL_NAME=${MODEL_NAME:-checkpoint.pt00065.pt}  # checkpoint file inside save_loc (./assets)
+MODEL_NAME=${MODEL_NAME:-checkpoint.pt00069.pt}  # checkpoint file inside save_loc (./assets)
 AVG=${AVG:-monthly}                   # monthly (default) | daily | none(6-hourly)
 # ----------------------------------------------------------------------------
 

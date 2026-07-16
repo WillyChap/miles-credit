@@ -46,7 +46,7 @@ time) and ~6 GB of asset downloads (~4.5 GB checkpoint + 1.3 GB forcing +
 statics). Host RAM ~16 GB is plenty (the `#PBS mem` in `RunQuickClimate.sh` is
 deliberately over-provisioned for NCAR).
 
-The default model is **`checkpoint.pt00065.pt`** (training epoch 65). The HF repo
+The default model is **`checkpoint.pt00069.pt`** (training epoch 69). The HF repo
 hosts many epochs; pick one with `download_assets.py --checkpoint <name>` and set
 `MODEL_NAME` to match — see *Choosing a checkpoint* below.
 
@@ -123,12 +123,12 @@ Edit `camulator_config.yml` → `predict:`
 | `save_forecast` | Output root (default `./output/`). |
 
 …and the experiment knobs in `RunQuickClimate.sh`: `FOLD_OUT` (run name),
-`MODEL_NAME` (checkpoint file in `./assets/`, default `checkpoint.pt00065.pt`),
+`MODEL_NAME` (checkpoint file in `./assets/`, default `checkpoint.pt00069.pt`),
 and `AVG` (`monthly` default → monthly means; `daily`; `none` → 6-hourly).
 
 ### Choosing a checkpoint
 
-Many training epochs are hosted (`checkpoint.pt000NN.pt`). Default is epoch 65.
+Many training epochs are hosted (`checkpoint.pt000NN.pt`). Default is epoch 69.
 To use a different one, download it and set `MODEL_NAME` to the same name:
 
 ```bash
@@ -171,7 +171,7 @@ All config paths are `./assets/<file>`. Fill `./assets/` one of two ways:
 
 | File in `assets/` | ~Size | Used for | NCAR origin |
 |---|---|---|---|
-| `checkpoint.pt00065.pt` | 4.5 G | the trained model (default epoch; other epochs hosted too) | `…/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended_v2/checkpoint.pt00065.pt` |
+| `checkpoint.pt00069.pt` | 4.5 G | the trained model (default epoch; other epochs hosted too) | `…/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended_v2/checkpoint.pt00069.pt` |
 | `mean_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc` | 0.5 M | normalization mean | `…/b_credit_runs/` |
 | `std_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc` | 0.5 M | normalization std | `…/b_credit_runs/` |
 | `statics_b_credit_runs_f32_02.nc` | 50 M | static inputs + mass/water fixers | `…/b_credit_runs/` |
@@ -218,7 +218,7 @@ uploaded as the repo's `README.md`):
 willychap/camulator        (HF model repo)
 ├── README.md                          # the model card (from climate/MODEL_CARD.md)
 ├── inference_config.yaml              # = camulator_config.yml
-├── checkpoint.pt00065.pt              # default epoch (others: checkpoint.pt000NN.pt)
+├── checkpoint.pt00069.pt              # default epoch (others: checkpoint.pt000NN.pt)
 ├── forcing_data/
 │   ├── b.e21.CREDIT_climate_cyclic_1yr_f32coords.nc   # cyclic (default)
 │   └── b.e21.CREDIT_climate_branch_1980_2014.nc       # progressive (slim, ~10 GB)
@@ -276,7 +276,7 @@ training zarr on NCAR):
 
 ```bash
 python Make_Climate_Initial_Conditions.py -c ./camulator_config.yml \
-       --model_name checkpoint.pt00065.pt
+       --model_name checkpoint.pt00069.pt
 ```
 
 ---

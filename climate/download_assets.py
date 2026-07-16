@@ -66,8 +66,8 @@ def main():
     ap.add_argument("--revision", default=None, help="Branch/tag/commit to pull (default: main)")
     ap.add_argument("--assets_dir", default=os.path.join(os.path.dirname(__file__), "assets"),
                     help="Where to place the files (default: ./assets)")
-    ap.add_argument("--checkpoint", default="checkpoint.pt00065.pt",
-                    help="checkpoint file to fetch from the repo (default: checkpoint.pt00065.pt). "
+    ap.add_argument("--checkpoint", default="checkpoint.pt00069.pt",
+                    help="checkpoint file to fetch from the repo (default: checkpoint.pt00069.pt). "
                          "Set the same name as MODEL_NAME when you run.")
     ap.add_argument("--checkpoints", nargs="+", default=None,
                     help="fetch several checkpoints at once (overrides --checkpoint)")
