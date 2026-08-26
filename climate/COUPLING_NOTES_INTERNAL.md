@@ -1,3 +1,12 @@
+<!-- Internal working notes -- deliberately not named README.md so GitHub does not
+     render it as the landing page for this directory. -->
+
+> **Internal working notes, not user-facing documentation.**
+> This guide targets a specific NCAR HPC setup and depends on CESM/CAM/CIME forks that
+> are not part of a CREDIT release. Paths, project codes and queue settings are
+> environment-specific and will not work as written elsewhere. For supported CREDIT
+> usage see `docs/` and `QUICKSTART.md`.
+
 # CAMulator ↔ POP Coupling via CESM2/CDEPS
 
 This document covers the coupling of CAMulator (the CREDIT AI atmosphere) to POP2 (ocean) + CICE5 (sea ice) inside CESM 2.1.5 on Derecho/Casper.

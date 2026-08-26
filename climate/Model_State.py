@@ -36,14 +36,42 @@ except ImportError:
     CREDIT_AVAILABLE = False
     logging.warning("CREDIT modules not fully available - initialization may be limited")
 
-# Import post-processing components
+# Import post-processing components.
+#
+# CREDIT gen2 (v2026.2) split the postblocks in two:
+#   * ``credit.postblock.gen1``      - the original channel-index fixers, ``__init__(post_conf)``
+#   * ``credit.postblock.conservation`` - gen2 rewrites taking named variables/kwargs
+# and re-pointed the top-level ``credit.postblock`` re-exports at the gen2 versions,
+# while dropping ``GlobalEnergyFixer`` from them entirely.
+#
+# Model_State drives the model with flat channel-index tensors and a gen1 ``post_conf``
+# block, so it must bind the gen1 classes.  Prefer ``credit.postblock.gen1`` and fall
+# back to the flat ``credit.postblock`` namespace on pre-gen2 CREDIT.
+#
+# NOTE: a bare ``from credit.postblock import ... GlobalEnergyFixer`` raises ImportError
+# under gen2, which this try/except would swallow -- silently disabling *every*
+# conservation fixer (mass, water AND energy) while the run looks healthy.  Keep the
+# failure loud: the exception is logged, not just the fact that something went wrong.
 try:
-    from credit.postblock import GlobalMassFixer, GlobalWaterFixer, GlobalEnergyFixer
+    try:
+        from credit.postblock.gen1 import (
+            GlobalMassFixer,
+            GlobalWaterFixer,
+            GlobalEnergyFixer,
+            GlobalEnergyFixerUpDown,
+        )
+    except ImportError:  # pre-gen2 CREDIT: gen1 fixers live at the package root
+        from credit.postblock import (
+            GlobalMassFixer,
+            GlobalWaterFixer,
+            GlobalEnergyFixer,
+            GlobalEnergyFixerUpDown,
+        )
 
     POSTBLOCK_AVAILABLE = True
-except ImportError:
+except ImportError as exc:
     POSTBLOCK_AVAILABLE = False
-    logging.warning("credit.postblock not available - conservation fixers disabled")
+    logging.warning("credit.postblock not available - CONSERVATION FIXERS DISABLED (%s)", exc)
 
 try:
     from WindPP import post_process_wind_artifacts
@@ -544,23 +572,50 @@ class CAMulatorStepper:
         """
         post_conf = self.conf["model"]["post_conf"]
 
-        # Check which conservation fixers are enabled
-        self.flag_mass = POSTBLOCK_AVAILABLE and post_conf["activate"] and post_conf["global_mass_fixer"]["activate"]
-        self.flag_water = POSTBLOCK_AVAILABLE and post_conf["activate"] and post_conf["global_water_fixer"]["activate"]
-        self.flag_energy = (
-            POSTBLOCK_AVAILABLE and post_conf["activate"] and post_conf["global_energy_fixer"]["activate"]
-        )
+        # Check which conservation fixers are enabled.
+        # Only activate OUTSIDE the model if activate_outside_model=True.
+        # When activate_outside_model=False (default), the fixer already runs
+        # inside model.forward() via PostBlock -- running it again here would
+        # double-apply it and corrupt the output (e.g. flip PRECT sign).
+        def _outside(key):
+            return (
+                POSTBLOCK_AVAILABLE
+                and post_conf["activate"]
+                and post_conf.get(key, {}).get("activate", False)
+                and post_conf[key].get("activate_outside_model", False)
+            )
+
+        self.flag_mass = _outside("global_mass_fixer")
+        self.flag_water = _outside("global_water_fixer")
+        self.flag_energy = _outside("global_energy_fixer")
+        self.flag_energy_updown = _outside("global_energy_fixer_updown")
+        self.flag_tracer = post_conf.get("activate", False) and post_conf.get("tracer_fixer", {}).get("activate", False)
 
         # Initialize conservation fixers
         if self.flag_mass:
             self.opt_mass = GlobalMassFixer(post_conf)
-            logger.info("Global mass fixer initialized")
+            logger.info("Global mass fixer initialized (outside model)")
         if self.flag_water:
             self.opt_water = GlobalWaterFixer(post_conf)
-            logger.info("Global water fixer initialized")
+            logger.info("Global water fixer initialized (outside model)")
         if self.flag_energy:
             self.opt_energy = GlobalEnergyFixer(post_conf)
-            logger.info("Global energy fixer initialized")
+            logger.info("Global energy fixer initialized (outside model)")
+        if self.flag_energy_updown:
+            self.opt_energy_updown = GlobalEnergyFixerUpDown(post_conf)
+            logger.info("Global energy fixer (updown) initialized (outside model)")
+
+        # The two energy fixers enforce the SAME global-energy budget by rescaling T.
+        # Running both would apply the correction twice. CAMulator is trained with the
+        # up/down-flux variant only, so `global_energy_fixer` should stay deactivated.
+        if self.flag_energy and self.flag_energy_updown:
+            raise ValueError(
+                "Both global_energy_fixer and global_energy_fixer_updown are active. "
+                "They enforce the same energy budget and would double-correct T. "
+                "CAMulator uses the up/down variant: set global_energy_fixer.activate: False."
+            )
+        if self.flag_tracer:
+            logger.info("Tracer fixer initialized")
 
         # Wind filtering flag
         self.enable_wind_filtering = WINDPP_AVAILABLE
@@ -625,6 +680,13 @@ class CAMulatorStepper:
 
         if self.flag_energy:
             prediction = self.opt_energy({"y_pred": prediction, "x": model_input})["y_pred"]
+
+        # up/down-flux energy fixer. This is the one CAMulator is TRAINED with
+        # (see global_energy_fixer_updown in the training config), so omitting it
+        # here leaves inference running under a different physics constraint than
+        # training -- it must be applied for the rollout to match the trained model.
+        if self.flag_energy_updown:
+            prediction = self.opt_energy_updown({"y_pred": prediction, "x": model_input})["y_pred"]
 
         return prediction
 
@@ -817,7 +879,11 @@ def initialize_camulator(config_path: str, model_name: str = None, device: str =
     print(f"Model device: {device}")
     print(f"State shape: {initial_state.shape}")
     print(f"Static forcing: {len(sf_vars)} variables")
-    print(f"Conservation fixers: Mass={stepper.flag_mass}, Water={stepper.flag_water}, Energy={stepper.flag_energy}")
+    print(
+        f"Conservation fixers: Mass={stepper.flag_mass}, Water={stepper.flag_water}, "
+        f"Energy={stepper.flag_energy}, EnergyUpDown={stepper.flag_energy_updown}"
+    )
+    print(f"Tracer fixer: {stepper.flag_tracer}")
     print(f"Wind filtering: {stepper.enable_wind_filtering}")
     print("=" * 70)
 
