@@ -34,6 +34,9 @@ def _build_bridgescaler_jsons(mean_path, std_path, var_groups, pre_out, post_out
         (e.g. ``"era5/prognostic/3d/temperature"``).
     post_prog_vars : list[str]
         Short variable names of prognostic vars in the postblock scaler.
+    spatial_keys : list[str]
+        Full key paths whose statistics are per-gridpoint rather than per-level.
+        These must be passed to the scaler blocks as ``spatial_variables``.
     """
     import numpy as np
     import xarray as xr
@@ -45,7 +48,7 @@ def _build_bridgescaler_jsons(mean_path, std_path, var_groups, pre_out, post_out
     except ImportError as e:
         print(f"  WARNING: cannot build BridgeScaler JSON — {e}", file=sys.stderr)
         print("  Falling back to era5_normalizer preblock.", file=sys.stderr)
-        return None, None
+        return None, None, None
 
     ds_mean = xr.open_dataset(mean_path)
     ds_std = xr.open_dataset(std_path)
@@ -57,6 +60,14 @@ def _build_bridgescaler_jsons(mean_path, std_path, var_groups, pre_out, post_out
         if mean_vals.ndim == 0:
             mean_vals = mean_vals.reshape(1)
             std_vals = std_vals.reshape(1)
+        elif mean_vals.ndim > 1:
+            # Per-gridpoint statistics: one mean/std per lat/lon cell rather than per
+            # level. `_flatten_spatial_tensors` folds (B, 1, 1, H, W) -> (B, H*W) before
+            # scaling, so the scaler needs H*W columns in that same row-major order.
+            # Without this branch `x_columns_` below would be len(mean_vals) == H, and the
+            # field would be silently replaced by a per-row or global statistic.
+            mean_vals = mean_vals.ravel()
+            std_vals = std_vals.ravel()
         sc = DStandardScalerTensor(channels_last=False)
         sc.mean_x_ = torch.tensor(mean_vals, dtype=torch.float32)
         sc.var_x_ = torch.tensor(std_vals**2, dtype=torch.float32)
@@ -72,6 +83,7 @@ def _build_bridgescaler_jsons(mean_path, std_path, var_groups, pre_out, post_out
     pre_input = {}  # all field types (prognostic, dynamic_forcing, static)
     pre_target = {}  # prognostic only (model prediction targets)
     pre_keys = []
+    spatial_keys = []  # variables whose statistics are per-gridpoint, not per-level
 
     # --- postblock dict: {"target": {source: {full_key: scaler}}}
     # BridgeScalerTransform always slices ["target"] — match that structure here.
@@ -84,6 +96,8 @@ def _build_bridgescaler_jsons(mean_path, std_path, var_groups, pre_out, post_out
             n_levels = int(ds_mean[varname].size)
             sc = _make_scaler(varname, n_levels)
             full_key = f"{source_name}/{field_type}/{dim}/{varname}"
+            if ds_mean[varname].values.ndim > 1:
+                spatial_keys.append(full_key)
             pre_input[full_key] = sc
             pre_keys.append(full_key)
             if field_type in ("prognostic", "diagnostic"):
@@ -104,7 +118,7 @@ def _build_bridgescaler_jsons(mean_path, std_path, var_groups, pre_out, post_out
         for varname in varnames
         if varname in nc_vars
     ]
-    return pre_keys, post_prog_vars
+    return pre_keys, post_prog_vars, spatial_keys
 
 
 class _FlowSeqDumper(yaml.Dumper):
@@ -379,7 +393,9 @@ def _convert(args: argparse.Namespace) -> None:
             pre_json = f"{base_out}_pre_scaler.json"
             post_json = f"{base_out}_post_scaler.json"
 
-            pre_keys, post_prog_vars = _build_bridgescaler_jsons(mean_path, std_path, var_groups, pre_json, post_json)
+            pre_keys, post_prog_vars, spatial_keys = _build_bridgescaler_jsons(
+                mean_path, std_path, var_groups, pre_json, post_json
+            )
 
             if pre_keys is not None:
                 per_step_pre = conf.setdefault("preblocks", {}).setdefault("per_step", {})
@@ -391,6 +407,8 @@ def _convert(args: argparse.Namespace) -> None:
                         "method": "transform",
                     },
                 }
+                if spatial_keys:
+                    per_step_pre["scaler"]["args"]["spatial_variables"] = spatial_keys
                 per_step_pre["concat"] = {"type": "concat"}
                 per_step_post = conf.setdefault("postblocks", {}).setdefault("per_step", {})
                 per_step_post["reconstruct"] = {"type": "reconstruct"}
@@ -402,6 +420,9 @@ def _convert(args: argparse.Namespace) -> None:
                         "method": "inverse_transform",
                     },
                 }
+                post_spatial = [k for k in spatial_keys if k in post_prog_vars]
+                if post_spatial:
+                    per_step_post["scaler"]["args"]["spatial_variables"] = post_spatial
                 changes.append(f"preblocks.per_step.scaler: bridgescaler_transform → {pre_json}")
                 changes.append(f"postblocks.per_step.scaler: bridgescaler_transform (inverse) → {post_json}")
             else:
