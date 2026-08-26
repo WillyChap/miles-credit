@@ -109,6 +109,11 @@ class PostBlock(nn.Module):
             return x
 
 
+# NOTE: this TracerFixer clips each tracer channel using that variable's OWN mean/std read
+# from the statistics NetCDF, instead of round-tripping the whole prediction through
+# load_transforms(...).inverse_transform. The round-trip perturbs every channel it touches
+# (surface pressure included, whose statistics are a 2-D lat/lon field), so tracer clipping
+# used to leave a footprint on fields it should not have modified at all.
 class TracerFixer(nn.Module):
     """
     This module fixes tracer values by replacing their values to a given threshold
@@ -121,45 +126,151 @@ class TracerFixer(nn.Module):
     def __init__(self, post_conf):
         super().__init__()
 
-        # ------------------------------------------------------------------------------ #
-        # identify variables of interest
-        self.tracer_indices = post_conf["tracer_fixer"]["tracer_inds"]
-        self.tracer_thres = post_conf["tracer_fixer"]["tracer_thres"]
-        self.tracer_thres_max = post_conf["tracer_fixer"].get("tracer_thres_max", None)
+        cfg = post_conf["tracer_fixer"]
 
         # ------------------------------------------------------------------------------ #
-        # setup a scaler
-        if post_conf["tracer_fixer"]["denorm"]:
-            self.state_trans = load_transforms(post_conf, scaler_only=True)
+        # Build flat tracer_indices and per-channel thresholds.
+        # Supports two config formats:
+        #   (a) tracer_inds: [i0, i1, ...]  — flat list of channel indices (legacy)
+        #   (b) tracer_ind_ranges: [[start, end], ...]  — inclusive ranges; thresholds
+        #       are one-per-range and expanded to per-channel internally.
+        #       tracer_var_names: ['Qtot', 'PRECT', ...]  — NC variable names for denorm.
+        if "tracer_ind_ranges" in cfg:
+            ranges = cfg["tracer_ind_ranges"]
+            thres_per_range = cfg["tracer_thres"]
+            thres_max_per_range = cfg.get("tracer_thres_max", None)
+
+            self.tracer_indices = []
+            self.tracer_thres = []
+            # thres_max_per_range may be None (no cap) or a list that can contain null values.
+            # Only activate per-channel max if any value is non-null.
+            any_max = thres_max_per_range is not None and any(v is not None for v in thres_max_per_range)
+            self.tracer_thres_max = [] if any_max else None
+
+            for i, (start, end) in enumerate(ranges):
+                n = end - start + 1
+                self.tracer_indices.extend(range(start, end + 1))
+                self.tracer_thres.extend([float(thres_per_range[i])] * n)
+                if any_max:
+                    v = thres_max_per_range[i]
+                    self.tracer_thres_max.extend([float(v) if v is not None else float("inf")] * n)
+
+            self._use_ranges = True
+            self._ranges = ranges
+            self._range_var_names = cfg.get("tracer_var_names", None)
         else:
-            self.state_trans = None
+            self.tracer_indices = cfg["tracer_inds"]
+            self.tracer_thres = cfg["tracer_thres"]
+            self.tracer_thres_max = cfg.get("tracer_thres_max", None)
+            self._use_ranges = False
+            self._range_var_names = cfg.get("tracer_var_names", None)
+
+        # ------------------------------------------------------------------------------ #
+        # Per-channel mean/std for denorm (loaded from NC files; NOT register_buffer).
+        # Supports per-level 3-D variables (e.g. Qtot shape (32,)) and scalar 2-D vars.
+        self.flag_denorm = bool(cfg.get("denorm", False))
+        self.tracer_mean = None
+        self.tracer_std = None
+
+        if self.flag_denorm:
+            mean_ds = xr.open_dataset(cfg["mean_path"]).load()
+            std_ds = xr.open_dataset(cfg["std_path"]).load()
+
+            chan_means = []
+            chan_stds = []
+
+            if self._use_ranges and self._range_var_names is not None:
+                for i, (start, end) in enumerate(self._ranges):
+                    n = end - start + 1
+                    vname = self._range_var_names[i]
+                    m = np.array(mean_ds[vname].values).flatten()
+                    s = np.array(std_ds[vname].values).flatten()
+                    if len(m) == 1:
+                        chan_means.extend([float(m[0])] * n)
+                        chan_stds.extend([float(s[0])] * n)
+                    else:
+                        chan_means.extend(m[:n].tolist())
+                        chan_stds.extend(s[:n].tolist())
+            elif self._range_var_names is not None:
+                # flat tracer_inds with per-index var names (scalar stats assumed)
+                for vname in self._range_var_names:
+                    m = float(np.array(mean_ds[vname].values).flatten()[0])
+                    s = float(np.array(std_ds[vname].values).flatten()[0])
+                    chan_means.append(m)
+                    chan_stds.append(s)
+            else:
+                logger.warning("TracerFixer: denorm=True but no tracer_var_names — stats default to 0/1")
+                chan_means = [0.0] * len(self.tracer_indices)
+                chan_stds = [1.0] * len(self.tracer_indices)
+
+            # Stored as plain attributes (NOT register_buffer) → not in state_dict → EMA-safe
+            self.tracer_mean = torch.tensor(chan_means).float()  # (n_tracers,)
+            self.tracer_std = torch.tensor(chan_stds).float()
 
     def forward(self, x):
         # ------------------------------------------------------------------------------ #
         # get y_pred
         # y_pred is channel first: (batch, var, time, lat, lon)
         y_pred = x["y_pred"]
-
-        # if denorm is needed
-        if self.state_trans:
-            y_pred = self.state_trans.inverse_transform(y_pred)
+        orig_dtype = y_pred.dtype
+        device = y_pred.device
 
         # ------------------------------------------------------------------------------ #
-        # tracer correction
-        for i, i_var in enumerate(self.tracer_indices):
-            # get the tracers
-            tracer_vals = y_pred[:, i_var, ...]
+        # tracer correction — denorm per channel if requested, clip, renorm
+        total_clipped_lo = 0
+        total_clipped_hi = 0
+        total_elements = 0
 
-            # in-place modification of y_pred
-            thres = self.tracer_thres[i]
-            tracer_vals[tracer_vals < thres] = thres
+        if self.flag_denorm and self.tracer_mean is not None:
+            for i, i_var in enumerate(self.tracer_indices):
+                m = self.tracer_mean[i].to(device)
+                s = self.tracer_std[i].to(device)
 
-            if self.tracer_thres_max is not None:
-                thres = self.tracer_thres_max[i]
-                tracer_vals[tracer_vals >= thres] = thres
+                # Inverse-normalize to physical units (float32 for precision)
+                chan = y_pred[:, i_var, ...].float() * s + m
 
-        if self.state_trans:
-            y_pred = self.state_trans.transform_array(y_pred)
+                # Clip (count before clip for diagnostics)
+                thres = self.tracer_thres[i]
+                total_clipped_lo += int((chan < thres).sum().item())
+                chan[chan < thres] = thres
+                if self.tracer_thres_max is not None:
+                    thres_hi = self.tracer_thres_max[i]
+                    if thres_hi is not None:
+                        total_clipped_hi += int((chan >= thres_hi).sum().item())
+                        chan[chan >= thres_hi] = thres_hi
+                total_elements += chan.numel()
+
+                # Re-normalize and write back in original dtype (in-place)
+                y_pred[:, i_var, ...] = ((chan - m) / s).to(dtype=orig_dtype)
+        else:
+            # Normalized-space clipping (no denorm)
+            for i, i_var in enumerate(self.tracer_indices):
+                tracer_vals = y_pred[:, i_var, ...]
+                thres = self.tracer_thres[i]
+                total_clipped_lo += int((tracer_vals < thres).sum().item())
+                tracer_vals[tracer_vals < thres] = thres
+                if self.tracer_thres_max is not None:
+                    thres_hi = self.tracer_thres_max[i]
+                    total_clipped_hi += int((tracer_vals >= thres_hi).sum().item())
+                    tracer_vals[tracer_vals >= thres_hi] = thres_hi
+                total_elements += tracer_vals.numel()
+
+        # ---- Diagnostic (every 50 steps) ----
+        self._tracer_calls = getattr(self, "_tracer_calls", 0) + 1
+        if self._tracer_calls % 50 == 1:
+            pct_lo = 100.0 * total_clipped_lo / max(total_elements, 1)
+            pct_hi = 100.0 * total_clipped_hi / max(total_elements, 1)
+            logger.info(
+                "TracerFixer step %d | clipped_lo=%d (%.4f%%)  clipped_hi=%d (%.4f%%)  "
+                "total_elements=%d  n_channels=%d",
+                self._tracer_calls,
+                total_clipped_lo,
+                pct_lo,
+                total_clipped_hi,
+                pct_hi,
+                total_elements,
+                len(self.tracer_indices),
+            )
 
         # give it back to x
         x["y_pred"] = y_pred

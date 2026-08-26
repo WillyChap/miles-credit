@@ -853,6 +853,15 @@ def initialize_camulator(config_path: str, model_name: str = None, device: str =
     chunk_size = conf["data"].get("forcing_chunk_size", 32)
     forcing_ds = xr.open_dataset(forcing_file, chunks={"time": chunk_size})
 
+    # Cast lat/lon coords to float32 so they align with the normalization mean_ds/std_ds,
+    # which are float32. When the forcing file stores its coords as float64, xarray aligns
+    # transform_dataset() on the coordinate *intersection* and silently collapses the grid
+    # (latitude 192 -> 2 for this dataset), which then fails at the torch.cat in
+    # build_input_with_forcing. Casting makes this robust to how the file was written.
+    for _c in ("latitude", "longitude"):
+        if _c in forcing_ds.coords and forcing_ds[_c].dtype != np.float32:
+            forcing_ds = forcing_ds.assign_coords({_c: forcing_ds[_c].astype("float32")})
+
     # Normalize forcing data
     print("Normalizing forcing data...")
     forcing_ds_norm = state_transformer.transform_dataset(forcing_ds)

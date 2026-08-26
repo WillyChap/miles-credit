@@ -604,6 +604,9 @@ def credit_main_parser(conf, parse_training=True, parse_predict=True, print_summ
 
         conf["model"]["post_conf"]["tracer_fixer"]["tracer_inds"] = tracer_inds
         conf["model"]["post_conf"]["tracer_fixer"]["tracer_thres"] = tracer_thres
+        # Per-channel variable names, so TracerFixer can look up each tracer's own mean/std
+        # rather than inverse-transforming the whole prediction tensor.
+        conf["model"]["post_conf"]["tracer_fixer"]["tracer_var_names"] = [varname_output[i] for i in tracer_inds]
         if tracers_thres_maximum is not None:
             conf["model"]["post_conf"]["tracer_fixer"]["tracer_thres_max"] = tracer_thres_max
 
