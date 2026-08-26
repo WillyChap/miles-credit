@@ -41,6 +41,8 @@ Loss config (``conf["loss"]``, mirroring the preblocks/postblocks structure)::
         include_computed_diagnostics: true
         use_latitude_weights: false      # cos(lat) spatial weighting per variable
         latitude_weights: "/path/static.zarr"
+        latitude_weight_power: 1.0       # exponent on cos(lat); <1 up-weights the poles
+        fixer_penalty_weight: 0.0        # penalize the conservation fixers for correcting at all
 
 Scored variables: every variable in the data target layout (prognostic AND
 diagnostic variables from ``conf["data"]["source"]``) is always scored.
@@ -139,13 +141,23 @@ def _load_target_variances(scaler_path: str) -> dict:
     return variances
 
 
-def _cos_lat_weights(path: str) -> torch.Tensor:
-    """Cos-latitude weights (H,) normalized to mean 1, from a grid dataset."""
+def _cos_lat_weights(path: str, power: float = 1.0) -> torch.Tensor:
+    """``cos(lat) ** power`` weights (H,), normalized to mean 1, from a grid dataset.
+
+    ``power`` flattens the profile. Plain ``cos(lat)`` (power 1.0) weights the poles by the
+    grid-cell area they occupy, which for a 1-degree lat/lon grid is very little: poleward of
+    60 degrees is 13% of the total. A power below 1 raises that share -- 0.4 gives 22.5%, and
+    the 89-degree row alone gains a factor of 9 -- which matters when the polar solution is
+    part of what the model is being judged on. Power 1.0 reproduces area weighting exactly.
+
+    The cosine is clamped before exponentiation so the pole rows cannot produce a zero (and,
+    for a fractional power, a NaN gradient).
+    """
     import xarray as xr
 
     ds = xr.open_dataset(os.path.expandvars(path))
     lat = torch.tensor(ds["latitude"].values, dtype=torch.float32)
-    weights = torch.cos(torch.deg2rad(lat))
+    weights = torch.cos(torch.deg2rad(lat)).clamp(min=1e-4) ** float(power)
     return weights / weights.mean()
 
 
@@ -201,6 +213,8 @@ class BaseLoss(nn.Module):
         use_latitude_weights: apply cos(lat) spatial weighting per variable.
         latitude_weights: path to a dataset with a ``latitude`` coordinate
             (required when ``use_latitude_weights`` is True).
+        latitude_weight_power: exponent on ``cos(lat)``; 1.0 is area weighting, below 1
+            flattens the profile and raises the weight on high latitudes.
         channel_schema: optional ``ChannelSchema`` fixing the data target
             variable layout; when None the scored variables are discovered from
             the state dict on the first forward pass.
@@ -230,6 +244,7 @@ class BaseLoss(nn.Module):
         include_computed_diagnostics: bool = True,
         use_latitude_weights: bool = False,
         latitude_weights: str | None = None,
+        latitude_weight_power: float = 1.0,
         channel_schema=None,
         validation: bool = False,
         **kwargs,
@@ -279,7 +294,7 @@ class BaseLoss(nn.Module):
         if use_latitude_weights:
             if not latitude_weights:
                 raise ValueError("latitude_weights (path) is required when use_latitude_weights=True.")
-            self.lat_weights = _cos_lat_weights(latitude_weights)  # (H,)
+            self.lat_weights = _cos_lat_weights(latitude_weights, latitude_weight_power)  # (H,)
 
         # Data target variables (prognostic + diagnostic from the data config):
         # always scored. Variables appearing in y_processed but not listed here
@@ -300,6 +315,8 @@ class BaseLoss(nn.Module):
         # Populated by forward(); initialized here so the documented attribute
         # exists (and logging code reading it is safe) before the first pass.
         self.last_var_losses = {}
+        #: {fixer_name: mean (ratio-1)^2} from the most recent forward, for logging.
+        self.last_fixer_penalties = {}
         if self.var_weighting == "learnable":
             if self.data_var_keys is None:
                 raise ValueError(
@@ -466,4 +483,27 @@ class BaseLoss(nn.Module):
             return torch.stack(terms).mean()
 
         weights = self._combination_weights
-        return torch.stack([weights[var_key] * var_losses[var_key] for var_key in var_keys]).mean()
+        loss = torch.stack([weights[var_key] * var_losses[var_key] for var_key in var_keys]).mean()
+        return loss + self._fixer_penalty(full_data_dict)
+
+    def _fixer_penalty(self, full_data_dict: dict) -> torch.Tensor:
+        """Penalize the conservation fixers for having work to do.
+
+        Each fixer records the ratio it multiplied its field by; 1.0 means the raw prediction
+        already closed that budget and the fixer changed nothing. Penalizing ``(ratio - 1)**2``
+        pushes the model toward conserving on its own rather than leaning on the fixer every
+        step -- the difference between a constraint the model has learned and one merely
+        imposed on its output afterwards.
+
+        Returns a 0.0 scalar when the weight is off or no fixer ran, so callers can add it
+        unconditionally.
+        """
+        ratios = full_data_dict.get("fixer_ratios") or {}
+        if self.fixer_penalty_weight <= 0.0 or not ratios:
+            return torch.zeros(())
+        terms = []
+        for name, ratio in ratios.items():
+            term = ((ratio - 1.0) ** 2).mean()
+            terms.append(term)
+            self.last_fixer_penalties[name] = term.detach().item()
+        return self.fixer_penalty_weight * torch.stack(terms).mean()

@@ -68,6 +68,17 @@ def _setup_physics_core(args: dict):
     return core, False, midpoint, len(p_level), None, None
 
 
+def _record_ratio(batch_dict: dict, name: str, ratio: torch.Tensor) -> None:
+    """Stash a fixer's correction ratio under ``batch_dict["fixer_ratios"][name]``.
+
+    A ratio of exactly 1 means the raw prediction already closed that budget and the fixer
+    changed nothing. Keeping the ratio on the autograd graph lets a loss term penalize the
+    distance from 1, i.e. train the model not to need correcting, rather than relying on the
+    fixer to clean up after it every step.
+    """
+    batch_dict.setdefault("fixer_ratios", {})[name] = ratio
+
+
 def _src(var_key: str) -> str:
     """Source (top-level super-dict key) is the first path segment of a var key."""
     return var_key.split("/")[0]
@@ -169,6 +180,7 @@ class GlobalMassFixer(nn.Module):
         mass_dry_b = (p_dry_b * sp_pred * grid_area).sum((-2, -1)) / GRAVITY
 
         sp_correct_ratio = (mass_dry_sum_t0 - mass_dry_a) / mass_dry_b
+        _record_ratio(batch_dict, "global_mass_fixer", sp_correct_ratio)
         sp_pred = sp_pred * sp_correct_ratio.unsqueeze(1).unsqueeze(2)
 
         # back to (B, 1, 1, H, W)
@@ -230,6 +242,7 @@ class GlobalWaterFixer(nn.Module):
 
         residual = -TWC_sum - E_sum - P_sum
         P_correct_ratio = (P_sum + residual) / P_sum
+        _record_ratio(batch_dict, "global_water_fixer", P_correct_ratio)
         precip = precip * P_correct_ratio.unsqueeze(-1).unsqueeze(-1)
 
         _set_pred(batch_dict, self.precip_var, precip.unsqueeze(1).unsqueeze(2))
@@ -366,6 +379,7 @@ class GlobalEnergyFixerUpDown(nn.Module):
         global_TE_t1 = self.core.weighted_sum(TE_t1, axis=(-2, -1))
 
         E_correct_ratio = (self.N_seconds * (R_T_sum - F_S_sum) + global_TE_t0) / global_TE_t1
+        _record_ratio(batch_dict, "global_energy_fixer_updown", E_correct_ratio)
         E_correct_ratio = E_correct_ratio.unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)
 
         E_t1_correct = E_level_t1 * E_correct_ratio

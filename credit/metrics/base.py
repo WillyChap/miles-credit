@@ -79,6 +79,7 @@ Code example — building a combined metric directly::
         scaler_path="/path/scaler.json",
         use_latitude_weights=True,
         latitude_weights="/path/static.zarr",
+        latitude_weight_power: 1.0          # exponent on cos(lat); <1 up-weights the poles
     )
     scores = metric(full_data_dict)   # {"rmse/ERA5/.../T": 1.2, "rmse": 0.9, ...}
 
@@ -147,6 +148,8 @@ class BaseVariableMetric(nn.Module, ABC):
             (variables present in ``y_processed`` but not in the data target
             layout). Data diagnostics are always scored.
         use_latitude_weights: apply cos(lat) spatial weighting per variable.
+        latitude_weight_power: exponent on ``cos(lat)``; 1.0 is area weighting, below 1
+            flattens the profile and raises the weight on high latitudes.
         latitude_weights: path to a dataset with a ``latitude`` coordinate
             (required when ``use_latitude_weights`` is True).
         channel_schema: optional :class:`ChannelSchema` fixing the data target
@@ -185,6 +188,7 @@ class BaseVariableMetric(nn.Module, ABC):
         include_computed_diagnostics: bool = True,
         use_latitude_weights: bool = False,
         latitude_weights: str | None = None,
+        latitude_weight_power: float = 1.0,
         channel_schema=None,
         **kwargs,
     ):
@@ -209,7 +213,7 @@ class BaseVariableMetric(nn.Module, ABC):
         if use_latitude_weights:
             if not latitude_weights:
                 raise ValueError("latitude_weights (path) is required when use_latitude_weights=True.")
-            self.lat_weights = _cos_lat_weights(latitude_weights)  # (H,)
+            self.lat_weights = _cos_lat_weights(latitude_weights, latitude_weight_power)  # (H,)
 
         # Data target variables (prognostic + diagnostic from the data config):
         # always scored. Variables appearing in y_processed but not listed here
