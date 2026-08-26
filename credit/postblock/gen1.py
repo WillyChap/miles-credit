@@ -771,9 +771,9 @@ class GlobalEnergyFixer(nn.Module):
 
         else:
             # the actual setup for model runs
-            ds_physics = get_forward_data(post_conf["data"]["save_loc_physics"])
+            ds_physics = get_forward_data(_fixer_physics_path(post_conf, "global_energy_fixer"))
 
-            lon_lat_level_names = post_conf["global_mass_fixer"]["lon_lat_level_name"]
+            lon_lat_level_names = post_conf["global_energy_fixer"]["lon_lat_level_name"]
             lon2d = torch.from_numpy(ds_physics[lon_lat_level_names[0]].values).float()
             lat2d = torch.from_numpy(ds_physics[lon_lat_level_names[1]].values).float()
 
@@ -836,7 +836,7 @@ class GlobalEnergyFixer(nn.Module):
         # ------------------------------------------------------------------------------------ #
         # setup a scaler
         if post_conf["global_energy_fixer"]["denorm"]:
-            self.state_trans = load_transforms(post_conf, scaler_only=True)
+            self.state_trans = _fixer_scaler(post_conf, "global_energy_fixer")
         else:
             self.state_trans = None
 
