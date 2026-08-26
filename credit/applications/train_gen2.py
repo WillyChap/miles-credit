@@ -194,9 +194,14 @@ def main_cli():
     seed_everything(seed)
     inject_flat_var_keys(conf)
     if "post_conf" in conf["model"]:
-        warnings.warn(
-            "Gen 2 training does not support Gen 1 postblocks (conf['model']['post_conf']). "
-            "These will be ignored. Gen 2 postblocks (conf['postblocks']) are still applied normally."
+        # logger, not warnings.warn: this module calls warnings.filterwarnings("ignore") at
+        # import, so a UserWarning here never reaches the log. Dropping the conservation
+        # fixers is not something a run should do silently -- a config that activates them
+        # would otherwise train with no physics constraint and no indication of it.
+        logger.warning(
+            "Gen 2 training does not support Gen 1 postblocks (conf['model']['post_conf']); "
+            "they are being REMOVED, so any conservation fixers configured there will NOT run. "
+            "Gen 2 postblocks (conf['postblocks']) are still applied normally."
         )
         conf["model"].pop("post_conf", None)
     m = load_model(conf)
