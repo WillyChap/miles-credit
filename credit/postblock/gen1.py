@@ -990,10 +990,14 @@ class GlobalEnergyFixerUpDown(nn.Module):
     .. code-block:: text
 
         R_T  = (DSWRFtoa  - USWRFtoa  - ULWRFtoa) / N_seconds
-        F_S  = (FSDS_J    - FSUS      + FLDS_J    - FLUS - SHF - LHF) / N_seconds
+        F_S  = (FSDS_J    - FSUS      + FLDS_J    - FLUS + SHF + LHF) / N_seconds
 
     where ``*_J`` variables are in J/m² (energy over the timestep) and ``SHF``/``LHF``
-    are positive-upward surface turbulent heat fluxes also in J/m².
+    are surface turbulent heat fluxes also in J/m².
+
+    The turbulent terms enter ``F_S`` with a PLUS sign, matching the implementation below and
+    :class:`credit.postblock.conservation.GlobalEnergyFixerUpDown`. This docstring previously
+    showed them subtracted, which contradicted both.
 
     Args:
         post_conf (dict): config dictionary.  The sub-key ``global_energy_fixer_updown``
