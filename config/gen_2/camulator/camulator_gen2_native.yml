@@ -553,12 +553,32 @@ loss:
         scaler_path: *post_scaler
         normalize_weights: true
 
+        # Divide each LEVEL by its own sigma^2 rather than by the variable's mean variance.
+        # Without this, a 3-D variable's loss is dominated by whichever levels carry the most
+        # variance: Qtot's sigma spans a factor of 22,000 across levels, so its upper 16 levels
+        # contribute 0.002% of its loss and the model has essentially no reason to get upper
+        # atmospheric moisture right. With it, every level contributes 1/32 -- exactly the
+        # balance the gen1 loss had by virtue of working in normalized space (verified:
+        # lev0:lev31 contribution ratio 2.1e-09 -> 1.000).
+        per_level_variance: true
+
         # Manual multipliers, applied ON TOP of inverse_variance (weight = manual / sigma^2).
         # PRECT and TREFHT at 3x reproduce ckpt69's training config; PRECT's 3x is the soft half
         # of the precipitation treatment, the global_water_fixer above being the hard half.
         # Setting an entry to that variable's sigma^2 cancels the inverse-variance weighting for
         # it alone -- that is how you opt a single variable out.
+        # The 3-D entries are their LEVEL COUNT, restoring gen1's channel-based balance.
+        # BaseLoss averages over variables, so without this U/V/T/Qtot get 4 votes out of 27 --
+        # the same as TAUX and TAUY -- and the 3-D state falls from 84.8% of the loss (gen1,
+        # per-channel) to 14.8%. Weighting each 3-D variable by 32 restores 128/151 = 84.8%.
+        #
+        # NOTE: this fixes the BETWEEN-variable balance only. It does NOT rebalance levels
+        # WITHIN a 3-D variable -- see the Qtot caveat above; that is structural in BaseLoss.
         variable_weights:
+            CESM/prognostic/3d/U: 32.0
+            CESM/prognostic/3d/V: 32.0
+            CESM/prognostic/3d/T: 32.0
+            CESM/prognostic/3d/Qtot: 32.0
             CESM/diagnostic/2d/PRECT: 3.0
             CESM/prognostic/2d/TREFHT: 3.0
 
