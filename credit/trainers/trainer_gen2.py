@@ -432,8 +432,6 @@ class TrainerERA5Gen2(BaseTrainer):
                     )
 
                 full_data_dict = apply_postblocks(self.step_postblocks, full_data_dict)
-                if t < self.forecast_len:
-                    self._gather_for_next_step(full_data_dict)
 
                 if t in self.backprop_on_timestep:
                     if isinstance(criterion, BaseLoss):
@@ -459,6 +457,16 @@ class TrainerERA5Gen2(BaseTrainer):
                             target = torch.repeat_interleave(target, self.ensemble_size, 0)
                         accum_log(logs, {"std": (full_data_dict["y_pred"] - target).detach().std().item()})
                     scaler.scale(loss / grad_accum_every).backward(retain_graph=self.retain_graph)
+
+                # Detach the carried prediction only AFTER this step's loss and backward.
+                # Running it before (where this used to sit) detaches y_processed in place, so a
+                # BaseLoss -- which scores y_processed rather than the flat y_pred -- sees no
+                # gradient on every step before the last and raises. That silently undid the
+                # `detach: false` on the reconstruct postblock, which is the whole mechanism for
+                # keeping the conservation fixers in the per-step gradient. Deferring is safe:
+                # backward() has already run, and detach() shares storage without the graph.
+                if t < self.forecast_len:
+                    self._gather_for_next_step(full_data_dict)
                 # No barrier here: NCCL collectives (grad sync, halo exchange)
                 # already order ranks; a per-timestep barrier only adds latency.
 

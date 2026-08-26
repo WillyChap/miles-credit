@@ -308,6 +308,8 @@ class BaseLoss(nn.Module):
         self._channel_variances = {}
         #: {var_key: (L,) tensor} per-level 1/sigma^2, applied before the elementwise mean.
         self._level_weights = {}
+        #: {var_key: n_levels} observed in the batch; distinguishes per-level from per-gridpoint.
+        self._level_counts = {}
 
         base_name = training_loss
         base_params = dict(base_loss_parameters or {})
@@ -422,6 +424,15 @@ class BaseLoss(nn.Module):
             if self.var_weighting == "inverse_variance":
                 variance = self._variances.get(var_key)
                 channel_var = self._channel_variances.get(var_key) if self.per_level_variance else None
+                # numel > 1 does NOT mean "per level". A variable normalized by a 2-D (lat, lon)
+                # field -- CAMulator's surface pressure -- has one variance per GRIDPOINT, so
+                # var_x_ flattens to H*W. Treating that as a level axis raised
+                #   ValueError: per-level variance for '.../PS' has 55296 entries but the
+                #               tensor has 1 levels
+                # Take the per-level branch only when the count matches the levels actually
+                # present in the batch; otherwise fall back to the scalar mean variance.
+                if channel_var is not None and channel_var.numel() != self._level_counts.get(var_key, -1):
+                    channel_var = None
                 if channel_var is not None and channel_var.numel() > 1:
                     # Per-level normalization: divide each level by its own sigma^2 BEFORE the
                     # elementwise mean, so every level contributes equally regardless of how much
@@ -503,6 +514,9 @@ class BaseLoss(nn.Module):
                 "loss backpropagates through the postblocks into the model."
             )
 
+        # Levels actually present per variable, used above to tell a per-level variance from a
+        # per-gridpoint one.
+        self._level_counts = {k: (v.shape[1] if torch.is_tensor(v) and v.dim() >= 2 else 1) for k, v in pred.items()}
         if self.var_keys is None:
             self.var_keys = self._resolve_var_keys(pred, target)
             if self.var_weighting != "learnable":
