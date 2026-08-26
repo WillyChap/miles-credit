@@ -45,6 +45,18 @@ def _fixer_physics_path(post_conf, fixer_key):
     return post_conf[fixer_key].get("save_loc_physics") or post_conf["data"]["save_loc_physics"]
 
 
+def _fixer_lead_time(post_conf, fixer_key):
+    """Forecast step length in hours for *fixer_key*.
+
+    Prefer the fixer's own ``lead_time_periods``; fall back to ``data.lead_time_periods``,
+    which is where configs predating the per-fixer key put it.
+    """
+    cfg = post_conf.get(fixer_key) or {}
+    if cfg.get("lead_time_periods") is not None:
+        return int(cfg["lead_time_periods"])
+    return int(post_conf["data"]["lead_time_periods"])
+
+
 def _fixer_scaler(post_conf, fixer_key):
     """Denormalizing scaler for *fixer_key*, honoring per-fixer mean_path/std_path.
 
@@ -1022,7 +1034,7 @@ class GlobalEnergyFixerUpDown(nn.Module):
             self.flag_sigma_level = False
             self.flag_midpoint = cfg["midpoint"]
             self.core_compute = physics_pressure_level(lon_demo, lat_demo, p_level_demo, midpoint=self.flag_midpoint)
-            self.N_seconds = int(cfg["lead_time_periods"]) * 3600
+            self.N_seconds = _fixer_lead_time(post_conf, "global_energy_fixer_updown") * 3600
             gph_surf_demo = np.ones((10, 18))
             self.GPH_surf = torch.from_numpy(gph_surf_demo)
         else:
@@ -1049,7 +1061,7 @@ class GlobalEnergyFixerUpDown(nn.Module):
                 self.N_levels = len(p_level)
                 self.core_compute = physics_pressure_level(lon2d, lat2d, p_level, midpoint=self.flag_midpoint)
 
-            self.N_seconds = int(cfg["lead_time_periods"]) * 3600
+            self.N_seconds = _fixer_lead_time(post_conf, "global_energy_fixer_updown") * 3600
 
             varname_gph = cfg["surface_geopotential_name"]
             self.GPH_surf = torch.from_numpy(ds_physics[varname_gph[0]].values).float()
@@ -1071,7 +1083,29 @@ class GlobalEnergyFixerUpDown(nn.Module):
         # ------------------------------------------------------------------ #
         # Variable indices — up/down fluxes
         # SOLIN is a forcing variable; read from x (input tensor) rather than y_pred
-        self.TOA_forcing_solar_ind = int(cfg["TOA_forcing_solar_ind"])
+        # TOA downwelling solar lives in one of two places, depending on the model:
+        #   TOA_forcing_solar_ind -> an INPUT-only forcing, read from x (e.g. CAMulator's SOLIN,
+        #                            which is absent from the model's output channels)
+        #   TOA_down_solar_ind    -> a predicted diagnostic, read from y_pred
+        # Exactly one must be given; they are not interchangeable, since they name channels in
+        # different tensors, and guessing wrong silently closes the budget against another field.
+        # A negative value is the parser's "could not resolve" sentinel, not a real channel.
+        def _opt_ind(key):
+            v = cfg.get(key)
+            return None if v is None or int(v) < 0 else int(v)
+
+        self.TOA_forcing_solar_ind = _opt_ind("TOA_forcing_solar_ind")
+        self.TOA_down_solar_ind = _opt_ind("TOA_down_solar_ind")
+        if (self.TOA_forcing_solar_ind is None) == (self.TOA_down_solar_ind is None):
+            raise ValueError(
+                "GlobalEnergyFixerUpDown needs exactly one of 'TOA_forcing_solar_ind' (TOA "
+                "downwelling solar as an input-only forcing, read from x) or 'TOA_down_solar_ind' "
+                "(TOA downwelling solar as a predicted diagnostic, read from y_pred); "
+                f"got TOA_forcing_solar_ind={self.TOA_forcing_solar_ind!r}, "
+                f"TOA_down_solar_ind={self.TOA_down_solar_ind!r}."
+            )
+        self.solar_from_input = self.TOA_forcing_solar_ind is not None
+        self.TOA_solar_ind = int(self.TOA_forcing_solar_ind if self.solar_from_input else self.TOA_down_solar_ind)
         self.TOA_up_solar_ind = int(cfg["TOA_up_solar_ind"])
         self.TOA_up_OLR_ind = int(cfg["TOA_up_OLR_ind"])
 
@@ -1229,11 +1263,11 @@ class GlobalEnergyFixerUpDown(nn.Module):
         # ------------------------------------------------------------------ #
         # TOA net flux: down_SW - up_SW - up_LW  (positive = energy in)
         # SOLIN from x (forcing, W/m²); FSUTOA, FLUT from y_pred (W/m²)
+        solar_src = (
+            x_input[:, self.TOA_solar_ind, -1, ...] if self.solar_from_input else y_pred[:, self.TOA_solar_ind, 0, ...]
+        )
         if self.flag_denorm:
-            TOA_down_solar = (
-                self._denorm(x_input[:, self.TOA_forcing_solar_ind, -1, ...], self.SOLIN_mean, self.SOLIN_std)
-                * self.N_seconds
-            )
+            TOA_down_solar = self._denorm(solar_src, self.SOLIN_mean, self.SOLIN_std) * self.N_seconds
             TOA_up_solar = (
                 self._denorm(y_pred[:, self.TOA_up_solar_ind, 0, ...], self.FSUTOA_mean, self.FSUTOA_std)
                 * self.N_seconds
@@ -1242,7 +1276,7 @@ class GlobalEnergyFixerUpDown(nn.Module):
                 self._denorm(y_pred[:, self.TOA_up_OLR_ind, 0, ...], self.FLUT_mean, self.FLUT_std) * self.N_seconds
             )
         else:
-            TOA_down_solar = x_input[:, self.TOA_forcing_solar_ind, -1, ...] * self.N_seconds
+            TOA_down_solar = solar_src * self.N_seconds
             TOA_up_solar = y_pred[:, self.TOA_up_solar_ind, 0, ...] * self.N_seconds
             TOA_up_OLR = y_pred[:, self.TOA_up_OLR_ind, 0, ...] * self.N_seconds
 

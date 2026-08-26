@@ -116,7 +116,7 @@ def test_convert_postblocks_inverse_transform(tmp_path, mean_std_nc):
     var_groups = {("prognostic", "3d"): ["T"], ("prognostic", "2d"): ["SP"]}
     pre_json = str(tmp_path / "pre.json")
     post_json = str(tmp_path / "post.json")
-    _, post_vars = _build_bridgescaler_jsons(mean_path, std_path, var_groups, pre_json, post_json)
+    _, post_vars, _spatial = _build_bridgescaler_jsons(mean_path, std_path, var_groups, pre_json, post_json)
 
     postblocks_cfg = {
         "per_step": {
