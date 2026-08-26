@@ -183,8 +183,10 @@ export PYTHONPATH=/glade/work/wchapman/Roman_Coupling/credit_gen_02
 python -c "import credit; print(credit.__file__)"   # must print .../credit_gen_02/credit/__init__.py
 ```
 
-`PYTHONPATH` shadows the editable install that points at `camulator_ud`. Unset it to go back
-to the gen1 stack. Never mix the two in one process.
+`PYTHONPATH` shadows whatever `credit` the conda env has installed editable (on this machine
+that is a different checkout). Everything below runs from this repository; the configs, the
+checker and the code fixes all live here and nothing reaches back into another tree. Never mix
+two `credit` trees in one process.
 
 **bridgescaler >= 0.8 is required** for anything touching a BridgeScaler JSON —
 `distributed_tensor`, `load_scaler_dict` and `save_scaler_dict` do not exist in 0.7.
@@ -241,9 +243,16 @@ qsub -I -A NAML0001 -l select=1:ncpus=32:ngpus=1:mem=250GB -l walltime=8:00:00 \
 ### Step 1 — copy the config
 
 ```bash
-cd /glade/work/wchapman/Roman_Coupling/camulator_ud/climate
-cp camulator_gen2.yml camulator_gen2_finetune.yml
+cd /glade/work/wchapman/Roman_Coupling/credit_gen_02
+cp climate/camulator_gen2.yml climate/camulator_gen2_finetune.yml
 ```
+
+The two CAMulator configs live in different places, each next to the thing that consumes it:
+
+| config | path | trainer |
+|---|---|---|
+| gen1-compatible (verified) | `climate/camulator_gen2.yml` | `era5-gen1`, and `Quick_Climate.py` for rollout |
+| gen2-native | `config/gen_2/camulator/camulator_gen2_native.yml` | `gen2`, fixers as postblocks |
 
 ### Step 2 — set the run directory and stage the checkpoint
 
