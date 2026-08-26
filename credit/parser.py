@@ -596,7 +596,11 @@ def credit_main_parser(conf, parse_training=True, parse_predict=True, print_summ
                 tracer_inds.append(i_var)
                 tracer_thres.append(float(tracer_threshold_dict[var]))
                 if tracers_thres_maximum is not None:
-                    tracer_thres_max.append(float(tracer_threshold_dict_max[var]))
+                    # A null entry means "no upper cap" for that tracer. Map it to +inf so
+                    # TracerFixer's `vals >= thres` comparison is simply never true; passing
+                    # None straight through raises TypeError here and again at compare time.
+                    thres_max = tracer_threshold_dict_max[var]
+                    tracer_thres_max.append(float("inf") if thres_max is None else float(thres_max))
 
         conf["model"]["post_conf"]["tracer_fixer"]["tracer_inds"] = tracer_inds
         conf["model"]["post_conf"]["tracer_fixer"]["tracer_thres"] = tracer_thres
@@ -813,6 +817,13 @@ def credit_main_parser(conf, parse_training=True, parse_predict=True, print_summ
             )
 
         def _find_ind(name_key, single=False):
+            # Prefer deriving the index from the variable name. When no *_name key is given,
+            # fall back to a literal *_ind supplied in the config. Both are needed: CAMulator's
+            # TOA downwelling solar (SOLIN) is an input-only forcing, so it has no entry in
+            # varname_output and can only be addressed by an explicit input-tensor index.
+            ind_key = name_key.replace("_name", "_ind")
+            if name_key not in cfg_ud:
+                return cfg_ud.get(ind_key, -1 if single else [])
             inds = [i for i, v in enumerate(varname_output) if v in cfg_ud[name_key]]
             return inds[0] if single else inds
 
@@ -821,6 +832,8 @@ def credit_main_parser(conf, parse_training=True, parse_predict=True, print_summ
         cfg_ud["U_inds"] = _find_ind("u_wind_name")
         cfg_ud["V_inds"] = _find_ind("v_wind_name")
         cfg_ud["TOA_down_solar_ind"] = _find_ind("TOA_down_solar_name", single=True)
+        # SOLIN read from the INPUT tensor (see GlobalEnergyFixerUpDown); index only.
+        cfg_ud["TOA_forcing_solar_ind"] = _find_ind("TOA_forcing_solar_name", single=True)
         cfg_ud["TOA_up_solar_ind"] = _find_ind("TOA_up_solar_name", single=True)
         cfg_ud["TOA_up_OLR_ind"] = _find_ind("TOA_up_OLR_name", single=True)
         cfg_ud["surf_down_solar_ind"] = _find_ind("surf_down_solar_name", single=True)

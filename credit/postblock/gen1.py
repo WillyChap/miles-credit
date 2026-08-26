@@ -14,6 +14,7 @@ import torch
 from torch import nn
 
 import numpy as np
+import xarray as xr
 
 from credit.data import get_forward_data
 from credit.transforms import load_transforms
@@ -822,6 +823,12 @@ class GlobalEnergyFixer(nn.Module):
         return x
 
 
+# NOTE: this is the CAMulator up/down-flux energy fixer. It differs from the older
+# implementation in one load-bearing way: TOA downwelling solar (SOLIN) is read from the
+# INPUT tensor, not from y_pred. In CAMulator SOLIN is an input-only dynamic forcing and
+# is absent from the model's output channels, so reading it from y_pred indexes an
+# unrelated diagnostic. It also denormalizes each flux with its own mean/std rather than
+# through the whole-state scaler, which keeps 2-D (lat,lon) statistics such as PS intact.
 class GlobalEnergyFixerUpDown(nn.Module):
     """
     Global energy conservation fixer using explicit up/down flux decomposition.
@@ -847,15 +854,17 @@ class GlobalEnergyFixerUpDown(nn.Module):
         - ``midpoint``, ``denorm``, ``surface_geopotential_name``
         - ``T_inds``, ``q_inds``, ``U_inds``, ``V_inds``
         - ``sp_inds``  (required when ``grid_type == 'sigma'``)
-        - ``TOA_down_solar_ind``  — DSWRFtoa index in y_pred
-        - ``TOA_up_solar_ind``   — USWRFtoa index in y_pred
-        - ``TOA_up_OLR_ind``     — ULWRFtoa index in y_pred
+        - ``TOA_forcing_solar_ind`` — SOLIN channel index in the *input* (x) tensor (W/m²);
+          the fixer multiplies by ``N_seconds`` internally to convert to J/m²
+        - ``TOA_up_solar_ind``   — FSUTOA_J index in y_pred (J/m²)
+        - ``TOA_up_OLR_ind``     — FLUT_J index in y_pred (J/m²)
         - ``surf_down_solar_ind`` — FSDS_J index in y_pred
         - ``surf_up_solar_ind``  — FSUS index in y_pred
         - ``surf_down_LW_ind``   — FLDS_J index in y_pred
         - ``surf_up_LW_ind``     — FLUS index in y_pred
-        - ``surf_SH_ind``        — SHF  index in y_pred  (positive-upward)
-        - ``surf_LH_ind``        — LHF  index in y_pred  (positive-upward)
+        - ``surf_SH_ind``        — SHF index in y_pred (same sign convention as FLNS/SHFLX in zarr:
+          negative = upward, i.e. stored as ``-(positive_upward × DT)``)
+        - ``surf_LH_ind``        — LHF index in y_pred (same sign convention as SHF)
     """
 
     def __init__(self, post_conf):
@@ -875,18 +884,18 @@ class GlobalEnergyFixerUpDown(nn.Module):
             self.flag_sigma_level = False
             self.flag_midpoint = cfg["midpoint"]
             self.core_compute = physics_pressure_level(lon_demo, lat_demo, p_level_demo, midpoint=self.flag_midpoint)
-            self.N_seconds = int(post_conf["data"]["lead_time_periods"]) * 3600
+            self.N_seconds = int(cfg["lead_time_periods"]) * 3600
             gph_surf_demo = np.ones((10, 18))
             self.GPH_surf = torch.from_numpy(gph_surf_demo)
         else:
-            ds_physics = get_forward_data(post_conf["data"]["save_loc_physics"])
-            lon_lat_level_names = post_conf["global_mass_fixer"]["lon_lat_level_name"]
+            ds_physics = get_forward_data(cfg["save_loc_physics"])
+            lon_lat_level_names = cfg["lon_lat_level_name"]
             lon2d = torch.from_numpy(ds_physics[lon_lat_level_names[0]].values).float()
             lat2d = torch.from_numpy(ds_physics[lon_lat_level_names[1]].values).float()
 
-            self.flag_midpoint = post_conf["global_mass_fixer"]["midpoint"]
+            self.flag_midpoint = cfg["midpoint"]
 
-            if post_conf["global_mass_fixer"]["grid_type"] == "sigma":
+            if cfg["grid_type"] == "sigma":
                 self.flag_sigma_level = True
                 self.coef_a = torch.from_numpy(ds_physics[lon_lat_level_names[2]].values).float()
                 self.coef_b = torch.from_numpy(ds_physics[lon_lat_level_names[3]].values).float()
@@ -902,7 +911,7 @@ class GlobalEnergyFixerUpDown(nn.Module):
                 self.N_levels = len(p_level)
                 self.core_compute = physics_pressure_level(lon2d, lat2d, p_level, midpoint=self.flag_midpoint)
 
-            self.N_seconds = int(post_conf["data"]["lead_time_periods"]) * 3600
+            self.N_seconds = int(cfg["lead_time_periods"]) * 3600
 
             varname_gph = cfg["surface_geopotential_name"]
             self.GPH_surf = torch.from_numpy(ds_physics[varname_gph[0]].values).float()
@@ -923,7 +932,8 @@ class GlobalEnergyFixerUpDown(nn.Module):
 
         # ------------------------------------------------------------------ #
         # Variable indices — up/down fluxes
-        self.TOA_down_solar_ind = int(cfg["TOA_down_solar_ind"])
+        # SOLIN is a forcing variable; read from x (input tensor) rather than y_pred
+        self.TOA_forcing_solar_ind = int(cfg["TOA_forcing_solar_ind"])
         self.TOA_up_solar_ind = int(cfg["TOA_up_solar_ind"])
         self.TOA_up_OLR_ind = int(cfg["TOA_up_OLR_ind"])
 
@@ -934,40 +944,138 @@ class GlobalEnergyFixerUpDown(nn.Module):
         self.surf_SH_ind = int(cfg["surf_SH_ind"])
         self.surf_LH_ind = int(cfg["surf_LH_ind"])
 
+        # How often to log the energy-budget diagnostic (forward passes). Set to 1
+        # in a rollout to trace every step; the default keeps training logs quiet.
+        self.log_every = int(cfg.get("log_every", 50))
+
         # ------------------------------------------------------------------ #
-        # Optional denorm scaler
-        if cfg["denorm"]:
-            self.state_trans = load_transforms(post_conf, scaler_only=True)
-        else:
-            self.state_trans = None
+        # Optional denorm: load per-variable mean/std directly from NC files.
+        # We do selective channel-wise denorm in forward() rather than full
+        # tensor denorm, because statistics can be scalar, level-varying (1-D),
+        # or spatially-varying (H×W) depending on the variable.
+        self.flag_denorm = bool(cfg.get("denorm", False))
+        if self.flag_denorm:
+            mean_ds = xr.open_dataset(cfg["mean_path"]).load()
+            std_ds = xr.open_dataset(cfg["std_path"]).load()
+
+            def _buf(varname, expand_dims=None):
+                """Return (mean, std) as float tensors; expand_dims = list of axes to unsqueeze."""
+                m = torch.from_numpy(np.array(mean_ds[varname].values)).float()
+                s = torch.from_numpy(np.array(std_ds[varname].values)).float()
+                if expand_dims:
+                    for d in expand_dims:
+                        m = m.unsqueeze(d)
+                        s = s.unsqueeze(d)
+                return m, s
+
+            # 3-D prognostic variables: stats shape (n_levels,) → (1, n_levels, 1, 1)
+            T_m, T_s = _buf("T", expand_dims=[0, -1, -1])  # (1, 32, 1, 1)
+            q_m, q_s = _buf("Qtot", expand_dims=[0, -1, -1])
+            U_m, U_s = _buf("U", expand_dims=[0, -1, -1])
+            V_m, V_s = _buf("V", expand_dims=[0, -1, -1])
+
+            # 2-D spatial variables: stats shape (H, W) → (1, H, W)
+            # One unsqueeze so (H,W) broadcasts against (B, H, W) without shifting dims
+            PS_m, PS_s = _buf("PS", expand_dims=[0])  # (1, H, W)
+
+            # 2-D scalar variables: scalar → ()
+            def _scalar_buf(vname):
+                return _buf(vname)  # already scalar shape ()
+
+            SOLIN_m, SOLIN_s = _scalar_buf("SOLIN")
+            FSUTOA_m, FSUTOA_s = _scalar_buf("FSUTOA")
+            FLUT_m, FLUT_s = _scalar_buf("FLUT")
+            FSDS_J_m, FSDS_J_s = _scalar_buf("FSDS_J")
+            FLDS_J_m, FLDS_J_s = _scalar_buf("FLDS_J")
+            FSUS_m, FSUS_s = _scalar_buf("FSUS")
+            FLUS_m, FLUS_s = _scalar_buf("FLUS")
+            SHFLX_m, SHFLX_s = _scalar_buf("SHFLX")
+            LHFLX_m, LHFLX_s = _scalar_buf("LHFLX")
+
+            # Store as plain attributes (NOT register_buffer) so they are:
+            #   (a) NOT included in state_dict → EMA won't try to track them
+            #   (b) NOT saved in checkpoints (they're reloaded from NC at init time)
+            # Device placement is handled lazily in _denorm/_renorm via .to(device).
+            self.T_mean = T_m
+            self.T_std = T_s
+            self.q_mean = q_m
+            self.q_std = q_s
+            self.U_mean = U_m
+            self.U_std = U_s
+            self.V_mean = V_m
+            self.V_std = V_s
+            self.PS_mean = PS_m
+            self.PS_std = PS_s
+            self.SOLIN_mean = SOLIN_m
+            self.SOLIN_std = SOLIN_s
+            self.FSUTOA_mean = FSUTOA_m
+            self.FSUTOA_std = FSUTOA_s
+            self.FLUT_mean = FLUT_m
+            self.FLUT_std = FLUT_s
+            self.FSDS_J_mean = FSDS_J_m
+            self.FSDS_J_std = FSDS_J_s
+            self.FLDS_J_mean = FLDS_J_m
+            self.FLDS_J_std = FLDS_J_s
+            self.FSUS_mean = FSUS_m
+            self.FSUS_std = FSUS_s
+            self.FLUS_mean = FLUS_m
+            self.FLUS_std = FLUS_s
+            self.SHFLX_mean = SHFLX_m
+            self.SHFLX_std = SHFLX_s
+            self.LHFLX_mean = LHFLX_m
+            self.LHFLX_std = LHFLX_s
+
+    def _denorm(self, vals, mean, std):
+        """Inverse-normalize in float32 (physics integrals need full precision)."""
+        m = mean.to(device=vals.device, dtype=torch.float32)
+        s = std.to(device=vals.device, dtype=torch.float32)
+        return vals.float() * s + m
+
+    def _renorm(self, vals, mean, std):
+        """Re-normalize, keeping float32 output."""
+        m = mean.to(device=vals.device, dtype=torch.float32)
+        s = std.to(device=vals.device, dtype=torch.float32)
+        return (vals.float() - m) / s
 
     def forward(self, x):
         x_input = x["x"]
         y_pred = x["y_pred"]
+        orig_dtype = y_pred.dtype  # remember for output cast-back
         x_input = x_input.detach().to(y_pred.device)
 
-        GPH_surf = self.GPH_surf.to(y_pred.device)
+        GPH_surf = self.GPH_surf.to(device=y_pred.device, dtype=torch.float32)
         N_vars = y_pred.shape[1]
 
-        if self.state_trans:
-            x_input = self.state_trans.inverse_transform_input(x_input)
-            y_pred = self.state_trans.inverse_transform(y_pred)
-
         # ------------------------------------------------------------------ #
-        # Atmosphere state at t0 and t1
-        T_input = x_input[:, self.T_ind_start : self.T_ind_end, -1, ...]
-        q_input = x_input[:, self.q_ind_start : self.q_ind_end, -1, ...]
-        U_input = x_input[:, self.U_ind_start : self.U_ind_end, -1, ...]
-        V_input = x_input[:, self.V_ind_start : self.V_ind_end, -1, ...]
+        # Atmosphere state at t0 and t1 — denorm if requested
+        if self.flag_denorm:
+            T_input = self._denorm(x_input[:, self.T_ind_start : self.T_ind_end, -1, ...], self.T_mean, self.T_std)
+            q_input = self._denorm(x_input[:, self.q_ind_start : self.q_ind_end, -1, ...], self.q_mean, self.q_std)
+            U_input = self._denorm(x_input[:, self.U_ind_start : self.U_ind_end, -1, ...], self.U_mean, self.U_std)
+            V_input = self._denorm(x_input[:, self.V_ind_start : self.V_ind_end, -1, ...], self.V_mean, self.V_std)
 
-        T_pred = y_pred[:, self.T_ind_start : self.T_ind_end, 0, ...]
-        q_pred = y_pred[:, self.q_ind_start : self.q_ind_end, 0, ...]
-        U_pred = y_pred[:, self.U_ind_start : self.U_ind_end, 0, ...]
-        V_pred = y_pred[:, self.V_ind_start : self.V_ind_end, 0, ...]
+            T_pred = self._denorm(y_pred[:, self.T_ind_start : self.T_ind_end, 0, ...], self.T_mean, self.T_std)
+            q_pred = self._denorm(y_pred[:, self.q_ind_start : self.q_ind_end, 0, ...], self.q_mean, self.q_std)
+            U_pred = self._denorm(y_pred[:, self.U_ind_start : self.U_ind_end, 0, ...], self.U_mean, self.U_std)
+            V_pred = self._denorm(y_pred[:, self.V_ind_start : self.V_ind_end, 0, ...], self.V_mean, self.V_std)
 
-        if self.flag_sigma_level:
-            sp_input = x_input[:, self.sp_ind, -1, ...]
-            sp_pred = y_pred[:, self.sp_ind, 0, ...]
+            if self.flag_sigma_level:
+                sp_input = self._denorm(x_input[:, self.sp_ind, -1, ...], self.PS_mean, self.PS_std)
+                sp_pred = self._denorm(y_pred[:, self.sp_ind, 0, ...], self.PS_mean, self.PS_std)
+        else:
+            T_input = x_input[:, self.T_ind_start : self.T_ind_end, -1, ...]
+            q_input = x_input[:, self.q_ind_start : self.q_ind_end, -1, ...]
+            U_input = x_input[:, self.U_ind_start : self.U_ind_end, -1, ...]
+            V_input = x_input[:, self.V_ind_start : self.V_ind_end, -1, ...]
+
+            T_pred = y_pred[:, self.T_ind_start : self.T_ind_end, 0, ...]
+            q_pred = y_pred[:, self.q_ind_start : self.q_ind_end, 0, ...]
+            U_pred = y_pred[:, self.U_ind_start : self.U_ind_end, 0, ...]
+            V_pred = y_pred[:, self.V_ind_start : self.V_ind_end, 0, ...]
+
+            if self.flag_sigma_level:
+                sp_input = x_input[:, self.sp_ind, -1, ...]
+                sp_pred = y_pred[:, self.sp_ind, 0, ...]
 
         # ------------------------------------------------------------------ #
         # Latent heat, potential energy, kinetic energy
@@ -982,21 +1090,47 @@ class GlobalEnergyFixerUpDown(nn.Module):
 
         # ------------------------------------------------------------------ #
         # TOA net flux: down_SW - up_SW - up_LW  (positive = energy in)
-        TOA_down_solar = y_pred[:, self.TOA_down_solar_ind, 0, ...]
-        TOA_up_solar = y_pred[:, self.TOA_up_solar_ind, 0, ...]
-        TOA_up_OLR = y_pred[:, self.TOA_up_OLR_ind, 0, ...]
+        # SOLIN from x (forcing, W/m²); FSUTOA, FLUT from y_pred (W/m²)
+        if self.flag_denorm:
+            TOA_down_solar = (
+                self._denorm(x_input[:, self.TOA_forcing_solar_ind, -1, ...], self.SOLIN_mean, self.SOLIN_std)
+                * self.N_seconds
+            )
+            TOA_up_solar = (
+                self._denorm(y_pred[:, self.TOA_up_solar_ind, 0, ...], self.FSUTOA_mean, self.FSUTOA_std)
+                * self.N_seconds
+            )
+            TOA_up_OLR = (
+                self._denorm(y_pred[:, self.TOA_up_OLR_ind, 0, ...], self.FLUT_mean, self.FLUT_std) * self.N_seconds
+            )
+        else:
+            TOA_down_solar = x_input[:, self.TOA_forcing_solar_ind, -1, ...] * self.N_seconds
+            TOA_up_solar = y_pred[:, self.TOA_up_solar_ind, 0, ...] * self.N_seconds
+            TOA_up_OLR = y_pred[:, self.TOA_up_OLR_ind, 0, ...] * self.N_seconds
+
         R_T = (TOA_down_solar - TOA_up_solar - TOA_up_OLR) / self.N_seconds
         R_T_sum = self.core_compute.weighted_sum(R_T, axis=(-2, -1))
 
-        # Surface net flux: (down_SW - up_SW) + (down_LW - up_LW) - SHF - LHF
-        # (positive = energy into atmosphere from surface)
-        surf_down_solar = y_pred[:, self.surf_down_solar_ind, 0, ...]
-        surf_up_solar = y_pred[:, self.surf_up_solar_ind, 0, ...]
-        surf_down_LW = y_pred[:, self.surf_down_LW_ind, 0, ...]
-        surf_up_LW = y_pred[:, self.surf_up_LW_ind, 0, ...]
-        surf_SH = y_pred[:, self.surf_SH_ind, 0, ...]
-        surf_LH = y_pred[:, self.surf_LH_ind, 0, ...]
-        F_S = (surf_down_solar - surf_up_solar + surf_down_LW - surf_up_LW - surf_SH - surf_LH) / self.N_seconds
+        # Surface net flux: (down_SW - up_SW) + (down_LW - up_LW) + SHF + LHF
+        # zarr convention: SHFLX/LHFLX negative = upward; + sign adds upward heat to atmosphere
+        if self.flag_denorm:
+            surf_down_solar = self._denorm(
+                y_pred[:, self.surf_down_solar_ind, 0, ...], self.FSDS_J_mean, self.FSDS_J_std
+            )
+            surf_up_solar = self._denorm(y_pred[:, self.surf_up_solar_ind, 0, ...], self.FSUS_mean, self.FSUS_std)
+            surf_down_LW = self._denorm(y_pred[:, self.surf_down_LW_ind, 0, ...], self.FLDS_J_mean, self.FLDS_J_std)
+            surf_up_LW = self._denorm(y_pred[:, self.surf_up_LW_ind, 0, ...], self.FLUS_mean, self.FLUS_std)
+            surf_SH = self._denorm(y_pred[:, self.surf_SH_ind, 0, ...], self.SHFLX_mean, self.SHFLX_std)
+            surf_LH = self._denorm(y_pred[:, self.surf_LH_ind, 0, ...], self.LHFLX_mean, self.LHFLX_std)
+        else:
+            surf_down_solar = y_pred[:, self.surf_down_solar_ind, 0, ...]
+            surf_up_solar = y_pred[:, self.surf_up_solar_ind, 0, ...]
+            surf_down_LW = y_pred[:, self.surf_down_LW_ind, 0, ...]
+            surf_up_LW = y_pred[:, self.surf_up_LW_ind, 0, ...]
+            surf_SH = y_pred[:, self.surf_SH_ind, 0, ...]
+            surf_LH = y_pred[:, self.surf_LH_ind, 0, ...]
+
+        F_S = (surf_down_solar - surf_up_solar + surf_down_LW - surf_up_LW + surf_SH + surf_LH) / self.N_seconds
         F_S_sum = self.core_compute.weighted_sum(F_S, axis=(-2, -1))
 
         # ------------------------------------------------------------------ #
@@ -1014,19 +1148,74 @@ class GlobalEnergyFixerUpDown(nn.Module):
         global_TE_t0 = self.core_compute.weighted_sum(TE_t0, axis=(-2, -1))
         global_TE_t1 = self.core_compute.weighted_sum(TE_t1, axis=(-2, -1))
 
-        E_correct_ratio = (self.N_seconds * (R_T_sum - F_S_sum) + global_TE_t0) / global_TE_t1
-        E_correct_ratio = E_correct_ratio.unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)
+        flux_correction = self.N_seconds * (R_T_sum - F_S_sum)  # J/m²
+        expected_TE_t1 = global_TE_t0 + flux_correction
+        E_correct_ratio = expected_TE_t1 / global_TE_t1
 
-        E_t1_correct = E_level_t1 * E_correct_ratio
-        T_pred = (E_t1_correct - E_qgk_t1) / CP_t1
+        self._fixer_calls = getattr(self, "_fixer_calls", 0) + 1
+        log_now = (self._fixer_calls % self.log_every == 1) or self.log_every == 1
+
+        # Guard: the fixer is only meaningful on PHYSICAL units. If it is ever fed
+        # normalized values (denorm misconfigured, or an inverse-scaler that silently
+        # no-oped), every budget term below is garbage and the model will diverge.
+        # Fail loudly here rather than mysteriously 200 steps into a rollout.
+        if log_now or self._fixer_calls == 1:
+            t_mean = T_input.detach().float().mean().item()
+            if not (150.0 < t_mean < 350.0):
+                logger.error(
+                    "EnergyFixer: T_input global mean = %.3f K is not physical (expected 150-350 K). "
+                    "The fixer is being fed NORMALIZED data — check denorm/mean_path/std_path "
+                    "(gen1) or the inverse bridgescaler in the postblock chain (gen2). "
+                    "Energy corrections are meaningless until this is fixed.",
+                    t_mean,
+                )
+
+        E_correct_ratio_b = E_correct_ratio.unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)
+
+        E_t1_correct = E_level_t1 * E_correct_ratio_b
+        T_pred_corrected = (E_t1_correct - E_qgk_t1) / CP_t1
+
+        # ---- Diagnostics: the RESIDUAL CORRECTION MAGNITUDE -------------------
+        # These are the numbers to watch when fine-tuning with the fixer on. As the
+        # model learns fluxes consistent with its own energy tendency, `residual`
+        # and `dT_mean` should shrink toward zero. For reference, ERA5-scaled truth
+        # closes this budget to ~0.4 W/m^2.
+        if log_now:
+            with torch.no_grad():
+                area = self.core_compute.area.to(global_TE_t0.device).sum()
+                # what the model's predicted fluxes claim the tendency must be [W/m^2]
+                flux_tendency = ((R_T_sum - F_S_sum) / area).float()
+                # the model's own (uncorrected) energy tendency [W/m^2]
+                model_tendency = ((global_TE_t1 - global_TE_t0) / self.N_seconds / area).float()
+                # the gap the fixer is forcing onto T every step [W/m^2]
+                residual = flux_tendency - model_tendency
+                dT = (T_pred_corrected - T_pred).detach().float()
+                r = E_correct_ratio.detach().float()
+                logger.info(
+                    "EnergyFixer step %d | residual=%+.3f W/m2 "
+                    "(model dTE/dt=%+.3f, fluxes say R_T-F_S=%+.3f) | "
+                    "correction dT mean=%+.4f K  |dT|max=%.4f K | "
+                    "ratio mean=%.6f min=%.6f max=%.6f",
+                    self._fixer_calls,
+                    residual.mean().item(),
+                    model_tendency.mean().item(),
+                    flux_tendency.mean().item(),
+                    dT.mean().item(),
+                    dT.abs().max().item(),
+                    r.mean().item(),
+                    r.min().item(),
+                    r.max().item(),
+                )
+
+        T_pred = T_pred_corrected
 
         # ------------------------------------------------------------------ #
-        # Write corrected T back to y_pred
-        T_pred = T_pred.unsqueeze(2)
+        # Write corrected T back to y_pred (re-normalize if denorm was applied)
+        if self.flag_denorm:
+            T_pred = self._renorm(T_pred, self.T_mean, self.T_std)
+        # Cast back to original dtype (e.g. bfloat16) before splicing into y_pred
+        T_pred = T_pred.to(dtype=orig_dtype).unsqueeze(2)
         y_pred = concat_fix(y_pred, T_pred, self.T_ind_start, self.T_ind_end, N_vars)
-
-        if self.state_trans:
-            y_pred = self.state_trans.transform_array(y_pred)
 
         x["y_pred"] = y_pred
         return x
