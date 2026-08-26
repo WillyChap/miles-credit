@@ -43,6 +43,7 @@ Loss config (``conf["loss"]``, mirroring the preblocks/postblocks structure)::
         latitude_weights: "/path/static.zarr"
         latitude_weight_power: 1.0       # exponent on cos(lat); <1 up-weights the poles
         fixer_penalty_weight: 0.0        # penalize the conservation fixers for correcting at all
+        per_level_variance: false        # divide each level by its own sigma^2, not the variable mean
 
 Scored variables: every variable in the data target layout (prognostic AND
 diagnostic variables from ``conf["data"]["source"]``) is always scored.
@@ -139,6 +140,30 @@ def _load_target_variances(scaler_path: str) -> dict:
             if channel_var is not None and torch.isfinite(channel_var).all():
                 variances[var_key] = float(channel_var.mean())
     return variances
+
+
+def _load_target_channel_variances(scaler_path: str) -> dict:
+    """Per-CHANNEL target variances, ``{var_key: (C,) tensor}``.
+
+    The scalar sibling above averages a 3-D variable's levels into one number, which is the
+    right default for combining variables but erases the level structure. A variable whose
+    sigma varies strongly with height then scores almost entirely on its highest-variance
+    levels -- CAMulator's Qtot spans a factor of 22,000, leaving its upper 16 levels with
+    0.002% of its loss. ``per_level_variance`` uses this instead.
+
+    Kept separate rather than widening the scalar function's return type: metrics and the
+    learnable weighting both depend on that contract.
+    """
+    from bridgescaler import load_scaler_dict
+
+    target_scalers = load_scaler_dict(os.path.expandvars(scaler_path))["target"]
+    out = {}
+    for source_scalers in target_scalers.values():
+        for var_key, scaler in source_scalers.items():
+            channel_var = _scaler_channel_variance(scaler)
+            if channel_var is not None and torch.isfinite(channel_var).all():
+                out[var_key] = channel_var
+    return out
 
 
 def _cos_lat_weights(path: str, power: float = 1.0) -> torch.Tensor:
@@ -245,12 +270,19 @@ class BaseLoss(nn.Module):
         use_latitude_weights: bool = False,
         latitude_weights: str | None = None,
         latitude_weight_power: float = 1.0,
+        fixer_penalty_weight: float = 0.0,
+        per_level_variance: bool = False,
         channel_schema=None,
         validation: bool = False,
         **kwargs,
     ):
         super().__init__()
         self.validation = validation
+        self.fixer_penalty_weight = float(fixer_penalty_weight)
+        self.per_level_variance = bool(per_level_variance)
+        self._channel_variances = {}
+        #: {var_key: (L,) tensor} per-level 1/sigma^2, applied before the elementwise mean.
+        self._level_weights = {}
 
         base_name = training_loss
         base_params = dict(base_loss_parameters or {})
@@ -308,6 +340,8 @@ class BaseLoss(nn.Module):
             if not scaler_path:
                 raise ValueError(f"scaler_path is required for var_weighting='{self.var_weighting}'.")
             self._variances = _load_target_variances(scaler_path)
+            if self.per_level_variance:
+                self._channel_variances = _load_target_channel_variances(scaler_path)
 
         self._combination_weights = None  # {var_key: float} for static modes; built at first forward
         self.log_variance = None  # nn.Parameter for learnable mode
@@ -360,6 +394,16 @@ class BaseLoss(nn.Module):
             manual = self.manual_weights.get(var_key, 1.0)
             if self.var_weighting == "inverse_variance":
                 variance = self._variances.get(var_key)
+                channel_var = self._channel_variances.get(var_key) if self.per_level_variance else None
+                if channel_var is not None and channel_var.numel() > 1:
+                    # Per-level normalization: divide each level by its own sigma^2 BEFORE the
+                    # elementwise mean, so every level contributes equally regardless of how much
+                    # variance it carries. This is what the gen1 loss did implicitly by working in
+                    # normalized space. The combination weight is then the manual multiplier
+                    # alone, the variance having already been divided out.
+                    self._level_weights[var_key] = 1.0 / channel_var.clamp(min=1e-12)
+                    weights[var_key] = manual
+                    continue
                 if variance is None:
                     logger.warning(
                         "BaseLoss: no scaler variance found for '%s'; falling back to weight 1.0. "
@@ -470,6 +514,14 @@ class BaseLoss(nn.Module):
             lat_w = self._lat_w(p)
             if lat_w is not None:
                 elementwise = elementwise * lat_w
+            lvl_w = self._level_weights.get(var_key)
+            if lvl_w is not None:
+                if lvl_w.numel() != elementwise.shape[1]:
+                    raise ValueError(
+                        f"BaseLoss: per-level variance for '{var_key}' has {lvl_w.numel()} entries "
+                        f"but the tensor has {elementwise.shape[1]} levels."
+                    )
+                elementwise = elementwise * lvl_w.to(elementwise.device).view(1, -1, 1, 1, 1)
             var_loss = elementwise.mean()
             var_losses[var_key] = var_loss
             self.last_var_losses[var_key] = var_loss.detach().item()
@@ -480,7 +532,7 @@ class BaseLoss(nn.Module):
             for i, var_key in enumerate(var_keys):
                 manual = self.manual_weights.get(var_key, 1.0)
                 terms.append(manual * torch.exp(-log_var[i]) * var_losses[var_key] + 0.5 * log_var[i])
-            return torch.stack(terms).mean()
+            return torch.stack(terms).mean() + self._fixer_penalty(full_data_dict)
 
         weights = self._combination_weights
         loss = torch.stack([weights[var_key] * var_losses[var_key] for var_key in var_keys]).mean()
