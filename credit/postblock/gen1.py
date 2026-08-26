@@ -35,6 +35,33 @@ PI = pi
 logger = logging.getLogger(__name__)
 
 
+def _fixer_physics_path(post_conf, fixer_key):
+    """Physics reference file for *fixer_key*.
+
+    Prefer the fixer's own ``save_loc_physics``. Configs set it inside every fixer block, so
+    reading it from ``data.save_loc_physics`` instead means an edit to a fixer block silently
+    has no effect. Falls back to the data-level key for configs that only set it there.
+    """
+    return post_conf[fixer_key].get("save_loc_physics") or post_conf["data"]["save_loc_physics"]
+
+
+def _fixer_scaler(post_conf, fixer_key):
+    """Denormalizing scaler for *fixer_key*, honoring per-fixer mean_path/std_path.
+
+    ``load_transforms`` reads ``data.mean_path``/``data.std_path``. When a fixer block names its
+    own statistics files, those are what the config means, so shadow the data-level pair for the
+    duration of the call.
+    """
+    cfg = post_conf[fixer_key]
+    if not (cfg.get("mean_path") and cfg.get("std_path")):
+        return load_transforms(post_conf, scaler_only=True)
+    shadowed = dict(post_conf)
+    shadowed["data"] = dict(post_conf["data"])
+    shadowed["data"]["mean_path"] = cfg["mean_path"]
+    shadowed["data"]["std_path"] = cfg["std_path"]
+    return load_transforms(shadowed, scaler_only=True)
+
+
 class PostBlock(nn.Module):
     def __init__(self, post_conf):
         """
@@ -337,7 +364,7 @@ class GlobalMassFixer(nn.Module):
 
         else:
             # the actual setup for model runs
-            ds_physics = get_forward_data(post_conf["data"]["save_loc_physics"])
+            ds_physics = get_forward_data(_fixer_physics_path(post_conf, "global_mass_fixer"))
 
             lon_lat_level_names = post_conf["global_mass_fixer"]["lon_lat_level_name"]
             lon2d = torch.from_numpy(ds_physics[lon_lat_level_names[0]].values).float()
@@ -385,7 +412,7 @@ class GlobalMassFixer(nn.Module):
         # ------------------------------------------------------------------------------------ #
         # setup a scaler
         if post_conf["global_mass_fixer"]["denorm"]:
-            self.state_trans = load_transforms(post_conf, scaler_only=True)
+            self.state_trans = _fixer_scaler(post_conf, "global_mass_fixer")
         else:
             self.state_trans = None
 
@@ -549,9 +576,9 @@ class GlobalWaterFixer(nn.Module):
 
         else:
             # the actual setup for model runs
-            ds_physics = get_forward_data(post_conf["data"]["save_loc_physics"])
+            ds_physics = get_forward_data(_fixer_physics_path(post_conf, "global_water_fixer"))
 
-            lon_lat_level_names = post_conf["global_mass_fixer"]["lon_lat_level_name"]
+            lon_lat_level_names = post_conf["global_water_fixer"]["lon_lat_level_name"]
             lon2d = torch.from_numpy(ds_physics[lon_lat_level_names[0]].values).float()
             lat2d = torch.from_numpy(ds_physics[lon_lat_level_names[1]].values).float()
 
@@ -594,7 +621,7 @@ class GlobalWaterFixer(nn.Module):
         # ------------------------------------------------------------------------------------ #
         # setup a scaler
         if post_conf["global_water_fixer"]["denorm"]:
-            self.state_trans = load_transforms(post_conf, scaler_only=True)
+            self.state_trans = _fixer_scaler(post_conf, "global_water_fixer")
         else:
             self.state_trans = None
 
