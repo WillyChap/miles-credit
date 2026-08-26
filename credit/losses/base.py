@@ -42,7 +42,9 @@ Loss config (``conf["loss"]``, mirroring the preblocks/postblocks structure)::
         use_latitude_weights: false      # cos(lat) spatial weighting per variable
         latitude_weights: "/path/static.zarr"
         latitude_weight_power: 1.0       # exponent on cos(lat); <1 up-weights the poles
-        fixer_penalty_weight: 0.0        # penalize the conservation fixers for correcting at all
+        fixer_penalty_weight: 0.0        # float, or "learnable" to discover it (Kendall-Gal)
+        fixer_penalty_init_scale: 2.6e-9 # expected penalty magnitude; sets the learnable init
+        fixer_penalty_target: 0.5        # penalty's share of the loss at equilibrium (0.5 = Kendall-Gal)
         per_level_variance: false        # divide each level by its own sigma^2, not the variable mean
 
 Scored variables: every variable in the data target layout (prognostic AND
@@ -270,7 +272,9 @@ class BaseLoss(nn.Module):
         use_latitude_weights: bool = False,
         latitude_weights: str | None = None,
         latitude_weight_power: float = 1.0,
-        fixer_penalty_weight: float = 0.0,
+        fixer_penalty_weight: float | str = 0.0,
+        fixer_penalty_init_scale: float = 2.6e-9,
+        fixer_penalty_target: float = 0.5,
         per_level_variance: bool = False,
         channel_schema=None,
         validation: bool = False,
@@ -278,7 +282,28 @@ class BaseLoss(nn.Module):
     ):
         super().__init__()
         self.validation = validation
-        self.fixer_penalty_weight = float(fixer_penalty_weight)
+        # Accepts a float, or "learnable" to discover the weight during training.
+        self.fixer_penalty_learnable = isinstance(fixer_penalty_weight, str) and (
+            fixer_penalty_weight.strip().lower() == "learnable"
+        )
+        self.fixer_penalty_weight = 0.0 if self.fixer_penalty_learnable else float(fixer_penalty_weight)
+        # Where the learnable weight settles: at equilibrium the penalty contributes exactly
+        # `fixer_penalty_target` to the loss. Standard Kendall-Gal uses 0.5, which EQUALIZES the
+        # penalty against the data term regardless of scale -- for a data loss around 0.06 that
+        # makes conservation roughly 8x the fit. Setting this to the share you actually intend
+        # (e.g. 1% of the loss) keeps the weight discovered while keeping conservation a
+        # constraint rather than the objective.
+        self.fixer_penalty_target = float(fixer_penalty_target)
+        #: Kendall-Gal log-variance for the fixer penalty (learnable mode only), else None.
+        self.fixer_log_variance = None
+        if self.fixer_penalty_learnable:
+            # Start at the Kendall-Gal equilibrium for a penalty of order
+            # fixer_penalty_init_scale, so training begins near balance rather than spending
+            # epochs climbing there from exp(0) = 1 -- which, for a ~1e-9 penalty, is off.
+            # s* solves exp(-s) * P = target, i.e. s* = log(P / target).
+            self.fixer_log_variance = nn.Parameter(
+                torch.tensor(float(np.log(max(float(fixer_penalty_init_scale) / self.fixer_penalty_target, 1e-30))))
+            )
         self.per_level_variance = bool(per_level_variance)
         self._channel_variances = {}
         #: {var_key: (L,) tensor} per-level 1/sigma^2, applied before the elementwise mean.
@@ -351,6 +376,8 @@ class BaseLoss(nn.Module):
         self.last_var_losses = {}
         #: {fixer_name: mean (ratio-1)^2} from the most recent forward, for logging.
         self.last_fixer_penalties = {}
+        #: discovered exp(-s) weight in learnable mode, for logging.
+        self.last_fixer_penalty_weight = None
         if self.var_weighting == "learnable":
             if self.data_var_keys is None:
                 raise ValueError(
@@ -551,11 +578,19 @@ class BaseLoss(nn.Module):
         unconditionally.
         """
         ratios = full_data_dict.get("fixer_ratios") or {}
-        if self.fixer_penalty_weight <= 0.0 or not ratios:
+        if not ratios or (self.fixer_penalty_weight <= 0.0 and not self.fixer_penalty_learnable):
             return torch.zeros(())
         terms = []
         for name, ratio in ratios.items():
             term = ((ratio - 1.0) ** 2).mean()
             terms.append(term)
             self.last_fixer_penalties[name] = term.detach().item()
-        return self.fixer_penalty_weight * torch.stack(terms).mean()
+        penalty = torch.stack(terms).mean()
+        if not self.fixer_penalty_learnable:
+            return self.fixer_penalty_weight * penalty
+        # Kendall-Gal, matching the per-variable learnable mode above: exp(-s) is the weight and
+        # the +0.5*s term is what stops it running away. Training settles where the two balance,
+        # so the weight is discovered rather than hand-set.
+        s = self.fixer_log_variance.to(penalty.device)
+        self.last_fixer_penalty_weight = float(torch.exp(-s).detach())
+        return torch.exp(-s) * penalty + self.fixer_penalty_target * s
