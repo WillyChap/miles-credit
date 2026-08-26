@@ -24,8 +24,25 @@ from ._convert import _write_reload_config
 logger = __import__("logging").getLogger(__name__)
 
 
+# Trainer types served by the gen1 entry point. Gen1 configs carry postblocks under
+# `model.post_conf`, which train_gen2 deletes -- dispatching them to gen2 would silently
+# train without their conservation fixers.
+_GEN1_TRAINER_TYPES = {"era5", "era5-gen1"}
+
+
 def _train(args: argparse.Namespace) -> None:
-    from credit.applications.train_gen2 import main_cli
+    import yaml
+
+    try:
+        with open(args.config) as f:
+            trainer_type = (yaml.safe_load(f) or {}).get("trainer", {}).get("type")
+    except (OSError, yaml.YAMLError):
+        trainer_type = None  # let the entry point report the real problem
+
+    if trainer_type in _GEN1_TRAINER_TYPES:
+        from credit.applications.train_gen1 import main_cli
+    else:
+        from credit.applications.train_gen2 import main_cli
 
     sys.argv = ["credit-train", "-c", args.config, "--backend", args.backend]
     main_cli()
