@@ -586,13 +586,26 @@ loss:
         # scaled its field by, and this adds w * mean((ratio - 1)^2). It trains the model to
         # conserve on its own instead of leaning on the fixer every step.
         #
-        # OFF by default because it needs calibrating, not because it is optional. On clean data
-        # the ratios sit ~1e-5 from unity, so (ratio-1)^2 is ~1e-10 -- orders below the MSE term,
-        # and a weight of 1 would be indistinguishable from 0. Run a few batches at 0, read
-        # BaseLoss.last_fixer_penalties (logged per fixer), then set the weight so the penalty is
-        # the share of total loss you intend. Consider |ratio - 1| instead of the square, since
-        # squaring something already ~1e-5 pushes it into float32 noise.
-        fixer_penalty_weight: 0.0
+        # ON, and calibrated rather than guessed. A real ckpt69 prediction gives an energy
+        # ratio of ~0.999949, so (ratio-1)^2 is ~2.6e-9 -- eight orders below the data loss
+        # (~0.064). A weight of 1 would be indistinguishable from 0; 2.5e5 makes the penalty
+        # ~1% of the loss, enough to steer without competing with the fit:
+        #
+        #     weight = target_share * loss / penalty  =  0.01 * 0.064 / 2.6e-9  ~  2.5e5
+        #
+        # Re-check against BaseLoss.last_fixer_penalties, which reports mass, water and energy
+        # separately -- they will not share a magnitude, and the loss scale changed with the
+        # per-level weighting. Raise it after a short run rather than starting high; this is a
+        # soft constraint on an already-converged model.
+        #
+        # The square is deliberate: the gradient is 2*(ratio-1)*d(ratio)/dtheta, so the push
+        # eases as the model approaches conservation, and it is differentiable at the optimum.
+        #
+        # Alternative: `fixer_penalty_weight: learnable` discovers the weight by Kendall-Gal
+        # uncertainty weighting, with `fixer_penalty_target` setting the share of the loss it
+        # settles at. Plain Kendall-Gal (target 0.5) would make conservation ~8x the data term,
+        # so set the target to the share you actually want.
+        fixer_penalty_weight: 2.5e5
 
         use_latitude_weights: true
         latitude_weights: "/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/f.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc"
