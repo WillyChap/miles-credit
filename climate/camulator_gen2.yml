@@ -1,0 +1,733 @@
+# ===================================================================================================== #
+# CAMulator — CREDIT gen2 config
+# 1.0deg (192x288), 32 hybrid-sigma levels, 6-hourly, state-in / state-out CESM atmosphere.
+#
+# This config drives THREE things off one file:
+#   1. fine-tuning       `python -m credit.applications.train_gen1 -c this.yml`
+#                        -> flat data.* lists + trainer + model.post_conf
+#   2. gen2 rollout      `credit rollout -c this.yml`      -> inference:
+#   3. climate driver    `python Quick_Climate.py this.yml` -> flat data.* lists + predict:
+#
+# ON FINE-TUNING: invoke train_gen1 DIRECTLY, as above. Stock CREDIT's `credit train`
+# dispatches to train_gen2 unconditionally, whatever trainer.type says, and train_gen2.py:196
+# DELETES model.post_conf -- every conservation fixer below is then removed before the model is
+# built and you train with no physics constraint. The PR branch routes `credit train` by
+# trainer.type so it is safe there too, but the direct invocation works either way.
+# See CAMULATOR_GEN2_FINETUNING.md section 1.3.
+#
+# WHY IT LOOKS LIKE TWO CONFIGS IN ONE `data:` BLOCK
+# -------------------------------------------------
+# gen2's dataset reads the nested `data.source.<name>.variables.*` schema. But
+# `credit_main_parser` still builds the postblock channel map from the FLAT lists
+# (`credit/parser.py:497-521`), and climate/Model_State.py reads those same flat lists to
+# lay out its state tensor. Both are therefore required, and they MUST agree in order.
+#
+# SURFACE PRESSURE IS NORMALIZED BY A 2-D FIELD
+# ---------------------------------------------
+# CAMulator's PS is normalized by a 2-D (lat,lon) mean/std FIELD, not a scalar -- it is the
+# only 2-D variable that is (see PS in mean_6h_*.nc: dims ('latitude','longitude')). Any
+# scaling path that stores one scalar per channel replaces that field with its global mean
+# (~96495.9 Pa); nothing errors, the model just stops seeing the inputs it was trained on, and
+# because PS feeds the mass/water/energy fixers the damage propagates everywhere.
+#
+# The scaler JSON shipped upstream has exactly that collapse baked in (PS mean_x_ is a single
+# value). The one below does not: bridgescaler's `spatial_variables` stores one statistic per
+# gridpoint, so PS carries all 55296 (=192*288) values. Verified on real data from the
+# training zarr: all 27 variables, PS included, come out BITWISE IDENTICAL to the gen1
+# Normalize_ERA5_and_Forcing path.
+#
+# If you ever regenerate this JSON, regenerate it with `spatial_variables` and check
+# PS's stored length is 55296, not 1. And CONVERT the existing NetCDF stats -- do not refit
+# from data with `credit preprocess`, which produces different numbers that the shipped
+# checkpoint was not trained under.
+#
+# ENERGY: THIS MODEL USES THE UP/DOWN FIXER
+# -----------------------------------------
+# CAMulator is trained under `global_energy_fixer_updown` (explicit up/down radiative fluxes),
+# NOT the net-flux `global_energy_fixer`. The two enforce the same budget by rescaling T, so
+# enabling both double-corrects temperature. Keep `global_energy_fixer.activate: False`.
+#
+# `activate_outside_model` — READ THIS BEFORE TRAINING
+# ---------------------------------------------------
+#   False -> the fixer runs INSIDE model.forward() via PostBlock, in the autograd graph.
+#            This is what you want for TRAINING / FINE-TUNING.
+#   True  -> PostBlock skips it (credit/postblock/gen1.py:72-97) and climate/Model_State.py
+#            applies it after the forward pass instead. This is what you want for the
+#            Quick_Climate ROLLOUT.
+# Setting it True and then training means you train with the fixers OFF. See FINETUNING.md.
+# ===================================================================================================== #
+
+save_loc: '/glade/derecho/scratch/wchapman/CREDIT_runs/camulator_gen2/'
+seed: 1000
+
+# ===================================================================================================== #
+# DATA
+# ===================================================================================================== #
+data:
+    # ------------------------------------------------------------------ #
+    # gen2 nested schema — consumed by the gen2 dataset/dataloader.
+    # ------------------------------------------------------------------ #
+    source:
+        CESM:
+            dataset_type: local
+            level_coord: level          # the zarr's vertical coord is 'level' (NOT 'lev')
+            # the 32 hybrid-sigma level values, as float32 in the zarr coord
+            levels: [3.643465757369995, 7.59481954574585, 14.356632232666016, 24.612220764160156,
+                     35.923248291015625, 43.193748474121094, 51.67749786376953, 61.5204963684082,
+                     73.75096130371094, 87.82122802734375, 103.31712341308594, 121.5472412109375,
+                     142.99403381347656, 168.22508239746094, 197.9080810546875, 232.82861328125,
+                     273.91082763671875, 322.2419128417969, 379.10089111328125, 445.9925842285156,
+                     524.6871948242188, 609.7786865234375, 691.389404296875, 763.4044799804688,
+                     820.8583984375, 859.5347900390625, 887.020263671875, 912.64453125,
+                     936.1984252929688, 957.4854736328125, 976.3253784179688, 992.5560913085938]
+            variables:
+                prognostic:
+                    vars_3D: [U, V, T, Qtot]
+                    vars_2D: [PS, TREFHT]
+                    path: '/glade/derecho/scratch/wchapman/b_credit_runs_f32_02/b.e21.CREDIT_climate_branch_1980_%Y_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+                    filename_time_format: '%Y'   # NOTE: ignored by the local gen2 dataset;
+                                                 # the strftime code must be in `path:` itself
+                dynamic_forcing:
+                    vars_2D: [SOLIN, SST, ICEFRAC, co2vmr_3d]
+                    path: '/glade/derecho/scratch/wchapman/b_credit_runs_f32_02/b.e21.CREDIT_climate_branch_1980_%Y_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+                    filename_time_format: '%Y'
+                static:
+                    vars_2D: [z_norm, LANDM_COSLAT]
+                    path: '/glade/derecho/scratch/wchapman/b_credit_runs/statics_b_credit_runs_f32_02.nc'
+                diagnostic:
+                    vars_2D: [PRECT, TS, CLDHGH, CLDLOW, CLDMED, TAUX, TAUY, U10, QFLX,
+                              FSDS_J, FLDS_J, FSUS, FLUS, SHFLX, LHFLX, FSUTOA, FLUT]
+                    path: '/glade/derecho/scratch/wchapman/b_credit_runs_f32_02/b.e21.CREDIT_climate_branch_1980_%Y_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+                    filename_time_format: '%Y'
+
+    # ------------------------------------------------------------------ #
+    # flat legacy lists — consumed by credit_main_parser (postblock channel
+    # map) and by climate/Model_State.py (state-tensor layout).
+    # ORDER IS LOAD-BEARING: it defines every channel index in post_conf below.
+    # ------------------------------------------------------------------ #
+    variables: ['U', 'V', 'T', 'Qtot']
+    surface_variables: ['PS', 'TREFHT']
+    dynamic_forcing_variables: ['SOLIN', 'SST', 'ICEFRAC', 'co2vmr_3d']
+    diagnostic_variables: ['PRECT', 'TS', 'CLDHGH', 'CLDLOW', 'CLDMED', 'TAUX', 'TAUY', 'U10',
+                           'QFLX', 'FSDS_J', 'FLDS_J', 'FSUS', 'FLUS', 'SHFLX', 'LHFLX', 'FSUTOA', 'FLUT']
+    forcing_variables: []
+    static_variables: ['z_norm', 'LANDM_COSLAT']
+
+    save_loc:                  '/glade/derecho/scratch/wchapman/b_credit_runs_f32_02/b.e21.CREDIT_climate_branch_1980_????_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+    save_loc_surface:          '/glade/derecho/scratch/wchapman/b_credit_runs_f32_02/b.e21.CREDIT_climate_branch_1980_????_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+    save_loc_dynamic_forcing:  '/glade/derecho/scratch/wchapman/b_credit_runs_f32_02/b.e21.CREDIT_climate_branch_1980_????_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+    save_loc_diagnostic:       '/glade/derecho/scratch/wchapman/b_credit_runs_f32_02/b.e21.CREDIT_climate_branch_1980_????_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+    save_loc_forcing:          '/glade/derecho/scratch/wchapman/b_credit_runs_f32_02/b.e21.CREDIT_climate_branch_1980_????_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+    save_loc_static:           '/glade/derecho/scratch/wchapman/b_credit_runs/statics_b_credit_runs_f32_02.nc'
+
+    # Fallback only, on the PR branch. Stock CREDIT has the mass, water and net-energy fixers
+    # read their physics reference grid from HERE rather than from the save_loc_physics key
+    # that appears under each fixer block below -- so on stock CREDIT this line is load-bearing
+    # and dropping it raises KeyError: 'save_loc_physics'. The PR branch makes all four fixers
+    # prefer their own key and fall back to this one, so here it is inert. Keep it: it costs
+    # nothing and it is what lets this config also run against stock CREDIT.
+    # (The two files are byte-identical in hyai, hybi, lon2d, lat2d and PHIS either way.)
+    save_loc_physics:          '/glade/derecho/scratch/wchapman/b_credit_runs/statics_b_credit_runs_f32_02.nc'
+
+    # normalization statistics.
+    # NOTE the '_f32coords' suffix here: the post_conf fixers below deliberately point at the
+    # NON-f32coords pair. Two stat files are in play in one run; that is how the model was
+    # trained, so do not unify them.
+    mean_path: '/glade/derecho/scratch/wchapman/b_credit_runs/mean_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal_f32coords.nc'
+    std_path:  '/glade/derecho/scratch/wchapman/b_credit_runs/std_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal_f32coords.nc'
+    scaler_type: 'std_new'      # Model_State.py hard-requires this string
+
+    # REQUIRED by the gen1 dataloader, which reads this TOP-LEVEL key. The
+    # `dataset_type: local` nested under data.source.CESM is the gen2 loader's key and is
+    # invisible to gen1 -- without the line below you get "ValueError: Unsupported dataset
+    # type: None" before training starts.
+    dataset_type: ERA5_MultiStep_Batcher
+
+    # number of vertical levels, as an INT. parser.py uses this to lay out post_conf
+    # channel indices; it is a different key from data.source.CESM.levels (the coord values).
+    levels: 32
+
+    # static_first: True puts static vars BEFORE dynamic forcing in the input tensor, i.e.
+    #   ... PS 128, TREFHT 129, z_norm 130, LANDM_COSLAT 131, SOLIN 132, SST 133, ICEFRAC 134, co2vmr_3d 135
+    # Flipping this to False moves SOLIN from channel 132 to 130, and the energy fixer's
+    # TOA_forcing_solar_ind (a literal the parser never recomputes) would then read terrain
+    # height as insolation. MUST stay True for this checkpoint.
+    static_first: True
+
+    history_len: 1
+    valid_history_len: 1
+    # forecast_len is interpreted by the TRAINER, and the two generations index it differently:
+    #   era5-gen1 (what this config uses): 0 = single step  -> 2 gives the 3-step rollout the
+    #                                      shipped checkpoint was trained with. KEEP 2.
+    #   gen2:                              1 = single step  -> the same rollout would be 3.
+    # Verified: with trainer.type era5-gen1, `forecast_len: 3` loads a 4-step rollout, which is
+    # NOT what the checkpoint was trained on. Bump this to 3 only if you also switch to gen2.
+    forecast_len: 2
+    valid_forecast_len: 2
+    one_shot: True
+    lead_time_periods: 6
+    skip_periods: null
+    data_clamp: null
+
+    start_datetime: '1980-01-01'
+    end_datetime:   '2012-12-31'
+    timestep: 6h
+
+    train_years: [1980, 2012]
+    valid_years: [2013, 2014]
+
+validation_data:
+    source:
+        CESM:
+            dataset_type: local
+            level_coord: level
+            variables:
+                prognostic:
+                    vars_3D: [U, V, T, Qtot]
+                    vars_2D: [PS, TREFHT]
+                    path: '/glade/derecho/scratch/wchapman/b_credit_runs_f32_02/b.e21.CREDIT_climate_branch_1980_%Y_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+                    filename_time_format: '%Y'
+                dynamic_forcing:
+                    vars_2D: [SOLIN, SST, ICEFRAC, co2vmr_3d]
+                    path: '/glade/derecho/scratch/wchapman/b_credit_runs_f32_02/b.e21.CREDIT_climate_branch_1980_%Y_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+                    filename_time_format: '%Y'
+                static:
+                    vars_2D: [z_norm, LANDM_COSLAT]
+                    path: '/glade/derecho/scratch/wchapman/b_credit_runs/statics_b_credit_runs_f32_02.nc'
+                diagnostic:
+                    vars_2D: [PRECT, TS, CLDHGH, CLDLOW, CLDMED, TAUX, TAUY, U10, QFLX,
+                              FSDS_J, FLDS_J, FSUS, FLUS, SHFLX, LHFLX, FSUTOA, FLUT]
+                    path: '/glade/derecho/scratch/wchapman/b_credit_runs_f32_02/b.e21.CREDIT_climate_branch_1980_%Y_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+                    filename_time_format: '%Y'
+    start_datetime: '2013-01-01'
+    end_datetime:   '2014-12-31'
+    timestep: 6h
+    history_len: 1
+    forecast_len: 2             # gen1 indexing, as above
+    one_shot: True
+    lead_time_periods: 6
+    skip_periods: null
+
+    # ------------------------------------------------------------------ #
+    # `load_dataset` requires validation_data to contain EVERY key that `data` has, and
+    # raises "ValueError: validation_data is missing keys: {...}" otherwise -- even for keys
+    # that are irrelevant to validation. So the block below mirrors `data:` verbatim; the
+    # genuinely validation-specific settings are the datetimes and source paths above.
+    # Keep this in sync if you edit the corresponding key in `data:`.
+    # ------------------------------------------------------------------ #
+    variables: ['U', 'V', 'T', 'Qtot']
+    surface_variables: ['PS', 'TREFHT']
+    dynamic_forcing_variables: ['SOLIN', 'SST', 'ICEFRAC', 'co2vmr_3d']
+    diagnostic_variables: ['PRECT', 'TS', 'CLDHGH', 'CLDLOW', 'CLDMED', 'TAUX', 'TAUY', 'U10',
+                           'QFLX', 'FSDS_J', 'FLDS_J', 'FSUS', 'FLUS', 'SHFLX', 'LHFLX', 'FSUTOA', 'FLUT']
+    forcing_variables: []
+    static_variables: ['z_norm', 'LANDM_COSLAT']
+
+    save_loc:                  '/glade/derecho/scratch/wchapman/b_credit_runs_f32_02/b.e21.CREDIT_climate_branch_1980_????_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+    save_loc_surface:          '/glade/derecho/scratch/wchapman/b_credit_runs_f32_02/b.e21.CREDIT_climate_branch_1980_????_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+    save_loc_dynamic_forcing:  '/glade/derecho/scratch/wchapman/b_credit_runs_f32_02/b.e21.CREDIT_climate_branch_1980_????_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+    save_loc_diagnostic:       '/glade/derecho/scratch/wchapman/b_credit_runs_f32_02/b.e21.CREDIT_climate_branch_1980_????_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+    save_loc_forcing:          '/glade/derecho/scratch/wchapman/b_credit_runs_f32_02/b.e21.CREDIT_climate_branch_1980_????_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+    save_loc_static:           '/glade/derecho/scratch/wchapman/b_credit_runs/statics_b_credit_runs_f32_02.nc'
+    save_loc_physics:          '/glade/derecho/scratch/wchapman/b_credit_runs/statics_b_credit_runs_f32_02.nc'
+
+    mean_path: '/glade/derecho/scratch/wchapman/b_credit_runs/mean_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal_f32coords.nc'
+    std_path:  '/glade/derecho/scratch/wchapman/b_credit_runs/std_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal_f32coords.nc'
+    scaler_type: 'std_new'
+    dataset_type: ERA5_MultiStep_Batcher
+
+    levels: 32
+    static_first: True
+    valid_history_len: 1
+    valid_forecast_len: 2
+    data_clamp: null
+    train_years: [1980, 2012]
+    valid_years: [2013, 2014]
+
+# ===================================================================================================== #
+# PREBLOCKS — input scaling. USED BY THE GEN2 TRAINER ONLY.
+#
+# NOT USED ON THE PATH THIS CONFIG RUNS. The gen1 trainer (trainer.type: era5-gen1) and
+# Quick_Climate both scale through data.mean_path / data.std_path + data.scaler_type via
+# credit.transforms.Normalize_ERA5_and_Forcing, and neither reads this section. It is kept,
+# and kept correct, as the migration target for when the gen2 trainer becomes usable here
+# (see the trainer block for what blocks that today).
+#
+# The scaler JSON was CONVERTED from the same NetCDF stats the gen1 path uses -- not refitted
+# -- so it is the same normalization, not a similar one. `spatial_variables` keeps PS as a
+# per-gridpoint field. Verified on real zarr data: all 27 variables bitwise identical to
+# Normalize_ERA5_and_Forcing, PS included (max|diff| = 0.0).
+#
+# Alternative: `era5_normalizer`, which reads the NetCDF stats directly and needs no JSON:
+#     norm:
+#         type: era5_normalizer
+#         args: {mean_path: <data.mean_path>, std_path: <data.std_path>}
+# It also handles the 2-D PS field, but only incidentally -- via an implicit broadcast in a
+# branch written for per-level stats -- and it has no inverse postblock, so the gen2 postblock
+# chain cannot use it. bridgescaler is the one with a matching inverse.
+# ===================================================================================================== #
+preblocks:
+    per_step:
+        scaler:
+            type: bridgescaler_transform
+            args:
+                scaler_path: '/glade/derecho/scratch/wchapman/CREDIT_runs/camulator_gen2/scalers/camulator_pre_scaler.json'
+                # NOT `[]`. Empty means "every variable in the batch", which includes the two
+                # statics -- and the scaler has no entries for those, so bridgescaler raises
+                #   AssertionError: Key path 'input -> CESM -> CESM/static/2d/z_norm'
+                #                   found in 'var_dict' but missing in 'scalers'
+                # These three prefixes expand to exactly the 27 variables that do have scalers.
+                variables:
+                    - CESM/prognostic
+                    - CESM/dynamic_forcing
+                    - CESM/diagnostic
+                method: transform
+                spatial_variables:     # one mean/std PER GRIDPOINT, not one per channel
+                    - CESM/prognostic/2d/PS
+        concat:
+            type: concat
+
+# ===================================================================================================== #
+# POSTBLOCKS — the gen2 inverse. ALSO NOT USED ON THIS PATH.
+#
+# The gen1 trainer and Quick_Climate apply model.post_conf instead (further down). This block
+# is the start of the gen2 equivalent; it is incomplete on purpose. To finish it you would add
+# the name-based conservation fixers from credit/postblock/conservation.py between the inverse
+# scaler and a flatten_to_tensor, and validate them against this model -- they are a separate
+# implementation from the model.post_conf fixers below and have never been run on CAMulator.
+# ===================================================================================================== #
+# The chain must be FOUR blocks, not two. `credit/metrics/base.py` scores y_processed against
+# y_target_processed, and the trainer builds the latter by running the SAME chain on the flat
+# target `y`. Supply only the prediction half and the metrics compare physical predictions
+# against still-normalized targets: the loss looks fine (it is computed elsewhere) while
+# valid_rmse comes out around 1e6 and valid_bias larger than surface pressure itself.
+#
+# Both scaler blocks need `spatial_variables`, for the same reason the preblock does -- the
+# target's PS must be inverse-scaled per gridpoint too.
+postblocks:
+    per_step:
+        reconstruct:
+            type: reconstruct
+            args:
+                detach: False          # required with flatten_to_tensor so y_pred can backprop
+        scaler:
+            type: bridgescaler_transform
+            args:
+                scaler_path: &post_scaler '/glade/derecho/scratch/wchapman/CREDIT_runs/camulator_gen2/scalers/camulator_post_scaler.json'
+                variables: []
+                method: inverse_transform
+                spatial_variables: &spatial_ps
+                    - CESM/prognostic/2d/PS
+        reconstruct_target:
+            type: reconstruct
+            args:
+                in_key: "y"
+                out_key: "y_target_processed"
+        scaler_target:
+            type: bridgescaler_transform
+            args:
+                scaler_path: *post_scaler
+                variables: []
+                method: inverse_transform
+                key: "y_target_processed"
+                spatial_variables: *spatial_ps
+
+# ===================================================================================================== #
+# TRAINER
+# ===================================================================================================== #
+# Which trainer? READ THIS.
+#
+#   era5-gen1  -> credit/applications/train_gen1.py. Runs credit_main_parser, honors
+#                 model.post_conf, and therefore actually applies the mass / water /
+#                 up-down-energy fixers. THIS IS THE ONE TO USE FOR CAMULATOR.
+#   gen2       -> credit/applications/train_gen2.py. It bypasses credit_main_parser and
+#                 EXPLICITLY DROPS model.post_conf (train_gen2.py:196-201, with a warning):
+#                     "Gen 2 training does not support Gen 1 postblocks ... will be ignored"
+#                 Its replacement is the name-based `postblocks:` pipeline, whose only
+#                 inverse-scaling block is bridgescaler -- which cannot represent CAMulator's
+#                 2-D (lat,lon) PS statistics. So the gen2 trainer cannot currently fine-tune
+#                 this model under its trained physics constraint.
+#
+# Both trainers read the same `data:` block above, so switching is a one-line change here.
+trainer:
+    type: era5-gen1
+    mode: ddp                    # fsdp | ddp | none   (used by the gen1 trainer)
+
+    # used only by the gen2 trainer; harmless and ignored by era5-gen1
+    parallelism:
+        data: ddp                # ddp | fsdp2 | none
+        tensor: 1
+        domain: 1
+
+    cpu_offload: False
+    activation_checkpoint: True
+    compile: False
+
+    # FINE-TUNING: load_weights True + save_loc pointed at the run directory holding the
+    # checkpoint you are continuing from. See FINETUNING.md for the full recipe.
+    load_weights: True
+    load_optimizer: False        # False when starting a NEW fine-tune from a pretrained ckpt
+    load_scaler: False
+    load_scheduler: False
+    reload_epoch: False
+
+    save_backup_weights: True
+    save_best_weights: True
+    save_every_epoch: True
+    save_metric_vars: ["PRECT", "TREFHT", "TAUX", "TAUY", "U", "T"]
+
+    update_learning_rate: True
+    learning_rate: 1.0e-06       # fine-tuning LR: 100x below the 1.0e-04 pretraining LR
+    weight_decay: 0
+
+    train_batch_size: 8
+    valid_batch_size: 8
+    batches_per_epoch: 0         # 0 -> len(dataloader)
+    valid_batches_per_epoch: 100
+    stopping_patience: 5000
+    skip_validation: False
+
+    start_epoch: 0
+    num_epoch: 5
+    epochs: &epochs 200
+
+    use_tensorboard: True
+    use_ema: False
+
+    use_scheduler: False
+    scheduler: {scheduler_type: cosine-annealing, T_max: *epochs, last_epoch: -1}
+
+    amp: False
+    mixed_precision:
+        param_dtype: "float32"
+        reduce_dtype: "float32"
+        buffer_dtype: "float32"
+
+    grad_accum_every: 1
+    grad_max_norm: 1.0
+    # thread_workers MUST be 1 for ERA5_MultiStep_Batcher. That dataset is STATEFUL -- it
+    # carries forecast_step_counts internally -- so every extra worker gets its own copy and
+    # the trainer receives each forecast step once per worker. The duplicate step is consumed
+    # with forecast_step != 1, so `x` is never rebuilt and the 6 forcing channels get appended
+    # a second time:
+    #   RuntimeError: expected input[1, 142, 288, 384] to have 136 channels, but got 142
+    # It crashes on the second batch. (credit/datasets/gen_1/load_dataset_and_dataloader.py:523
+    # carries the same warning: "Must be 1 to use prefetching".)
+    thread_workers: 1
+    # must be >= 1: the validation branch passes prefetch_factor unconditionally, and 0 raises
+    # "prefetch_factor option could only be specified in multiprocessing"
+    valid_thread_workers: 1
+    prefetch_factor: 32
+
+# ===================================================================================================== #
+# MODEL
+# Architecture must match the checkpoint exactly — do not edit for a shipped model.
+# ===================================================================================================== #
+model:
+    type: "camulator"
+    frames: 1
+    image_height: 192
+    image_width: 288
+    levels: 32
+    channels: 4                 # 3D prognostic: U V T Qtot
+    surface_channels: 2         # 2D prognostic: PS TREFHT
+    input_only_channels: 6      # static (2) + dynamic_forcing (4)
+    output_only_channels: 17    # diagnostics
+
+    patch_width: 1
+    patch_height: 1
+    frame_patch_size: 1
+
+    dim: [256, 512, 1024, 2048]
+    depth: [2, 2, 18, 2]
+    global_window_size: [4, 4, 2, 1]
+    local_window_size: 3
+    cross_embed_kernel_sizes:
+        - [4, 8, 16, 32]
+        - [2, 4]
+        - [2, 4]
+        - [2, 4]
+    cross_embed_strides: [2, 2, 2, 2]
+    attn_dropout: 0.
+    ff_dropout: 0.
+
+    use_spectral_norm: True
+    interp: True
+
+    padding_conf:
+        activate: True
+        mode: earth
+        # written as 2-lists rather than bare ints. credit_main_parser normalizes 48 -> [48, 48],
+        # but the gen2 trainer bypasses the parser and hands the raw value to TensorPadding,
+        # which then raises "TypeError: 'int' object is not iterable". Same padding either way.
+        pad_lat: [48, 48]
+        pad_lon: [48, 48]
+
+    # ------------------------------------------------------------------------------------------- #
+    # PHYSICS CONSERVATION FIXERS (gen1 channel-index postblocks).
+    #
+    # These are the gen1 fixers, still wired into the gen2 camulator model
+    # (credit/models/camulator.py:10,575). They are used here rather than the gen2 `postblocks:`
+    # pipeline because they denormalize with the SAME NetCDF stats the model was trained on,
+    # including the 2-D PS field the gen2 bridgescaler path cannot represent.
+    #
+    # Every index below is derived from the flat variable lists above with static_first: True.
+    # Input tensor  (136 ch): U 0-31, V 32-63, T 64-95, Qtot 96-127, PS 128, TREFHT 129,
+    #                         z_norm 130, LANDM_COSLAT 131, SOLIN 132, SST 133, ICEFRAC 134, co2vmr_3d 135
+    # Output tensor (147 ch): U 0-31, V 32-63, T 64-95, Qtot 96-127, PS 128, TREFHT 129,
+    #                         PRECT 130, TS 131, CLDHGH 132, CLDLOW 133, CLDMED 134, TAUX 135,
+    #                         TAUY 136, U10 137, QFLX 138, FSDS_J 139, FLDS_J 140, FSUS 141,
+    #                         FLUS 142, SHFLX 143, LHFLX 144, FSUTOA 145, FLUT 146
+    #
+    # The parser regenerates T_inds/q_inds/U_inds/V_inds/sp_inds from the *_name keys, but the
+    # NINE flux indices in global_energy_fixer_updown have no matching *_name key and are kept
+    # verbatim (credit/parser.py:798-838). They are load-bearing literals.
+    # ------------------------------------------------------------------------------------------- #
+    post_conf:
+        activate: True
+
+        skebs:
+            activate: False
+
+        tracer_fixer:
+            activate: True
+            activate_outside_model: True
+            denorm: True
+            mean_path: '/glade/derecho/scratch/wchapman/b_credit_runs/mean_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+            std_path:  '/glade/derecho/scratch/wchapman/b_credit_runs/std_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+            tracer_name:      ['Qtot', 'PRECT', 'CLDHGH', 'CLDLOW', 'CLDMED', 'FSDS_J', 'FSUS', 'FSUTOA', 'FLUT']
+            tracer_thres:     [0, 0, 0, 0, 0, 0, 0, 0, 0]
+            tracer_thres_max: [null, null, 1, 1, 1, null, null, null, null]
+
+        global_mass_fixer:
+            activate: True
+            activate_outside_model: True
+            fix_level_num: 14
+            simple_demo: False
+            denorm: True
+            grid_type: 'sigma'
+            midpoint: True
+            lon_lat_level_name: ['lon2d', 'lat2d', 'hyai', 'hybi']
+            surface_pressure_name: ['PS']
+            specific_total_water_name: ['Qtot']
+            save_loc_physics: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc'
+            mean_path: '/glade/derecho/scratch/wchapman/b_credit_runs/mean_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+            std_path:  '/glade/derecho/scratch/wchapman/b_credit_runs/std_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+            q_inds: [96, 127]
+            sp_inds: 128
+
+        global_water_fixer:
+            activate: True
+            activate_outside_model: True
+            conservation_loss_weight: 0.05
+            simple_demo: False
+            denorm: True
+            grid_type: 'sigma'
+            midpoint: True
+            lon_lat_level_name: ['lon2d', 'lat2d', 'hyai', 'hybi']
+            surface_pressure_name: ['PS']
+            specific_total_water_name: ['Qtot']
+            precipitation_name: ['PRECT']
+            evaporation_name: ['QFLX']
+            save_loc_physics: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc'
+            mean_path: '/glade/derecho/scratch/wchapman/b_credit_runs/mean_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+            std_path:  '/glade/derecho/scratch/wchapman/b_credit_runs/std_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+            lead_time_periods: 6
+            q_inds: [96, 127]
+            sp_inds: 128
+            precip_ind: 130
+            evapor_ind: 138
+
+        # NET-flux energy fixer — MUST stay off. It enforces the same budget as the up/down
+        # fixer below by rescaling T; running both double-corrects temperature and
+        # climate/Model_State.py raises if it finds both active.
+        global_energy_fixer:
+            activate: False
+
+        # UP/DOWN-flux energy fixer — this is the one CAMulator is trained with.
+        global_energy_fixer_updown:
+            activate: True
+            activate_outside_model: True
+            simple_demo: False
+            denorm: True
+            grid_type: 'sigma'
+            midpoint: True
+            lead_time_periods: 6
+            save_loc_physics: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc'
+            mean_path: '/glade/derecho/scratch/wchapman/b_credit_runs/mean_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+            std_path:  '/glade/derecho/scratch/wchapman/b_credit_runs/std_6h_Coupled_1980_2014_32lev_1.0deg_ERA5scaled_F32_Qtot_Mixed_Modal.nc'
+            lon_lat_level_name: ['lon2d', 'lat2d', 'hyai', 'hybi']
+            surface_pressure_name: ['PS']
+            surface_geopotential_name: ['PHIS']
+            air_temperature_name: ['T']
+            specific_total_water_name: ['Qtot']
+            u_wind_name: ['U']
+            v_wind_name: ['V']
+            T_inds: [64, 95]
+            q_inds: [96, 127]
+            U_inds: [0, 31]
+            V_inds: [32, 63]
+            sp_inds: 128
+            # --- the nine load-bearing flux literals --- #
+            TOA_forcing_solar_ind: 132   # SOLIN  — read from the INPUT tensor, depends on static_first: True
+            TOA_up_solar_ind:      145   # FSUTOA
+            TOA_up_OLR_ind:        146   # FLUT
+            surf_down_solar_ind:   139   # FSDS_J
+            surf_up_solar_ind:     141   # FSUS
+            surf_down_LW_ind:      140   # FLDS_J
+            surf_up_LW_ind:        142   # FLUS
+            surf_SH_ind:           143   # SHFLX
+            surf_LH_ind:           144   # LHFLX
+
+# ===================================================================================================== #
+# WIND ARTIFACT FILTER (fork-specific; read by climate/WindPP.py, not by credit/)
+# Applied to the NORMALIZED prediction inside Model_State._apply_postprocessing, before the
+# conservation fixers. These values are tuned for normalized units.
+#
+# DO NOT DELETE THIS BLOCK to disable the filter: WindPP.load_wind_filter_config defaults
+# activate=True, so removing it re-enables the filter with DIFFERENT built-in defaults
+# (speed_threshold 3.019, smooth_sigma 1.0, dilation_zonal 13, isotropic, no amplitude
+# preservation). Set `activate: False` explicitly instead. WindPP also swallows all
+# exceptions, so a misconfiguration here fails silently.
+# ===================================================================================================== #
+postprocessing:
+    wind_artifact_filter:
+        activate: True
+        mask_level: 14
+        target_levels: [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+        target_vars: ["U", "V", "T", "Qtot"]
+        speed_threshold: 2.8
+        smooth_sigma: 1.2
+        smooth_sigma_zonal: 2.0        # smooth hard in longitude: kills the meridional stripe
+        smooth_sigma_meridional: 0.5   # barely smooth in latitude: preserves the jet profile
+        dilation_zonal: 15
+        dilation_meridional: 5
+        falloff_sigma: 4.0
+        preserve_amplitude: true
+
+# ===================================================================================================== #
+# LOSS
+# NOTE: latitude_weights starts with 'f.e21.' while every save_loc_physics starts with 'b.e21.'.
+# Those are two different real files. Model_State.py also opens latitude_weights to get lat/lon,
+# so it is required at inference, not just training.
+# ===================================================================================================== #
+loss:
+    training_loss: "mse"
+    use_power_loss: False
+    use_spectral_loss: False
+    spectral_lambda_reg: 0.1
+    spectral_wavenum_init: 20
+    latitude_weights: "/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/f.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc"
+    use_latitude_weights: True
+
+    # cos(lat) ** 0.4 rather than plain area weighting. Area weighting gives the whole region
+    # poleward of 60 degrees only 13.1% of the loss; 0.4 raises that to 22.5%, and the 89-degree
+    # row alone by a factor of 9. This is what ckpt69 was trained with -- omit it and a
+    # fine-tune silently re-weights the problem away from the poles.
+    latitude_weight_power: 0.4
+
+    # Also from ckpt69's training config. Everything is 1.0 except precipitation and 2-m
+    # temperature at 3x. The 3x on PRECT is the soft half of the precipitation treatment; the
+    # hard half is the global_water_fixer above.
+    use_variable_weights: True
+    # 3-D variables need one weight PER LEVEL -- credit_main_parser asserts
+    # len(weights) == data.levels and a scalar raises "object of type 'float' has no len()".
+    # The anchor keeps that from being 128 lines.
+    variable_weights:
+        U: &w32 [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+                 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+        V: *w32
+        T: *w32
+        Qtot: *w32
+        PS: 1.0
+        TREFHT: 3.0
+        PRECT: 3.0
+        TS: 1.0
+        CLDHGH: 1.0
+        CLDLOW: 1.0
+        CLDMED: 1.0
+        TAUX: 1.0
+        TAUY: 1.0
+        U10: 1.0
+        QFLX: 1.0
+        FSDS_J: 1.0
+        FLDS_J: 1.0
+        FSUS: 1.0
+        FLUS: 1.0
+        SHFLX: 1.0
+        LHFLX: 1.0
+        FSUTOA: 1.0
+        FLUT: 1.0
+
+# ===================================================================================================== #
+# PREDICT — the climate driver (Quick_Climate.py). Not the gen2 `inference:` block.
+# ===================================================================================================== #
+predict:
+    mode: none
+    batch_size: 1
+
+    forecasts:
+        type: "custom"
+        start_year: 1980
+        start_month: 1
+        start_day: 1
+        start_hours: [0]
+        duration: 1
+        days: 365
+
+    start_datetime: '1980-01-01 00:00:00'
+
+    # LANDMINE: credit/output.py:198 tests for the PRESENCE of this key, not its value.
+    # Setting it False still inverse-transforms the output. To disable, delete the key.
+    climate_rescale_output: True
+
+    metadata: '/glade/work/schreck/repos/credit/miles-credit/metadata/era5.yaml'
+    save_forecast: '/glade/derecho/scratch/wchapman/CREDIT/camulator_gen2_rollout/'
+    use_laplace_filter: False
+    climatology: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/ERA5_clim_1990_2019_6h_interp.nc'
+
+    save_vars: ['U', 'V', 'T', 'Qtot', 'PS', 'TREFHT', 'PRECT', 'TS', 'U10', 'QFLX', 'LHFLX', 'TAUX', 'TAUY']
+    forcing_file: '/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate_branch_1980_2014.nc'
+
+    init_cond_fast_climate: '/glade/derecho/scratch/wchapman/CREDIT_runs/NEW_CLI_JOHN_CASPER_extended_v2/init_times/init_camulator_condition_tensor_1980-01-01T00Z.pth'
+    timesteps_fast_climate: 51100
+
+# ===================================================================================================== #
+# INFERENCE — the gen2 `credit rollout` path (independent of predict: above)
+# ===================================================================================================== #
+inference:
+    run_mode: single
+    mode: none
+    save_forecast: '/glade/derecho/scratch/wchapman/CREDIT_runs/camulator_gen2/rollout'
+
+    single_forecast:
+        forecast_length: "30d"
+        start_datetime: "1995-01-01T00:00Z"
+
+    batch_forecast:
+        forecast_length: "180d"
+        first_init_date: "1981-01-01"
+        last_init_date: "1981-12-31"
+        init_interval: "1d"
+
+    output:
+        format: netcdf
+        output_interval: null
+        group_by: month
+        metadata: '/glade/campaign/cisl/aiml/credit/cesm_exercise/camulator_metadata.yaml'
+        encoding:
+            dtype: float32
+            zlib: true
+            complevel: 0
+
+# ===================================================================================================== #
+pbs:
+    conda: "/glade/work/wchapman/conda-envs/credit-derecho-mar2026"
+    project: "NAML0001"
+    job_name: "camulator_gen2"
+    walltime: "12:00:00"
+    nodes: 8
+    ncpus: 64
+    ngpus: 4
+    mem: '480GB'
+    queue: 'main'
