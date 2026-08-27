@@ -1,0 +1,488 @@
+# Gen2 config for the ACE-style SFNO model on CESM data (model.type: sfno).
+#
+# Same data, preblocks and physics postblocks as the CAMulator gen2 config
+# (config/gen_2/camulator/camulator_gen2_casper.yml) -- only the model block
+# and the loss differ. That is the point: the backbone is swappable.
+#
+# Differences from that config, and why:
+#   - model.type: sfno            spherical Fourier neural operator instead of
+#                                 the CrossFormer U-Net backbone
+#   - no padding_conf             SFNO's spherical harmonic transform assumes the
+#                                 grid spans the sphere exactly; padding it would
+#                                 silently corrupt the quadrature (the model raises)
+#   - no wind_artifact_filter     that block is tuned to a CAMulator-specific
+#                                 decoder artifact and has no counterpart here
+#   - loss.type: base             per-variable loss in physical units with
+#                                 var_weighting: inverse_variance
+#   - target-twin postblocks      reconstruct_target + scaler_target, which
+#                                 BaseLoss requires
+#
+# The model is state-to-state: it maps the full input state to the full output
+# state. It does not predict tendencies (ACE's residual_prediction), and loss
+# scaling stays with CREDIT's inverse-variance weighting rather than ACE's
+# residual normalization.
+#
+# This is a SMOKE / FIRST-TRAIN config: single GPU, short window, few batches.
+
+save_loc: '/glade/derecho/scratch/$USER/CREDIT_runs/sfno_gen2'
+seed: 1000
+
+# ---- Training/validation data ---- #
+# Paths under each variable group are TRAINING-ONLY (ignored by Quick_Climate inference).
+data:
+  source:
+    CESM:
+      dataset_type: "local"
+      level_coord: "lev"                # CESM hybrid sigma-pressure coordinate
+      variables:
+        prognostic:
+          vars_3D: ['U', 'V', 'T', 'Qtot']
+          vars_2D: ['PS', 'TREFHT']
+          path: '/glade/campaign/cisl/aiml/credit/cesm_exercise/data/b.e21.CREDIT_climate_branch_1980_%Y_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+
+        diagnostic:
+          vars_2D: ['PRECT', 'TS', 'CLDHGH', 'CLDLOW', 'CLDMED', 'TAUX', 'TAUY', 'U10',
+                    'QFLX', 'FSDS_J', 'FLDS_J', 'FSUS', 'FLUS', 'SHFLX', 'LHFLX', 'FSUTOA', 'FLUT']
+          path: '/glade/campaign/cisl/aiml/credit/cesm_exercise/data/b.e21.CREDIT_climate_branch_1980_%Y_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+
+        dynamic_forcing:
+          vars_2D: ['SOLIN', 'SST', 'ICEFRAC', 'co2vmr_3d']
+          path: "/glade/campaign/cisl/aiml/credit/cesm_exercise/forcing/dynamic_forcing/%Y_forcing.zarr"
+
+        static:
+          vars_2D: ['z_norm', 'LANDM_COSLAT']
+          path: '/glade/campaign/cisl/aiml/credit/cesm_exercise/static/statics_b_credit_runs_f32_02.nc'
+
+  start_datetime: "1980-01-01"
+  end_datetime: "2012-12-31"
+  timestep: "6h"
+
+  history_len: 1
+  forecast_len: 2
+
+  one_shot: True
+  lead_time_periods: 6
+  skip_periods: null
+
+
+# ---- Validation data ---- #
+validation_data:
+  source:
+    CESM:
+      dataset_type: "local"
+      level_coord: "lev"
+      variables:
+        prognostic:
+          vars_3D: ['U', 'V', 'T', 'Qtot']
+          vars_2D: ['PS', 'TREFHT']
+          path: '/glade/derecho/scratch/wchapman/b_credit_runs/b.e21.CREDIT_climate_branch_1980_%Y_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+
+        diagnostic:
+          vars_2D: ['PRECT', 'TS', 'CLDHGH', 'CLDLOW', 'CLDMED', 'TAUX', 'TAUY', 'U10',
+                    'QFLX', 'FSDS_J', 'FLDS_J', 'FSUS', 'FLUS', 'SHFLX', 'LHFLX', 'FSUTOA', 'FLUT']
+          path: '/glade/derecho/scratch/wchapman/b_credit_runs/b.e21.CREDIT_climate_branch_1980_%Y_zmdata_ERA5scaled_zmdata_Qtot.zarr'
+
+        dynamic_forcing:
+          vars_2D: ['SOLIN', 'SST', 'ICEFRAC', 'co2vmr_3d']
+          path: '/glade/derecho/scratch/cbecker/cesm_camulator_data/dynamic_forcing/control/forcing_%Y.zarr'
+        static:
+          vars_2D: ['z_norm', 'LANDM_COSLAT']
+          path: '/glade/derecho/scratch/cbecker/cesm_camulator_data/static/statics_b_credit_runs_f32_02.nc'
+
+  start_datetime: "2013-01-01"
+  end_datetime: "2014-12-31"
+  timestep: "6h"
+
+  history_len: 1
+  forecast_len: 2
+
+  one_shot: True
+  lead_time_periods: 6
+  skip_periods: null
+
+
+# ---- Training hyperparameters ---- #
+trainer:
+  type: gen2
+
+  parallelism:
+    data: none               # ddp | fsdp2 | none
+    tensor: 1
+    domain: 1
+
+  cpu_offload: False
+  activation_checkpoint: True
+
+  load_weights: False
+  load_optimizer: False
+  load_scaler: False
+  load_scheduler: False
+  reload_epoch: False
+
+  skip_validation: True
+  update_learning_rate: True
+
+  save_backup_weights: True
+  save_best_weights: True
+  save_every_epoch: True
+
+  save_metric_vars: ["PRECT", "TREFHT", "TAUX", "TAUY", "U", "T"]
+
+  learning_rate: 1.0e-04
+  weight_decay: 0
+
+  train_batch_size: 2
+  valid_batch_size: 2
+
+  batches_per_epoch: 10
+  valid_batches_per_epoch: 10
+  stopping_patience: 5000
+
+  start_epoch: 0
+  num_epoch: 2
+  epochs: &epochs 2
+
+  use_tensorboard: True
+  use_ema: False
+
+  use_scheduler: False
+  scheduler:
+    scheduler_type: cosine-annealing
+    T_max: *epochs
+    last_epoch: -1
+
+  amp: False
+  grad_accum_every: 1
+  grad_max_norm: 1.0
+
+  thread_workers: 4
+  valid_thread_workers: 4
+  prefetch_factor: 2
+
+preblocks:
+  per_step:
+    scaler:
+      type: bridgescaler_transform
+      args:
+        scaler_path: /glade/derecho/scratch/$USER/CREDIT_runs/sfno_gen2/scaler.json
+        variables:
+          - CESM/prognostic/3d/U
+          - CESM/prognostic/3d/V
+          - CESM/prognostic/3d/T
+          - CESM/prognostic/3d/Qtot
+          - CESM/prognostic/2d/PS
+          - CESM/prognostic/2d/TREFHT
+          - CESM/dynamic_forcing/2d/SOLIN
+          - CESM/dynamic_forcing/2d/SST
+          - CESM/dynamic_forcing/2d/ICEFRAC
+          - CESM/dynamic_forcing/2d/co2vmr_3d
+          - CESM/diagnostic/2d/PRECT
+          - CESM/diagnostic/2d/TS
+          - CESM/diagnostic/2d/CLDHGH
+          - CESM/diagnostic/2d/CLDLOW
+          - CESM/diagnostic/2d/CLDMED
+          - CESM/diagnostic/2d/TAUX
+          - CESM/diagnostic/2d/TAUY
+          - CESM/diagnostic/2d/U10
+          - CESM/diagnostic/2d/QFLX
+          - CESM/diagnostic/2d/FSDS_J
+          - CESM/diagnostic/2d/FLDS_J
+          - CESM/diagnostic/2d/FSUS
+          - CESM/diagnostic/2d/FLUS
+          - CESM/diagnostic/2d/SHFLX
+          - CESM/diagnostic/2d/LHFLX
+          - CESM/diagnostic/2d/FSUTOA
+          - CESM/diagnostic/2d/FLUT
+        method: transform
+        scaler_params:
+          channels_last: False
+    concat:
+      type: concat
+
+# -----------------------------------------------------------------------
+# Physics conservation fixers — gen2 name-based postblock schema.
+#
+# The "super dict" carried through the postblock chain (y_processed, built by
+# reconstruct) is keyed by variable NAME, so the fixers address fields by name
+# rather than channel index. They also do NO scaling: like the geopotential /
+# mslp flagship blocks they operate in physical units. The bridgescaler blocks
+# own the scaling, and the preblocks own input scaling.
+#
+# Pipeline order (per_step):
+#   1. reconstruct (detach: false)  -> split y_pred into named y_processed,
+#                                       keeping the autograd graph
+#   2. inverse bridgescaler         -> y_processed in physical units
+#   3. tracer / mass / water / energy fixers (name-based, physical, no scaling)
+#   4. flatten_to_tensor            -> forward-scale a copy + rebuild flat y_pred
+#                                       (normalized) for the loss; y_processed
+#                                       stays physical for rollout assembly
+#
+# Because reconstruct no longer detaches, the conservation corrections flow into
+# the loss/gradient (loss is computed on y_pred after step_postblocks run).
+#
+# The fixers read t0 by name from the per-step physical input the model
+# consumed that step (default key x_physical, set by the trainer each step). For
+# forecast_len=1 that equals the initial condition; for multistep it is the
+# previous step's predicted physical state plus the current step's forcing.
+# SOLIN (TOA downwelling solar) is an input-only dynamic forcing, also read from
+# x_physical.
+# -----------------------------------------------------------------------
+postblocks:
+  per_step:
+    reconstruct:
+      type: reconstruct
+      args:
+        detach: False   # REQUIRED with flatten_to_tensor in training: keeps y_processed
+                        # on the autograd graph so the rebuilt y_pred can backprop
+    inverse_scale:
+      type: bridgescaler_transform
+      args:
+        method: inverse_transform
+        scaler_path: /glade/derecho/scratch/$USER/CREDIT_runs/sfno_gen2/scaler.json
+        variables: &scored_vars
+          - CESM/prognostic/3d/U
+          - CESM/prognostic/3d/V
+          - CESM/prognostic/3d/T
+          - CESM/prognostic/3d/Qtot
+          - CESM/prognostic/2d/PS
+          - CESM/prognostic/2d/TREFHT
+          - CESM/diagnostic/2d/PRECT
+          - CESM/diagnostic/2d/TS
+          - CESM/diagnostic/2d/CLDHGH
+          - CESM/diagnostic/2d/CLDLOW
+          - CESM/diagnostic/2d/CLDMED
+          - CESM/diagnostic/2d/TAUX
+          - CESM/diagnostic/2d/TAUY
+          - CESM/diagnostic/2d/U10
+          - CESM/diagnostic/2d/QFLX
+          - CESM/diagnostic/2d/FSDS_J
+          - CESM/diagnostic/2d/FLDS_J
+          - CESM/diagnostic/2d/FSUS
+          - CESM/diagnostic/2d/FLUS
+          - CESM/diagnostic/2d/SHFLX
+          - CESM/diagnostic/2d/LHFLX
+          - CESM/diagnostic/2d/FSUTOA
+          - CESM/diagnostic/2d/FLUT
+
+    tracer_fixer:
+      type: tracer_fixer
+      args:
+        tracer_thres: 0.0
+        tracer_vars:
+          - CESM/prognostic/3d/Qtot
+          - CESM/diagnostic/2d/PRECT
+          - CESM/diagnostic/2d/CLDHGH
+          - CESM/diagnostic/2d/CLDLOW
+          - CESM/diagnostic/2d/CLDMED
+          - CESM/diagnostic/2d/FSDS_J
+          - CESM/diagnostic/2d/FSUS
+          - CESM/diagnostic/2d/FSUTOA
+          - CESM/diagnostic/2d/FLUT
+
+    mass_fixer:
+      type: global_mass_fixer
+      args:
+        save_loc_physics: /glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc
+        lon_lat_level_name: [lon2d, lat2d, hyai, hybi]
+        grid_type: sigma
+        midpoint: true
+        fix_level_num: 14
+        q_var: CESM/prognostic/3d/Qtot
+        sp_var: CESM/prognostic/2d/PS
+
+    water_fixer:
+      type: global_water_fixer
+      args:
+        save_loc_physics: /glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc
+        lon_lat_level_name: [lon2d, lat2d, hyai, hybi]
+        grid_type: sigma
+        midpoint: true
+        lead_time_periods: 6
+        q_var: CESM/prognostic/3d/Qtot
+        sp_var: CESM/prognostic/2d/PS
+        precip_var: CESM/diagnostic/2d/PRECT
+        evapor_var: CESM/diagnostic/2d/QFLX
+
+    energy_fixer_updown:
+      type: global_energy_fixer_updown
+      args:
+        save_loc_physics: /glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/b.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc
+        lon_lat_level_name: [lon2d, lat2d, hyai, hybi]
+        grid_type: sigma
+        midpoint: true
+        lead_time_periods: 6
+        surface_geopotential_name: PHIS
+        T_var: CESM/prognostic/3d/T
+        q_var: CESM/prognostic/3d/Qtot
+        U_var: CESM/prognostic/3d/U
+        V_var: CESM/prognostic/3d/V
+        sp_var: CESM/prognostic/2d/PS
+        toa_down_solar_input_var: CESM/dynamic_forcing/2d/SOLIN
+        toa_up_solar_var: CESM/diagnostic/2d/FSUTOA
+        toa_up_olr_var: CESM/diagnostic/2d/FLUT
+        surf_down_solar_var: CESM/diagnostic/2d/FSDS_J
+        surf_up_solar_var: CESM/diagnostic/2d/FSUS
+        surf_down_lw_var: CESM/diagnostic/2d/FLDS_J
+        surf_up_lw_var: CESM/diagnostic/2d/FLUS
+        surf_sh_var: CESM/diagnostic/2d/SHFLX
+        surf_lh_var: CESM/diagnostic/2d/LHFLX
+
+    # Target twin. BaseLoss compares variables in physical units, so the flat
+    # target y goes through the same split + inverse-scale as the prediction.
+    # Physics fixers are deliberately NOT applied to the target -- they correct
+    # the model's output, they do not redefine truth.
+    reconstruct_target:
+      type: reconstruct
+      args:
+        in_key: 'y'
+        out_key: 'y_target_processed'
+
+    scaler_target:
+      type: bridgescaler_transform
+      args:
+        method: inverse_transform
+        scaler_path: /glade/derecho/scratch/$USER/CREDIT_runs/sfno_gen2/scaler.json
+        key: 'y_target_processed'
+        variables: *scored_vars
+
+# ---- Model architecture ---- #
+# ACE-style spherical Fourier neural operator. Channel counts follow the usual
+# CREDIT convention and are cross-checked against data.source by `credit check`:
+#   in  = channels*levels + surface_channels + input_only_channels  = 136
+#   out = channels*levels + surface_channels + output_only_channels = 147
+model:
+  type: "sfno"
+  frames: 1                 # SFNO is single-frame; must match data.history_len
+  image_height: 192
+  image_width: 288
+  levels: 32
+  channels: 4               # 3D prognostic: U V T Qtot
+  surface_channels: 2       # 2D prognostic: PS TREFHT
+  input_only_channels: 6    # dynamic_forcing (4) + static (2)
+  output_only_channels: 17  # diagnostic variables
+
+  # Quadrature. CESM f09 puts 192 latitudes uniformly from -90 to 90, which is
+  # torch-harmonics' "equiangular" grid; its nodes match this file's latitudes
+  # to 4e-6 deg, where "legendre-gauss" (upstream ACE's default) is off by up to
+  # 0.72 deg. A wrong grid does not raise on its own -- it just weights the
+  # transform incorrectly -- so point `latitudes` at a real grid file and let the
+  # model verify the choice at construction.
+  grid_type: equiangular
+  latitudes: '/glade/campaign/cisl/aiml/credit/cesm_exercise/static/statics_b_credit_runs_f32_02.nc'
+  sht_grid_type: legendre-gauss   # internal latent grid; unrelated to the data
+
+  # Capacity. ACE2-ERA5 uses embed_dim 384 / num_layers 8 / scale_factor 1,
+  # which is ~480M parameters on this grid. The settings below are ~104M, a sane
+  # starting point; scale up once the pipeline is proven.
+  embed_dim: 256
+  num_layers: 8
+  scale_factor: 2           # spatial downsampling into the latent grid
+  operator_type: dhconv     # zonally symmetric (ACE2's choice); "diagonal" is far larger
+  spectral_layers: 3
+  hard_thresholding_fraction: 1.0
+
+  use_mlp: True
+  mlp_ratio: 2.0
+  activation_function: gelu
+  encoder_layers: 1
+  # No positional embedding: the spherical harmonic transform already carries
+  # the grid geometry, so the learned lat-lon embedding is redundant here.
+  # ACE2 uses 'direct'; set it back to that to match upstream.
+  pos_embed: none
+  big_skip: True
+  normalization_layer: instance_norm
+  drop_rate: 0.
+  drop_path_rate: 0.
+
+  # NOTE: no padding_conf. Padding the grid invalidates the spherical
+  # quadrature, and the model raises if padding_conf.activate is True.
+
+
+# ---- Loss ---- #
+# Per-variable loss in physical units on the postblock output (y_processed vs
+# y_target_processed). inverse_variance weights each variable by 1/sigma^2 from
+# the fitted bridgescaler, which is what keeps a ~1e5 Pa surface pressure from
+# drowning out a ~1e-2 kg/kg humidity. This is CREDIT's own weighting -- ACE's
+# residual (tendency) normalization is deliberately not reproduced.
+loss:
+  type: base
+  args:
+    training_loss: "mse"
+    base_loss_parameters: {}
+
+    var_weighting: "inverse_variance"
+    scaler_path: '/glade/derecho/scratch/$USER/CREDIT_runs/sfno_gen2/scaler.json'
+    variable_weights: {}
+    normalize_weights: true
+
+    include_computed_diagnostics: true
+
+    use_latitude_weights: True
+    latitude_weights: '/glade/campaign/cisl/aiml/credit/cesm_exercise/static/statics_b_credit_runs_f32_02.nc'
+
+
+# ---- Inference ---- #
+# run_mode selects between batch and single forecast.
+#   batch:  generates forecasts for a range of init times defined under batch_forecast.initialization
+#   single: runs one forecast from a specific init time defined under single_forecast.start_datetime
+inference:
+  run_mode: single
+  mode: none                          # none | ddp | fsdp
+  save_forecast: '/glade/derecho/scratch/$USER/CREDIT_runs/sfno_gen2/rollout'
+
+  batch_forecast:
+    forecast_length: "180d"                    # 1460 6-hourly steps = 1 no-leap year
+    first_init_date: "1981-01-01"
+    last_init_date: "1981-12-31"
+    init_interval: "1d"
+
+  single_forecast:
+    forecast_length: "30d"                    # 1460 6-hourly steps = 1 no-leap year
+    start_datetime: "1995-01-01T00:00Z"
+
+  output:
+    format: netcdf
+    output_interval: null
+    group_by: month
+    metadata: "/glade/campaign/cisl/aiml/credit/cesm_exercise/camulator_metadata.yaml"
+    variables:
+#      - name: "CESM/prognostic/3d/U"
+#      - name: "CESM/prognostic/3d/V"
+#      - name: "CESM/prognostic/3d/T"
+#      - name: "CESM/prognostic/3d/Qtot"
+      - name: "CESM/prognostic/2d/PS"
+      - name: "CESM/prognostic/2d/TREFHT"
+      - name: "CESM/diagnostic/2d/PRECT"
+      - name: "CESM/diagnostic/2d/TS"
+      - name: "CESM/diagnostic/2d/CLDHGH"
+      - name: "CESM/diagnostic/2d/CLDLOW"
+      - name: "CESM/diagnostic/2d/CLDMED"
+      - name: "CESM/diagnostic/2d/TAUX"
+      - name: "CESM/diagnostic/2d/TAUY"
+      - name: "CESM/diagnostic/2d/U10"
+      - name: "CESM/diagnostic/2d/QFLX"
+      - name: "CESM/diagnostic/2d/SHFLX"
+      - name: "CESM/diagnostic/2d/LHFLX"
+      - name: "CESM/diagnostic/2d/FSDS_J"
+      - name: "CESM/diagnostic/2d/FLDS_J"
+      - name: "CESM/diagnostic/2d/FSUS"
+      - name: "CESM/diagnostic/2d/FLUS"
+      - name: "CESM/diagnostic/2d/FSUTOA"
+      - name: "CESM/diagnostic/2d/FLUT"
+    encoding:
+      dtype: float32
+      zlib: true
+      complevel: 0
+
+pbs:
+  conda: camulator_testhf2      # env with a working bridgescaler + torch-harmonics
+  project: "NAML0001"
+  job_name: "sfno"
+  walltime: "00:30:00"
+  ncpus: 8
+  ngpus: 1
+  mem: "64GB"
+  # "any" = any NVIDIA GPGPU. Casper has only 2 H100 nodes (one currently
+  # offline), so pinning gpu_type: h100 can queue for a day. Pin a100_80gb
+  # explicitly once you scale past the smoke run.
+  gpu_type: "any"

@@ -444,7 +444,10 @@ trainer:
     save_backup_weights: True
     save_best_weights: True
     save_every_epoch: True
-    save_metric_vars: ["PRECT", "TREFHT", "TAUX", "TAUY", "U", "T"]
+    # Listed EXPLICITLY: save_metric_vars matches by SUBSTRING, so a bare "U" and "T" silently
+    # pulled in TS, U10, FSUS, FLUS and FSUTOA while omitting V, Qtot and PS entirely.
+    save_metric_vars: ["U", "V", "T", "Qtot", "PS", "TREFHT", "PRECT", "TS", "U10", "QFLX",
+                       "TAUX", "TAUY", "FLUT", "FSUTOA"]
 
     update_learning_rate: True
     learning_rate: 1.0e-06       # fine-tuning LR: 100x below the 1.0e-04 pretraining LR
@@ -586,26 +589,27 @@ loss:
         # scaled its field by, and this adds w * mean((ratio - 1)^2). It trains the model to
         # conserve on its own instead of leaning on the fixer every step.
         #
-        # ON, and calibrated rather than guessed. A real ckpt69 prediction gives an energy
-        # ratio of ~0.999949, so (ratio-1)^2 is ~2.6e-9 -- eight orders below the data loss
-        # (~0.064). A weight of 1 would be indistinguishable from 0; 2.5e5 makes the penalty
-        # ~1% of the loss, enough to steer without competing with the fit:
+        # RE-CALIBRATED against the real model. An earlier value of 2.5e5 made the penalty
+        # 100.0% of the total loss -- about 4e9 too large -- from two compounding mistakes:
+        # it was derived from the ENERGY fixer (~2.6e-9) when the WATER fixer dominates at
+        # ~1.2e-3, six orders larger; and it assumed a data loss of 0.064 when per_level_variance
+        # puts it near 1e-6, five orders smaller.
         #
-        #     weight = target_share * loss / penalty  =  0.01 * 0.064 / 2.6e-9  ~  2.5e5
+        # Measured per-fixer means on ckpt69:  mass 5.5e-08   water 1.2e-03   energy 3.8e-09
+        # Data loss ~1e-6. For the penalty to be ~1% of the loss:  w ~ 6e-5.
         #
-        # Re-check against BaseLoss.last_fixer_penalties, which reports mass, water and energy
-        # separately -- they will not share a magnitude, and the loss scale changed with the
-        # per-level weighting. Raise it after a short run rather than starting high; this is a
-        # soft constraint on an already-converged model.
+        # CAVEAT worth knowing before tuning this: the penalty is the MEAN over the three
+        # fixers, and their magnitudes span six orders, so it is effectively the water fixer
+        # alone -- mass and energy contribute nothing at any weight. Normalizing each fixer
+        # before averaging would fix that; it has not been built. Watch
+        # BaseLoss.last_fixer_penalties, which reports all three separately.
         #
         # The square is deliberate: the gradient is 2*(ratio-1)*d(ratio)/dtheta, so the push
         # eases as the model approaches conservation, and it is differentiable at the optimum.
         #
-        # Alternative: `fixer_penalty_weight: learnable` discovers the weight by Kendall-Gal
-        # uncertainty weighting, with `fixer_penalty_target` setting the share of the loss it
-        # settles at. Plain Kendall-Gal (target 0.5) would make conservation ~8x the data term,
-        # so set the target to the share you actually want.
-        fixer_penalty_weight: 2.5e5
+        # Alternative: `fixer_penalty_weight: learnable` discovers the weight by Kendall-Gal,
+        # with `fixer_penalty_target` setting the share of the loss it settles at.
+        fixer_penalty_weight: 6.0e-5
 
         use_latitude_weights: true
         latitude_weights: "/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/f.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc"

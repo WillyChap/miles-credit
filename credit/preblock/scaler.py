@@ -6,6 +6,13 @@ from os.path import exists, expandvars
 from os import makedirs
 from ._utils import _parse_variable_selection, _flatten_spatial_tensors, _unflatten_spatial_tensors
 
+from ._utils import accelerate_bridgescaler_column_order
+
+# bridgescaler resolves scaler->input column order with an O(n^2) list scan, which for a
+# per-gridpoint scaler (55296 columns) costs ~41 s per call with the GPU idle. Applied once,
+# at import; see the helper's docstring.
+accelerate_bridgescaler_column_order()
+
 _SCALER_REGISTRY = {
     "standard": DStandardScalerTensor,
     "quantile": DQuantileScalerTensor,

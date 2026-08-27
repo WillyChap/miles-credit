@@ -8,6 +8,13 @@ from credit.preblock._utils import (
     _unflatten_spatial_tensors,
 )  # shared utilities — live in preblock but used by both pre and postblocks
 
+from credit.preblock._utils import accelerate_bridgescaler_column_order
+
+# bridgescaler resolves scaler->input column order with an O(n^2) list scan, which for a
+# per-gridpoint scaler (55296 columns) costs ~41 s per call with the GPU idle. Applied once,
+# at import; see the helper's docstring.
+accelerate_bridgescaler_column_order()
+
 
 class BridgeScalerTransform(BasePostblock):
     """Scaling postblock using a fitted bridgescaler dict.

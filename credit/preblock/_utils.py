@@ -114,3 +114,51 @@ def _unflatten_spatial_tensors(state_dict: dict, original_shapes: dict) -> dict:
         return new_d
 
     return _walk(state_dict)
+
+
+def accelerate_bridgescaler_column_order() -> bool:
+    """Make ``get_column_order`` O(n) instead of O(n^2). Idempotent; returns True if applied.
+
+    bridgescaler resolves the scaler-to-input column mapping with two list scans::
+
+        assert all(var in self.x_columns_ for var in x_in_columns)
+        [self.x_columns_.index(item) for item in x_in_columns if item in self.x_columns_]
+
+    Each ``in``/``index`` is O(n), so the pair is O(n^2) in the column count. That is
+    harmless for a per-level scaler (32 columns) and ruinous for a per-gridpoint one:
+    CAMulator normalizes surface pressure by a 2-D (lat, lon) field, giving 55296 columns
+    and ~3e9 comparisons per call. Measured at 41 s per call, six calls per optimizer step,
+    single-threaded on the CPU with the GPU at 0% -- roughly 500 s of an 8-minute batch.
+
+    Caching a ``{name: index}`` dict on the scaler removes it from the profile. The indices
+    are bit-identical: same values, same order, same duplicate handling (dict keeps the
+    first occurrence, exactly as ``list.index`` returns it).
+    """
+    try:
+        from bridgescaler import distributed_tensor as _dt
+    except ImportError:
+        return False
+
+    base = getattr(_dt, "DBaseScalerTensor", None)
+    if base is None or getattr(base, "_credit_fast_column_order", False):
+        return False
+
+    def get_column_order(self, x_in_columns):
+        cache = self.__dict__.get("_credit_col_index")
+        cols = self.x_columns_
+        if cache is None or cache[0] is not cols:
+            index = {}
+            for i, name in enumerate(cols):
+                index.setdefault(name, i)  # first occurrence, matching list.index
+            cache = (cols, index)
+            self.__dict__["_credit_col_index"] = cache
+        index = cache[1]
+        missing = [v for v in x_in_columns if v not in index]
+        assert not missing, (
+            f"Some input variables not in scaler x_columns. Missing: {missing[:5]}{' ...' if len(missing) > 5 else ''}"
+        )
+        return [index[item] for item in x_in_columns]
+
+    base.get_column_order = get_column_order
+    base._credit_fast_column_order = True
+    return True
