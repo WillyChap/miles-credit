@@ -1204,3 +1204,45 @@ def test_sqrt_transform_partial_path_expands_to_matching_vars():
         assert torch.allclose(result["input"][_TRANSFORM_SOURCE][v].float(), originals[v].float()), (
             f"partial path should NOT have transformed {v}"
         )
+
+
+# ---------------------------------------------------------------------------
+# bridgescaler clobbers the host application's warning filters
+# ---------------------------------------------------------------------------
+
+
+def test_restore_warning_filters_after_bridgescaler():
+    """bridgescaler's import-time simplefilter("always") must not survive.
+
+    ``bridgescaler.distributed_tensor`` calls ``warnings.simplefilter("always")`` at module
+    scope, which wipes the process-wide filter configuration. CREDIT sets
+    ``filterwarnings("ignore")`` when train_gen2 is imported, but bridgescaler is imported
+    later (when preblocks are built) and wins -- producing ~400 "Input data lacks variable
+    names" lines per training batch, roughly 200k per chained PBS job.
+    """
+    import warnings
+
+    from credit.preblock._utils import restore_warning_filters_after_bridgescaler
+
+    warnings.simplefilter("always")  # stand in for bridgescaler's import
+    assert warnings.filters[0][0] == "always"
+
+    assert restore_warning_filters_after_bridgescaler() is True
+    assert warnings.filters[0][0] == "ignore"
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.warn("Input data lacks variable names", UserWarning)
+    assert caught == []
+
+
+def test_importing_the_scaler_preblock_leaves_filters_quiet():
+    """Importing the preblock is what actually pulls bridgescaler in, so the guard has to
+    hold after that import -- not merely when called by hand."""
+    import warnings
+
+    warnings.simplefilter("always")
+    import credit.preblock.scaler  # noqa: F401  (import IS the thing under test)
+    import importlib
+
+    importlib.reload(credit.preblock.scaler)
+    assert warnings.filters[0][0] == "ignore"

@@ -162,3 +162,32 @@ def accelerate_bridgescaler_column_order() -> bool:
     base.get_column_order = get_column_order
     base._credit_fast_column_order = True
     return True
+
+
+def restore_warning_filters_after_bridgescaler() -> bool:
+    """Undo bridgescaler's global ``warnings.simplefilter("always")``. Returns True if applied.
+
+    ``bridgescaler.distributed_tensor`` calls ``warnings.simplefilter("always")`` at module
+    import, which wipes the host application's warning configuration process-wide and makes
+    every warning print on every occurrence. CREDIT sets ``filterwarnings("ignore")`` when
+    ``train_gen2`` is imported, but bridgescaler is imported later -- when the preblocks are
+    built -- so it wins.
+
+    The visible result is one "Input data lacks variable names" per variable per scaler call:
+    about 400 per training batch, ~200k lines in a single chained PBS job, which buries the
+    log messages that matter.
+
+    That warning is not diagnostic here. ``scale_var_dict`` walks the nested state dict and
+    looks each scaler up **by variable key**, asserting the key exists, so the pairing that
+    could actually go wrong is checked by name. What bridgescaler cannot validate is the
+    order *within* one variable's channel axis -- the 32 levels of T, the 55296 gridpoints of
+    PS -- and both sides take that order from the same channel schema.
+
+    This resets the filters and reinstates ``ignore``, matching what the application asked
+    for. Warnings CREDIT raises through ``logger.warning`` are unaffected.
+    """
+    import warnings
+
+    warnings.resetwarnings()
+    warnings.filterwarnings("ignore")
+    return True
