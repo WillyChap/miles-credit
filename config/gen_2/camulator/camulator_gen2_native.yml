@@ -586,30 +586,50 @@ loss:
             CESM/prognostic/2d/TREFHT: 3.0
 
         # Penalize the conservation fixers for having work to do: each records the ratio it
-        # scaled its field by, and this adds w * mean((ratio - 1)^2). It trains the model to
-        # conserve on its own instead of leaning on the fixer every step.
+        # scaled its field by, and this adds w * mean((ratio - 1)^2 / scale^2). It trains the
+        # model to conserve on its own instead of leaning on the fixer every step.
         #
-        # RE-CALIBRATED against the real model. An earlier value of 2.5e5 made the penalty
-        # 100.0% of the total loss -- about 4e9 too large -- from two compounding mistakes:
-        # it was derived from the ENERGY fixer (~2.6e-9) when the WATER fixer dominates at
-        # ~1.2e-3, six orders larger; and it assumed a data loss of 0.064 when per_level_variance
-        # puts it near 1e-6, five orders smaller.
+        # fixer_penalty_scales is what makes the mean meaningful. The three fixers correct by
+        # very different relative amounts, so an unnormalized mean is the water fixer alone to
+        # four decimal places and the other two get no gradient at any weight. Dividing each by
+        # its own reference variance puts all three near 1.0 and weights them equally.
         #
-        # Measured per-fixer means on ckpt69:  mass 5.5e-08   water 1.2e-03   energy 3.8e-09
-        # Data loss ~1e-6. For the penalty to be ~1% of the loss:  w ~ 6e-5.
+        # Scales below are the measured rms(ratio - 1) over 36 real training steps on ckpt69
+        # (per-fixer terms: water 2.85e-04, mass 3.09e-08, energy 3.46e-09 -- the water fixer
+        # was 99.99% of the old unnormalized penalty):
         #
-        # CAVEAT worth knowing before tuning this: the penalty is the MEAN over the three
-        # fixers, and their magnitudes span six orders, so it is effectively the water fixer
-        # alone -- mass and energy contribute nothing at any weight. Normalizing each fixer
-        # before averaging would fix that; it has not been built. Watch
-        # BaseLoss.last_fixer_penalties, which reports all three separately.
+        #   fixer                        rms(ratio-1)     max|ratio-1|
+        #   global_water_fixer               1.41e-02         3.73e-02
+        #   global_mass_fixer                1.50e-04         3.36e-04
+        #   global_energy_fixer_updown       4.55e-05         1.43e-04
+        #
+        # These are REFERENCE values, not a moving target: as the model learns to conserve, the
+        # terms fall below 1 and the penalty relaxes on its own. Re-measure them only if you
+        # change the fixers or move to a very different model.
+        #
+        # With every fixer at its reference scale the normalized penalty is exactly 1.0, so
+        # fixer_penalty_weight IS the penalty's contribution to the loss in absolute terms.
+        # The measured data-term loss at ckpt69 is ~3.0e-6, so:
+        #
+        #   1.5e-7  ->  penalty is ~5% of the loss   (set below; a constraint, not the objective)
+        #   3.0e-7  ->  ~10%
+        #   3.0e-8  ->  ~1%
+        #
+        # Watch BaseLoss.last_fixer_penalties_normalized during training: each entry is that
+        # fixer's term in units of its reference, so >1 means that budget is drifting WORSE
+        # than the model that set the scales. last_fixer_penalties keeps the raw physical
+        # values. Set a scale to null to drop that fixer from the penalty entirely.
         #
         # The square is deliberate: the gradient is 2*(ratio-1)*d(ratio)/dtheta, so the push
         # eases as the model approaches conservation, and it is differentiable at the optimum.
         #
         # Alternative: `fixer_penalty_weight: learnable` discovers the weight by Kendall-Gal,
         # with `fixer_penalty_target` setting the share of the loss it settles at.
-        fixer_penalty_weight: 6.0e-5
+        fixer_penalty_weight: 1.5e-7
+        fixer_penalty_scales:
+            global_water_fixer:         1.41e-02
+            global_mass_fixer:          1.50e-04
+            global_energy_fixer_updown: 4.55e-05
 
         use_latitude_weights: true
         latitude_weights: "/glade/campaign/cisl/aiml/wchapman/MLWPS/STAGING/f.e21.CREDIT_climate.statics_1.0deg_32levs_latlon_F32_hyai_fixed.nc"

@@ -365,6 +365,46 @@ V100 with little headroom. Use an H100 (80 GB) for anything larger.
 
 ---
 
+### Step 8 — train the model to need the fixers less
+
+Enabled in `camulator_gen2_native.yml`. Each conservation fixer records the ratio it
+multiplied its field by; `fixer_penalty_weight` adds
+`w * mean((ratio - 1)^2 / scale^2)` to the loss, so the model is pushed to close each
+budget itself rather than leaning on the fixer every step.
+
+`fixer_penalty_scales` is the part that has to be right. Measured over 36 real training
+steps on ckpt69:
+
+| fixer | rms(ratio-1) | max&#124;ratio-1&#124; | raw term | share of an *unnormalized* penalty |
+|---|---|---|---|---|
+| `global_water_fixer` | 1.41e-02 | 3.73e-02 | 2.85e-04 | 99.988% |
+| `global_mass_fixer` | 1.50e-04 | 3.36e-04 | 3.09e-08 | 0.011% |
+| `global_energy_fixer_updown` | 4.55e-05 | 1.43e-04 | 3.46e-09 | 0.001% |
+
+The water fixer corrects ~100x harder than mass and ~300x harder than energy, so a plain
+mean over `(ratio-1)^2` is the water fixer and nothing else — mass and energy would get no
+gradient at any weight you chose. Dividing each term by its own reference variance puts all
+three near 1.0. Re-run with the penalty on and the shares become 45% / 42% / 13%; the
+residual spread is batch-to-batch variability (the water term spans two orders across
+batches), not a bias.
+
+Note that these are **fixed reference values, not a running average**, so the incentive
+persists: as the model learns to conserve, the terms fall below 1 and the penalty relaxes
+on its own. Re-measure them only if you change the fixers or the model substantially.
+
+Because a fixer at its reference scale contributes exactly 1.0, `fixer_penalty_weight` is
+the penalty's contribution to the loss in absolute terms. The measured data-term loss at
+ckpt69 is ~3.0e-6, so the configured `1.5e-7` makes the penalty ~5% of the loss — a
+constraint, not the objective. Verified in a real run: penalty 1.60e-7 against a 3.0e-6
+loss, and `train_rmse` moved 0.001758 → 0.001760.
+
+Watch `BaseLoss.last_fixer_penalties_normalized` while training. Each entry is that fixer's
+term in units of its reference, so a value above 1 means that budget is drifting worse than
+ckpt69 did. `last_fixer_penalties` keeps the raw physical values. Setting a scale to `null`
+drops that fixer from the penalty.
+
+---
+
 ## 5. Rollout
 
 The climate driver is unchanged:
@@ -406,6 +446,7 @@ its value. Setting it `False` still inverse-transforms the output; delete the ke
 | anisotropic wind filter | `climate/WindPP.py` | gen2 shipped the isotropic version, which ignores the config's zonal/meridional sigmas |
 | float64 accumulation in `weighted_sum` | `credit/physics_core.py` | float32 summation of ~55k cells biased the fixer corrections by 15% (ΔT) and 36% (ΔPRECT) per step |
 | per-variable `TracerFixer` denorm | `credit/postblock/gen1.py` | the old whole-tensor `inverse_transform` round-trip perturbed PS and 90% of Qtot |
+| `fixer_penalty_scales` | `credit/losses/base.py` | without per-fixer normalization the penalty is the water fixer alone; mass and energy get no gradient at any weight |
 
 All of these are staged as an upstream PR on branch
 `fix/climate-gen1-postblock-imports-updown-fixer` in

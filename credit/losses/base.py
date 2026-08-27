@@ -43,6 +43,7 @@ Loss config (``conf["loss"]``, mirroring the preblocks/postblocks structure)::
         latitude_weights: "/path/static.zarr"
         latitude_weight_power: 1.0       # exponent on cos(lat); <1 up-weights the poles
         fixer_penalty_weight: 0.0        # float, or "learnable" to discover it (Kendall-Gal)
+        fixer_penalty_scales: {}         # per-fixer reference rms(ratio-1); equalizes the fixers
         fixer_penalty_init_scale: 2.6e-9 # expected penalty magnitude; sets the learnable init
         fixer_penalty_target: 0.5        # penalty's share of the loss at equilibrium (0.5 = Kendall-Gal)
         per_level_variance: false        # divide each level by its own sigma^2, not the variable mean
@@ -273,6 +274,7 @@ class BaseLoss(nn.Module):
         latitude_weights: str | None = None,
         latitude_weight_power: float = 1.0,
         fixer_penalty_weight: float | str = 0.0,
+        fixer_penalty_scales: dict | None = None,
         fixer_penalty_init_scale: float = 2.6e-9,
         fixer_penalty_target: float = 0.5,
         per_level_variance: bool = False,
@@ -294,6 +296,23 @@ class BaseLoss(nn.Module):
         # (e.g. 1% of the loss) keeps the weight discovered while keeping conservation a
         # constraint rather than the objective.
         self.fixer_penalty_target = float(fixer_penalty_target)
+        # Per-fixer reference scale for `(ratio - 1)`. The three conservation fixers correct by
+        # wildly different relative amounts -- on a trained CAMulator the water fixer's rms
+        # (ratio-1) is ~1.4e-2 while mass is ~1.5e-4 and energy ~4.6e-5 -- so a plain mean over
+        # (ratio-1)^2 is the water fixer alone to four decimal places, and mass and energy get
+        # no gradient at any weight. Dividing each fixer's term by its own reference variance
+        # puts all three near 1.0, so the mean weights them equally and `fixer_penalty_weight`
+        # becomes interpretable: it IS the penalty's contribution to the loss when the fixers
+        # sit at their reference scale. An absent fixer defaults to 1.0 (i.e. the raw,
+        # unnormalized term, preserving the previous behavior); an explicit null or a
+        # non-positive scale drops that fixer from the penalty entirely.
+        self.fixer_penalty_scales = {}
+        self._fixer_penalty_excluded = set()
+        for name, scale in (fixer_penalty_scales or {}).items():
+            if scale is None or float(scale) <= 0.0:
+                self._fixer_penalty_excluded.add(name)
+            else:
+                self.fixer_penalty_scales[name] = float(scale)
         #: Kendall-Gal log-variance for the fixer penalty (learnable mode only), else None.
         self.fixer_log_variance = None
         if self.fixer_penalty_learnable:
@@ -377,7 +396,13 @@ class BaseLoss(nn.Module):
         # exists (and logging code reading it is safe) before the first pass.
         self.last_var_losses = {}
         #: {fixer_name: mean (ratio-1)^2} from the most recent forward, for logging.
+        #: Raw and unnormalized, so it stays a physical diagnostic of how hard each fixer
+        #: worked regardless of how the penalty happens to be weighted.
         self.last_fixer_penalties = {}
+        #: {fixer_name: term / scale^2} -- the same terms as they enter the penalty. Each is
+        #: ~1.0 when that fixer is correcting by its reference amount, so these are directly
+        #: comparable across fixers and show at a glance which budget is drifting.
+        self.last_fixer_penalties_normalized = {}
         #: discovered exp(-s) weight in learnable mode, for logging.
         self.last_fixer_penalty_weight = None
         if self.var_weighting == "learnable":
@@ -588,17 +613,30 @@ class BaseLoss(nn.Module):
         step -- the difference between a constraint the model has learned and one merely
         imposed on its output afterwards.
 
-        Returns a 0.0 scalar when the weight is off or no fixer ran, so callers can add it
-        unconditionally.
+        Each fixer's term is divided by ``fixer_penalty_scales[name] ** 2`` before averaging,
+        which is what stops the single worst-behaved budget from being the whole penalty --
+        see the note in ``__init__``. With no scales configured every divisor is 1.0 and this
+        is a plain mean over the raw terms.
+
+        Returns a 0.0 scalar when the weight is off, no fixer ran, or every fixer that ran was
+        excluded, so callers can add it unconditionally.
         """
         ratios = full_data_dict.get("fixer_ratios") or {}
         if not ratios or (self.fixer_penalty_weight <= 0.0 and not self.fixer_penalty_learnable):
             return torch.zeros(())
         terms = []
         for name, ratio in ratios.items():
+            if name in self._fixer_penalty_excluded:
+                continue
             term = ((ratio - 1.0) ** 2).mean()
-            terms.append(term)
             self.last_fixer_penalties[name] = term.detach().item()
+            # scale is a reference rms(ratio-1), so the variance it normalizes by is scale^2.
+            scale = self.fixer_penalty_scales.get(name, 1.0)
+            normalized = term / (scale * scale)
+            self.last_fixer_penalties_normalized[name] = normalized.detach().item()
+            terms.append(normalized)
+        if not terms:
+            return torch.zeros(())
         penalty = torch.stack(terms).mean()
         if not self.fixer_penalty_learnable:
             return self.fixer_penalty_weight * penalty

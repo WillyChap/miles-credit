@@ -114,6 +114,12 @@ That is the minimum. The full option set:
 | `include_computed_diagnostics` | `true` | Score postblock-computed diagnostics (see below). |
 | `use_latitude_weights` | `false` | Apply cos(lat) spatial weighting per variable. |
 | `latitude_weights` | — | Path to a dataset with a `latitude` coordinate. Required when the above is true. |
+| `latitude_weight_power` | `1.0` | Exponent on `cos(lat)`. Below 1 flattens the profile and gives the poles more say. |
+| `per_level_variance` | `false` | Weight each level by its own `1/sigma^2` instead of the variable mean. |
+| `fixer_penalty_weight` | `0.0` | Weight on the conservation-fixer penalty, or `"learnable"`. |
+| `fixer_penalty_scales` | `{}` | Per-fixer reference `rms(ratio-1)`, so the fixers are weighted equally. |
+| `fixer_penalty_init_scale` | `2.6e-9` | Expected penalty magnitude; sets the `learnable` initialization. |
+| `fixer_penalty_target` | `0.5` | Share of the loss the `learnable` weight settles at. |
 
 ### Choosing the univariate loss
 
@@ -278,6 +284,56 @@ far smaller than tropical ones.
 Weights are normalized to mean 1 and applied to the elementwise tensor before the
 spatial mean, per variable. They are sharded automatically under domain-parallel
 training.
+
+`latitude_weight_power` raises `cos(lat)` to an exponent before normalization:
+
+```yaml
+    latitude_weight_power: 0.4
+```
+
+`1.0` is true area weighting. Values below 1 flatten the profile, so the polar cells
+carry more of the loss than their area alone would give them — worth doing when polar
+behavior matters more than its area share, as in a climate run where Arctic drift is a
+headline failure mode. `0.0` is uniform weighting.
+
+## Conservation-fixer penalty
+
+When conservation fixers run as postblocks, each records the ratio it multiplied its
+field by. A ratio of exactly 1 means the raw prediction already closed that budget and
+the fixer had nothing to do. Penalizing the distance from 1 trains the model to conserve
+on its own rather than leaning on the fixer every step:
+
+```yaml
+    fixer_penalty_weight: 1.5e-7
+    fixer_penalty_scales:
+      global_water_fixer:         1.41e-02
+      global_mass_fixer:          1.50e-04
+      global_energy_fixer_updown: 4.55e-05
+```
+
+The penalty is `weight * mean_over_fixers((ratio - 1)^2 / scale^2)`.
+
+**`fixer_penalty_scales` is what makes that mean mean anything.** The fixers correct by
+very different relative amounts — on a trained CAMulator the water fixer's `rms(ratio-1)`
+is ~1.4e-2 against ~1.5e-4 for mass and ~4.6e-5 for energy — so an unnormalized mean is
+the water fixer alone to four decimal places, and the others get no gradient at any
+weight. Set each scale to that fixer's measured `rms(ratio - 1)` and all three land near
+1.0 and count equally. A fixer with no entry defaults to `1.0` (its raw, unnormalized
+term); an explicit `null` drops it from the penalty.
+
+These are fixed reference values, not a running average, so the incentive persists: as
+the model learns to conserve, the terms fall below 1 and the penalty relaxes on its own.
+
+Because a fixer at its reference scale contributes exactly 1.0, `fixer_penalty_weight` is
+the penalty's contribution to the loss in absolute terms — divide by your data-term loss
+to get its share. Two attributes report what happened on the last forward pass:
+`last_fixer_penalties` holds the raw physical terms, and
+`last_fixer_penalties_normalized` holds them in units of each fixer's reference, so a
+value above 1 says that budget is drifting worse than the model the scales came from.
+
+Setting `fixer_penalty_weight: learnable` discovers the weight by Kendall-Gal uncertainty
+weighting instead, with `fixer_penalty_target` setting the share of the loss it settles
+at.
 
 ## Per-variable loss overrides
 

@@ -522,3 +522,137 @@ def test_postblock_chain_with_base_loss(tmp_path):
     assert y_pred.grad is not None
     assert torch.isfinite(y_pred.grad).all()
     assert set(loss_fn.last_var_losses) == {VAR_T, VAR_SP, VAR_PRECIP}
+
+
+# ---------------------------------------------------------------------------
+# Conservation-fixer penalty
+# ---------------------------------------------------------------------------
+
+# Stand-ins for the three real fixers, at roughly the correction magnitudes measured on a
+# trained CAMulator: water corrects ~100x harder than mass and ~300x harder than energy.
+FIXER_RMS = {"global_water_fixer": 1.4e-2, "global_mass_fixer": 1.5e-4, "global_energy_fixer_updown": 4.6e-5}
+
+
+def _state_with_ratios(rms=None, **kwargs):
+    """A scoreable state whose fixer_ratios sit a fixed rms away from 1."""
+    state = _make_state_dict(**kwargs)
+    rms = FIXER_RMS if rms is None else rms
+    # float64: at rms 4.6e-5 a float32 `1 + r` keeps only ~3 significant digits of the
+    # offset itself, which would put a ~0.3% floor under assertions about the arithmetic.
+    state["fixer_ratios"] = {
+        name: torch.full((2, 1, 1, 4, 5), 1.0 + r, dtype=torch.float64, requires_grad=True) for name, r in rms.items()
+    }
+    return state
+
+
+def test_fixer_penalty_off_by_default(tmp_path):
+    """No weight configured -> the fixers cost nothing and nothing is recorded."""
+    loss_fn = _make_loss(_make_scaler_file(tmp_path))
+    plain = loss_fn(_make_state_dict())
+    with_fixers = loss_fn(_state_with_ratios())
+    assert with_fixers.item() == pytest.approx(plain.item(), rel=1e-6)
+    assert loss_fn.last_fixer_penalties == {}
+
+
+def test_fixer_penalty_unnormalized_is_dominated_by_the_worst_fixer(tmp_path):
+    """Without scales the penalty is a plain mean, i.e. the water fixer alone.
+
+    This is the behavior the scales exist to correct, and pinning it here is what makes the
+    next test's contrast meaningful rather than a claim.
+    """
+    loss_fn = _make_loss(_make_scaler_file(tmp_path), fixer_penalty_weight=1.0)
+    loss_fn(_state_with_ratios())
+    raw = loss_fn.last_fixer_penalties
+    total = sum(raw.values())
+    assert raw["global_water_fixer"] / total > 0.999
+    # nothing configured -> normalized terms are the raw terms
+    assert loss_fn.last_fixer_penalties_normalized == pytest.approx(raw, rel=1e-6)
+
+
+def test_fixer_penalty_scales_equalize_the_fixers(tmp_path):
+    """Scaled by their own reference rms, all three fixers contribute equally."""
+    loss_fn = _make_loss(_make_scaler_file(tmp_path), fixer_penalty_weight=1.0, fixer_penalty_scales=dict(FIXER_RMS))
+    loss_fn(_state_with_ratios())
+    norm = loss_fn.last_fixer_penalties_normalized
+    assert set(norm) == set(FIXER_RMS)
+    for name in FIXER_RMS:
+        # ratio sits exactly one reference rms from 1, so term / scale^2 == 1
+        assert norm[name] == pytest.approx(1.0, rel=1e-4)
+    # ...while the raw terms still span four orders, i.e. the diagnostic is untouched
+    raw = loss_fn.last_fixer_penalties
+    assert raw["global_water_fixer"] / raw["global_energy_fixer_updown"] > 1e4
+
+
+def test_fixer_penalty_weight_is_the_contribution_at_reference_scale(tmp_path):
+    """With every fixer at its reference scale the penalty equals fixer_penalty_weight."""
+    w = 0.25
+    scaler = _make_scaler_file(tmp_path)
+    plain = _make_loss(scaler)(_make_state_dict())
+    loss_fn = _make_loss(scaler, fixer_penalty_weight=w, fixer_penalty_scales=dict(FIXER_RMS))
+    penalized = loss_fn(_state_with_ratios())
+    assert (penalized - plain).item() == pytest.approx(w, rel=1e-4)
+
+
+def test_fixer_penalty_scale_null_excludes_that_fixer(tmp_path):
+    """An explicit null (or non-positive scale) drops a fixer from the penalty."""
+    scales = dict(FIXER_RMS)
+    scales["global_water_fixer"] = None
+    loss_fn = _make_loss(_make_scaler_file(tmp_path), fixer_penalty_weight=1.0, fixer_penalty_scales=scales)
+    loss_fn(_state_with_ratios())
+    assert "global_water_fixer" not in loss_fn.last_fixer_penalties_normalized
+    assert set(loss_fn.last_fixer_penalties_normalized) == {"global_mass_fixer", "global_energy_fixer_updown"}
+
+
+def test_fixer_penalty_all_excluded_is_zero(tmp_path):
+    """Excluding every fixer that ran leaves the loss untouched rather than erroring."""
+    scales = {name: None for name in FIXER_RMS}
+    scaler = _make_scaler_file(tmp_path)
+    plain = _make_loss(scaler)(_make_state_dict())
+    loss_fn = _make_loss(scaler, fixer_penalty_weight=1.0, fixer_penalty_scales=scales)
+    assert loss_fn(_state_with_ratios()).item() == pytest.approx(plain.item(), rel=1e-6)
+
+
+def test_fixer_penalty_reaches_every_fixer_in_the_gradient(tmp_path):
+    """The point of the scales: all three fixers get a gradient, not just the loudest.
+
+    Unnormalized, the mass and energy ratios carry gradients ~1e4 smaller than water's --
+    numerically present but swamped by the data term. Scaled, all three are comparable.
+    """
+    scaler = _make_scaler_file(tmp_path)
+
+    def grads(**kw):
+        loss_fn = _make_loss(scaler, fixer_penalty_weight=1.0, **kw)
+        state = _state_with_ratios()
+        loss_fn(state).backward()
+        return {n: float(r.grad.abs().sum()) for n, r in state["fixer_ratios"].items()}
+
+    unscaled = grads()
+    scaled = grads(fixer_penalty_scales=dict(FIXER_RMS))
+
+    # Unnormalized, the water fixer's ratio gets ~90x the gradient the mass fixer's does,
+    # purely because it happens to correct by more.
+    assert unscaled["global_water_fixer"] / unscaled["global_mass_fixer"] > 50.0
+
+    # Normalized, the fixers are equalized in the units that matter: d(loss)/d(ratio/scale),
+    # the response to moving a fixer by one reference rms. The raw d(loss)/d(ratio) stays
+    # LARGER for a tighter-scaled fixer, which is right -- a given absolute drift in the mass
+    # ratio is a bigger deal than the same drift in the water ratio.
+    for name in FIXER_RMS:
+        assert scaled[name] > 0.0
+    per_scale = {n: g * FIXER_RMS[n] for n, g in scaled.items()}
+    spread = max(per_scale.values()) / min(per_scale.values())
+    assert spread == pytest.approx(1.0, rel=1e-3), f"fixers not equalized: {per_scale}"
+
+
+def test_fixer_penalty_scales_accepted_through_load_loss(tmp_path):
+    """The config key survives the {type, args} plumbing (this is how training sets it)."""
+    conf = _make_conf(
+        _make_scaler_file(tmp_path),
+        tmp_path,
+        loss_args={"fixer_penalty_weight": 1.0, "fixer_penalty_scales": dict(FIXER_RMS)},
+    )
+    loss_fn = load_loss(conf)
+    assert loss_fn.fixer_penalty_scales == pytest.approx(FIXER_RMS)
+    loss_fn(_state_with_ratios())
+    for name in FIXER_RMS:
+        assert loss_fn.last_fixer_penalties_normalized[name] == pytest.approx(1.0, rel=1e-4)
