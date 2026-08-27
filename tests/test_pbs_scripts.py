@@ -1467,3 +1467,40 @@ class TestIsNcarSystem:
 
         monkeypatch.setattr(socket, "gethostname", lambda: "workstation.example.com")
         assert _is_ncar_system() is False
+
+
+# ---------------------------------------------------------------------------
+# The submitted job must run the checkout it was submitted from
+# ---------------------------------------------------------------------------
+
+
+class TestRepoOnPythonPath:
+    """Every generated script must put ${REPO} on PYTHONPATH.
+
+    The scripts `cd ${REPO}` and run `${REPO}/credit/applications/...`, but Python puts the
+    *script's* directory on sys.path, not the cwd -- so `import credit` inside that script
+    resolves through the environment's editable install, which may well point at a different
+    checkout. When it does, the job silently trains with someone else's code: the right
+    entrypoint file, the wrong package behind every import.
+    """
+
+    def test_casper_exports_pythonpath(self):
+        assert 'export PYTHONPATH="${REPO}:${PYTHONPATH:-}"' in _casper_script()
+
+    def test_derecho_single_node_exports_pythonpath(self):
+        assert 'export PYTHONPATH="${REPO}:${PYTHONPATH:-}"' in _derecho_script(nodes=1)
+
+    def test_derecho_multi_node_exports_pythonpath(self):
+        assert 'export PYTHONPATH="${REPO}:${PYTHONPATH:-}"' in _derecho_script(nodes=4)
+
+    def test_slurm_exports_pythonpath(self):
+        assert 'export PYTHONPATH="${REPO}:${PYTHONPATH:-}"' in _slurm_script()
+
+    def test_pythonpath_is_exported_before_the_launch(self):
+        """Order matters: an export after torchrun would never reach the training process."""
+        for script in (_casper_script(), _derecho_script(nodes=1), _slurm_script()):
+            assert script.index("export PYTHONPATH=") < script.index("torchrun")
+
+    def test_existing_pythonpath_is_preserved(self):
+        """`:${PYTHONPATH:-}` — prepend, never clobber what the site or user already set."""
+        assert "${PYTHONPATH:-}" in _casper_script()

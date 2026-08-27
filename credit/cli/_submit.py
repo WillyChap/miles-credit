@@ -356,6 +356,7 @@ def _build_slurm_script(
         f"{directives}\n\n"
         f"{env}\n\n"
         f"REPO={repo}\n"
+        f'export PYTHONPATH="${{REPO}}:${{PYTHONPATH:-}}"\n'
         f"CONFIG={config}\n"
         f"NGPUS={args.gpus}\n\n"
         f'echo "Config    : ${{CONFIG}}"\n'
@@ -389,6 +390,7 @@ def _build_realtime_slurm_script(
         f"{directives}\n\n"
         f"{env}\n\n"
         f"REPO={repo}\n"
+        f'export PYTHONPATH="${{REPO}}:${{PYTHONPATH:-}}"\n'
         f"CONFIG={config}\n"
         f"NGPUS={args.gpus}\n\n"
         f'echo "Realtime forecast - init: {init_time}  steps: {steps}"\n'
@@ -414,6 +416,7 @@ def _build_preprocess_slurm_script(
         f"{directives}\n\n"
         f"{env}\n\n"
         f"REPO={repo}\n"
+        f'export PYTHONPATH="${{REPO}}:${{PYTHONPATH:-}}"\n'
         f"CONFIG={config}\n"
         f"NGPUS={args.gpus}\n\n"
         f'echo "Preprocessing - scaler fitting"\n'
@@ -436,6 +439,7 @@ def _build_rollout_slurm_script(
         f"{directives}\n\n"
         f"{env}\n\n"
         f"REPO={repo}\n"
+        f'export PYTHONPATH="${{REPO}}:${{PYTHONPATH:-}}"\n'
         f"CONFIG={config}\n"
         f"NGPUS={args.gpus}\n\n"
         f'echo "Ensemble rollout - subset {subset} of {n_subsets}"\n'
@@ -676,6 +680,8 @@ def _build_pbs_script(
             conda activate {args.conda_env}
 
             REPO={repo}
+
+            export PYTHONPATH="${{REPO}}:${{PYTHONPATH:-}}"
             CONFIG={config}
             NGPUS={args.gpus}
             TORCHRUN=$(which torchrun)
@@ -711,6 +717,8 @@ def _build_pbs_script(
             conda activate {args.conda_env}
 
             REPO={repo}
+
+            export PYTHONPATH="${{REPO}}:${{PYTHONPATH:-}}"
             CONFIG={config}
 
             total_gpus=$(( {nodes} * {args.gpus} ))
@@ -857,6 +865,8 @@ def _build_realtime_pbs_script(
             conda activate {args.conda_env}
 
             REPO={repo}
+
+            export PYTHONPATH="${{REPO}}:${{PYTHONPATH:-}}"
             CONFIG={config}
             NGPUS={args.gpus}
             TORCHRUN=$(which torchrun)
@@ -897,6 +907,8 @@ def _build_realtime_pbs_script(
             conda activate {args.conda_env}
 
             REPO={repo}
+
+            export PYTHONPATH="${{REPO}}:${{PYTHONPATH:-}}"
             CONFIG={config}
 
             echo "Realtime forecast — init: {init_time}  steps: {steps}"
@@ -939,6 +951,8 @@ def _build_preprocess_pbs_script(
             conda activate {args.conda_env}
 
             REPO={repo}
+
+            export PYTHONPATH="${{REPO}}:${{PYTHONPATH:-}}"
             CONFIG={config}
             NGPUS={args.gpus}
             TORCHRUN=$(which torchrun)
@@ -977,6 +991,8 @@ def _build_preprocess_pbs_script(
             conda activate {args.conda_env}
 
             REPO={repo}
+
+            export PYTHONPATH="${{REPO}}:${{PYTHONPATH:-}}"
             CONFIG={config}
 
             echo "Preprocessing — scaler fitting"
@@ -1180,6 +1196,8 @@ def _build_rollout_pbs_script(
             conda activate {args.conda_env}
 
             REPO={repo}
+
+            export PYTHONPATH="${{REPO}}:${{PYTHONPATH:-}}"
             CONFIG={config}
             NGPUS={args.gpus}
 
@@ -1219,6 +1237,8 @@ def _build_rollout_pbs_script(
             conda activate {args.conda_env}
 
             REPO={repo}
+
+            export PYTHONPATH="${{REPO}}:${{PYTHONPATH:-}}"
             CONFIG={config}
 
             echo "Ensemble rollout — subset {subset} of {n_subsets}"
