@@ -450,6 +450,16 @@ class TrainerERA5Gen2(BaseTrainer):
                     accum_log(logs, {"loss": loss.item()})
                     if isinstance(criterion, BaseLoss):
                         accum_log(logs, {f"loss_var/{k}": v for k, v in criterion.last_var_losses.items()})
+                        # Normalized so the three fixers are comparable: 1.0 means that budget
+                        # is drifting as much as the model the penalty scales were measured on.
+                        # accum_log SUMS, and this runs once per backprop timestep and per
+                        # grad-accum micro-batch, so count the contributions and average below --
+                        # a summed "1.0 = at reference" column would not mean anything.
+                        accum_log(
+                            logs,
+                            {f"fixer/{k}": v for k, v in criterion.last_fixer_penalties_normalized.items()},
+                        )
+                        accum_log(logs, {"fixer_calls": 1.0})
                     if self.is_crps_ensemble:
                         # Ensemble spread proxy: std of member errors.
                         target = full_data_dict["y"]
@@ -537,6 +547,12 @@ class TrainerERA5Gen2(BaseTrainer):
                     if self.distributed:
                         all_reduce_avg(var_loss)
                     results_dict[f"train_loss_var/{name}"].append(var_loss[0].item())
+                n_fixer_calls = max(logs.get("fixer_calls", 0.0), 1.0)
+                for name in criterion.last_fixer_penalties_normalized:
+                    fixer_term = torch.Tensor([logs.get(f"fixer/{name}", 0.0) / n_fixer_calls]).to(self.device)
+                    if self.distributed:
+                        all_reduce_avg(fixer_term)
+                    results_dict[f"train_fixer/{name}"].append(fixer_term[0].item())
             results_dict["train_forecast_len"].append(self.forecast_len)
             results_dict["train_history_len"].append(self.history_len)
 
@@ -678,6 +694,11 @@ class TrainerERA5Gen2(BaseTrainer):
                                 if self.distributed:
                                     all_reduce_avg(value)
                                 results_dict[f"valid_loss_var/{name}"].append(value[0].item())
+                            for name, value in criterion.last_fixer_penalties_normalized.items():
+                                value = torch.Tensor([value]).to(self.device, non_blocking=True)
+                                if self.distributed:
+                                    all_reduce_avg(value)
+                                results_dict[f"valid_fixer/{name}"].append(value[0].item())
                         else:
                             if self.flag_clamp:
                                 full_data_dict["y"] = torch.clamp(

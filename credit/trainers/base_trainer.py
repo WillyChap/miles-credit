@@ -428,6 +428,11 @@ class BaseTrainer(ABC):
           - list of variable names: only per-variable columns whose key contains
             one of the names.
           - ``False`` or ``[]``: combined aggregates only.
+
+        Conservation-fixer terms (``fixer/...``) are always kept. They are global
+        budget diagnostics rather than per-variable columns, so a list-form
+        ``save_metric_vars`` would otherwise silently drop them -- and they are the
+        only view onto whether the fixer penalty is doing anything during a run.
         """
         required_metrics = ["loss", *self.display_metrics, "forecast_len", "history_len"]
 
@@ -450,6 +455,7 @@ class BaseTrainer(ABC):
             names = all_names
         else:
             names = []
+        names += [name for name in all_names if name.startswith("fixer/")]
         return list(dict.fromkeys(names + required_metrics))  # preserves order; set() randomizes column order
 
     # ------------------------------------------------------------------

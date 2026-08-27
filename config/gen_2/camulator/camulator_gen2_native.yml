@@ -453,9 +453,19 @@ trainer:
     learning_rate: 1.0e-06       # fine-tuning LR: 100x below the 1.0e-04 pretraining LR
     weight_decay: 0
 
-    train_batch_size: 8
-    valid_batch_size: 8
-    batches_per_epoch: 0         # 0 -> len(dataloader)
+    # MEASURED on an 80 GB A100 (gen2 trainer, forecast_len 3, activation_checkpoint True):
+    #   batch 1 -> 44.1 GB (54%)     batch 2 -> 52.8 GB (65%)
+    #   batch 4 -> 76.5 GB (94%)     batch 8 -> ~104 GB, i.e. OOM on any 80 GB card
+    # (fixed cost ~35.6 GB, ~8.6 GB per sample). This was 8, inherited from the gen1
+    # pretraining config -- gen1's multi-step batcher has a different memory profile and the
+    # number does not carry over. 4 fits but at 94% leaves nothing for fragmentation or a
+    # larger validation batch; 2 is the safe long-run choice.
+    train_batch_size: 2
+    valid_batch_size: 2
+    # Samples per epoch = batches_per_epoch * train_batch_size * n_gpus.
+    # 50 * 2 * 4 = 400 samples/epoch on 4 GPUs. On 1 GPU use 200 for the same 400 samples,
+    # or drop it to ~4 for a smoke test. 0 -> len(dataloader) (the whole dataset).
+    batches_per_epoch: 50
     valid_batches_per_epoch: 100
     stopping_patience: 5000
     skip_validation: False
